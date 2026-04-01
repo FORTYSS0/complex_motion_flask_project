@@ -109,7 +109,7 @@ def generate_all_plots(data):
     plt.close()
 
     # ------------------------------------------------------------
-    # 2. Скорости (стандартные оси X,Y,Z + базисные ω, a_cor, V_отн)
+    # 2. Скорости (без осей X,Y,Z, только базисные векторы ω, a_cor, V_отн)
     # ------------------------------------------------------------
     point = data['point']
     vectors = [data['V_rel'], data['V_rot'], data['V_trans_post'], data['V_abs']]
@@ -120,9 +120,13 @@ def generate_all_plots(data):
 
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(111, projection='3d')
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
+    # Убираем подписи осей
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+    ax.set_zlabel('')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_zticks([])
     ax.set_title('Векторы скоростей в точке M')
 
     ax.scatter(point[0], point[1], point[2], color='red', s=50, label='Point M')
@@ -157,6 +161,7 @@ def generate_all_plots(data):
     a_cor_basis = scaled_basis(a_cor_vec, basis_length)
     V_rel_basis = scaled_basis(V_rel_vec, basis_length)
 
+    # Базисные векторы чёрным цветом
     ax.quiver(point[0], point[1], point[2],
               omega_basis[0], omega_basis[1], omega_basis[2],
               color='black', label='ω (basis)', arrow_length_ratio=0.05, linewidth=2)
@@ -178,15 +183,10 @@ def generate_all_plots(data):
     ax.text(end_vrel[0], end_vrel[1], end_vrel[2], 'V_отн',
             color='black', fontsize=10, ha='center', va='center')
 
+    # Устанавливаем лимиты с учётом всех объектов
     all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + \
                  [np.array(point) + omega_basis, np.array(point) + a_cor_basis, np.array(point) + V_rel_basis, np.array([0,0,0])]
     all_arr = np.array(all_points)
-    min_vals = np.min(all_arr, axis=0)
-    max_vals = np.max(all_arr, axis=0)
-    max_range = np.max(max_vals - min_vals)
-    axis_length = max_range * 0.25
-    axis_ends = [[axis_length,0,0], [0,axis_length,0], [0,0,axis_length]]
-    all_arr = np.vstack([all_arr, axis_ends])
     min_vals = np.min(all_arr, axis=0)
     max_vals = np.max(all_arr, axis=0)
     margin = 0.2
@@ -194,7 +194,6 @@ def generate_all_plots(data):
     ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
     ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
 
-    draw_axes(ax, origin=(0,0,0), length=axis_length, color='black')
     ax.grid(True, alpha=0.3)
     ax.legend(loc='upper left')
     plt.tight_layout()
@@ -202,7 +201,7 @@ def generate_all_plots(data):
     plt.close()
 
     # ------------------------------------------------------------
-    # 3. Ускорения (стандартные оси X,Y,Z + базисные ω, a_cor, a_отн)
+    # 3. Ускорения (без осей X,Y,Z, только базисные ω, a_cor, a_отн)
     # ------------------------------------------------------------
     vectors = [data['a_rel'], data['a_centr'], data['a_rot'],
                data['a_trans_post'], data['a_cor'], data['a_abs']]
@@ -213,9 +212,12 @@ def generate_all_plots(data):
 
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(111, projection='3d')
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+    ax.set_zlabel('')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_zticks([])
     ax.set_title('Векторы ускорений в точке M')
 
     ax.scatter(point[0], point[1], point[2], color='red', s=50, label='Point M')
@@ -271,18 +273,11 @@ def generate_all_plots(data):
     all_arr = np.array(all_points)
     min_vals = np.min(all_arr, axis=0)
     max_vals = np.max(all_arr, axis=0)
-    max_range = np.max(max_vals - min_vals)
-    axis_length = max_range * 0.25
-    axis_ends = [[axis_length,0,0], [0,axis_length,0], [0,0,axis_length]]
-    all_arr = np.vstack([all_arr, axis_ends])
-    min_vals = np.min(all_arr, axis=0)
-    max_vals = np.max(all_arr, axis=0)
     margin = 0.2
     ax.set_xlim([min_vals[0]-margin, max_vals[0]+margin])
     ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
     ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
 
-    draw_axes(ax, origin=(0,0,0), length=axis_length, color='black')
     ax.grid(True, alpha=0.3)
     ax.legend(loc='upper left')
     plt.tight_layout()
