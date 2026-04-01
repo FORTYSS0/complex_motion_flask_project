@@ -215,7 +215,7 @@ def generate_all_plots(data):
 
 def generate_interactive_trajectory(data):
     """Возвращает JSON для интерактивного графика траектории с одной стрелкой направления в конце,
-       увеличенной стрелкой ω (развёрнутой в противоположную сторону) и горизонтальной проекцией траектории (жирная линия)."""
+       увеличенной стрелкой ω (в начале дуги) и горизонтальной проекцией траектории (жирная линия)."""
     t_vals = np.linspace(0, 2.5, 200)
     x_t = 8 * np.cos(np.pi * t_vals**2 / 3)
     y_t = 16 * np.sin(np.pi * t_vals**2 / 3)
@@ -346,7 +346,7 @@ def generate_interactive_trajectory(data):
         showlegend=False
     ))
 
-    # --- Дуга вращения (ω) с увеличенной стрелкой (конусом) в конце, развёрнутой в противоположную сторону ---
+    # --- Дуга вращения (ω) с увеличенной стрелкой (конусом) в начале дуги ---
     theta = np.linspace(0, -np.pi/2, 50)
     radius = axis_len * 0.6
     x_arc = O[0] + radius * np.cos(theta)
@@ -354,22 +354,22 @@ def generate_interactive_trajectory(data):
     z_arc = O[2] + axis_len * 0.05
     fig.add_trace(go.Scatter3d(x=x_arc, y=y_arc, z=np.full_like(x_arc, z_arc), mode='lines',
                                line=dict(color='green', width=2), name='ω'))
-    # Стрелка (конус) в конце дуги – увеличенный размер, развёрнута на 180°
-    end_x_arc = x_arc[-1]
-    end_y_arc = y_arc[-1]
-    end_z_arc = z_arc
-    # Вектор направления дуги в последней точке (касательная) – изменим знак, чтобы развернуть стрелку
-    dx_arc = x_arc[-1] - x_arc[-2]
-    dy_arc = y_arc[-1] - y_arc[-2]
+    # Стрелка (конус) в начале дуги
+    start_x = x_arc[0]
+    start_y = y_arc[0]
+    start_z = z_arc
+    # Вектор направления дуги в первой точке (касательная)
+    dx_arc = x_arc[1] - x_arc[0]
+    dy_arc = y_arc[1] - y_arc[0]
     dz_arc = 0
     len_arc = np.sqrt(dx_arc**2 + dy_arc**2 + dz_arc**2)
     if len_arc > 1e-8:
-        arrow_scale_arc = 0.3 * radius
-        u_arc = -dx_arc / len_arc * arrow_scale_arc   # знак минус для разворота
-        v_arc = -dy_arc / len_arc * arrow_scale_arc
+        arrow_scale_arc = 0.3 * radius  # размер стрелки
+        u_arc = dx_arc / len_arc * arrow_scale_arc
+        v_arc = dy_arc / len_arc * arrow_scale_arc
         w_arc = 0
         fig.add_trace(go.Cone(
-            x=[end_x_arc], y=[end_y_arc], z=[end_z_arc],
+            x=[start_x], y=[start_y], z=[start_z],
             u=[u_arc], v=[v_arc], w=[w_arc],
             colorscale=[[0, 'green'], [1, 'green']],
             showscale=False,
@@ -377,7 +377,7 @@ def generate_interactive_trajectory(data):
             sizeref=0.3,
             name='ω direction'
         ))
-    # Подпись ω без знака минус
+    # Подпись ω (без знака минус) в середине дуги
     mid = len(theta)//2
     fig.add_trace(go.Scatter3d(x=[x_arc[mid]], y=[y_arc[mid]], z=[z_arc + 0.02], mode='text',
                                text=[f'ω = {abs(data["omega"]):.2f}'], textfont=dict(color='green', size=10), showlegend=False))
