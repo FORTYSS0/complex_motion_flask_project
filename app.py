@@ -1,138 +1,124 @@
-from flask import Flask, render_template, send_file, url_for
-import os
-import io
-import base64
-import tempfile
-import pdfkit
-import pypandoc
-import matplotlib.pyplot as plt
 import numpy as np
-from calc import compute_complex_motion
-from plots import generate_all_plots, generate_interactive_trajectory, generate_interactive_velocities, generate_interactive_accelerations
+import sympy as sp
 
-app = Flask(__name__)
+t_sym = sp.Symbol('t', real=True)
+a_sym, b_sym = sp.symbols('a b', real=True)
 
-os.makedirs('static', exist_ok=True)
+# Относительное движение
+a_val = 8
+b_val = -2
 
-def latex_to_png(latex_str):
-    """Преобразует LaTeX-строку в base64-изображение PNG."""
-    fig, ax = plt.subplots(figsize=(0.8, 0.4))
-    fig.patch.set_visible(False)
-    ax.axis('off')
-    ax.text(0.5, 0.5, f'${latex_str}$', fontsize=12, ha='center', va='center')
-    img = io.BytesIO()
-    plt.savefig(img, format='png', bbox_inches='tight', pad_inches=0.05, transparent=True)
-    plt.close()
-    img.seek(0)
-    return base64.b64encode(img.read()).decode()
+x_sym = a_sym * sp.cos(b_sym * sp.pi * t_sym**2 / 6)
+y_sym = -2 * a_sym * sp.sin(b_sym * sp.pi * t_sym**2 / 6)
 
-@app.route('/')
-def index():
-    data, formulas = compute_complex_motion(t=1)
-    generate_all_plots(data)  # PNG для экспорта и fallback
-    traj_json = generate_interactive_trajectory(data)
-    vel_json = generate_interactive_velocities(data)
-    acc_json = generate_interactive_accelerations(data)
-    static_paths = {
-        'trajectory': url_for('static', filename='trajectory.png'),
-        'velocities': url_for('static', filename='velocities.png'),
-        'accelerations': url_for('static', filename='accelerations.png'),
-    }
-    return render_template('report.html', data=data, formulas=formulas,
-                           traj_json=traj_json, vel_json=vel_json, acc_json=acc_json,
-                           static_paths=static_paths)
+x_expr = x_sym.subs({a_sym: a_val, b_sym: b_val}).simplify()
+y_expr = y_sym.subs({a_sym: a_val, b_sym: b_val}).simplify()
 
-def prepare_export_data():
-    """Возвращает data, formulas и formula_images для экспорта."""
-    data, formulas = compute_complex_motion(t=1)
-    generate_all_plots(data)
+vx_expr = sp.diff(x_expr, t_sym).simplify()
+vy_expr = sp.diff(y_expr, t_sym).simplify()
+ax_expr = sp.diff(vx_expr, t_sym).simplify()
+ay_expr = sp.diff(vy_expr, t_sym).simplify()
 
-    formula_images = {}
-    for key, latex in formulas.items():
-        formula_images[key] = latex_to_png(latex)
+# Переносное движение
+z_expr = 2 * t_sym**2 + 4
+vz_expr = sp.diff(z_expr, t_sym)
+az_expr = sp.diff(vz_expr, t_sym)
 
-    extra_formulas = {
-        'V_abs_eq': r'\mathbf{V}_{\text{абс}} = \mathbf{V}_{\text{отн}} + \mathbf{V}_{\text{пер,пост}} + \mathbf{V}_{\text{пер,вр}}',
-        'V_rot_eq': r'\mathbf{V}_{\text{пер,вр}} = \boldsymbol{\omega} \times \mathbf{r}_{\text{отн}}',
-        'a_abs_eq': r'\mathbf{a}_{\text{абс}} = \mathbf{a}_{\text{отн}} + \mathbf{a}_{\text{пер}} + \mathbf{a}_{\text{кор}}',
-        'a_trans_eq': r'\mathbf{a}_{\text{пер}} = \mathbf{a}_{\text{пер,пост}} + \mathbf{a}_{\text{пер,ц}} + \mathbf{a}_{\text{пер,вр}}',
-        'a_centr_eq': r'\mathbf{a}_{\text{пер,ц}} = -\omega^2 \mathbf{r}_{\text{отн}}',
-        'a_rot_eq': r'\mathbf{a}_{\text{пер,вр}} = \boldsymbol{\alpha} \times \mathbf{r}_{\text{отн}}',
-        'a_cor_eq': r'\mathbf{a}_{\text{кор}} = 2\,\boldsymbol{\omega} \times \mathbf{V}_{\text{отн}}',
-        'rho_eq': r'\rho = \frac{V_{\text{абс}}^3}{|\mathbf{V}_{\text{абс}} \times \mathbf{a}_{\text{абс}}|}',
-    }
-    for key, latex in extra_formulas.items():
-        formula_images[key] = latex_to_png(latex)
+phi_expr = 2 * sp.sin(sp.pi * t_sym)
+omega_expr = sp.diff(phi_expr, t_sym).simplify()
+alpha_expr = sp.diff(omega_expr, t_sym).simplify()
 
-    static_abs_path = os.path.abspath('static')
-    img_files = {
-        'trajectory': os.path.join(static_abs_path, 'trajectory.png'),
-        'velocities': os.path.join(static_abs_path, 'velocities.png'),
-        'accelerations': os.path.join(static_abs_path, 'accelerations.png'),
-    }
-    return data, formulas, formula_images, img_files
+# Расчёт в момент t=1
+t0 = 1
 
-@app.route('/export/pdf')
-def export_pdf():
-    data, formulas, formula_images, img_files = prepare_export_data()
-    rendered = render_template('report_export.html', data=data, formulas=formulas,
-                               formula_images=formula_images, images=img_files, export=True)
+x0 = float(x_expr.subs(t_sym, t0))
+y0 = float(y_expr.subs(t_sym, t0))
+z0 = 0.0
 
-    with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as f:
-        f.write(rendered.encode('utf-8'))
-        html_path = f.name
+vx0 = float(vx_expr.subs(t_sym, t0))
+vy0 = float(vy_expr.subs(t_sym, t0))
+V_rel = np.array([vx0, vy0, 0.0])
 
-    pdf_path = html_path.replace('.html', '.pdf')
-    try:
-        pdfkit.from_file(html_path, pdf_path, options={'enable-local-file-access': None})
-    except Exception as e:
-        os.unlink(html_path)
-        return f"Ошибка генерации PDF: {e}", 500
+ax0 = float(ax_expr.subs(t_sym, t0))
+ay0 = float(ay_expr.subs(t_sym, t0))
+a_rel = np.array([ax0, ay0, 0.0])
 
-    with open(pdf_path, 'rb') as f:
-        pdf_data = f.read()
-    os.unlink(html_path)
-    os.unlink(pdf_path)
+zp0 = float(z_expr.subs(t_sym, t0))
+vz0 = float(vz_expr.subs(t_sym, t0))
+az0 = float(az_expr.subs(t_sym, t0))
 
-    return send_file(
-        io.BytesIO(pdf_data),
-        as_attachment=True,
-        download_name='report.pdf',
-        mimetype='application/pdf'
-    )
+phi0 = float(phi_expr.subs(t_sym, t0))
+omega0 = float(omega_expr.subs(t_sym, t0))
+alpha0 = float(alpha_expr.subs(t_sym, t0))
 
-@app.route('/export/word')
-def export_word():
-    data, formulas, formula_images, img_files = prepare_export_data()
-    rendered = render_template('report_export.html', data=data, formulas=formulas,
-                               formula_images=formula_images, images=img_files, export=True)
+r_rel = np.array([x0, y0, 0.0])
 
-    with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as f_html:
-        f_html.write(rendered.encode('utf-8'))
-        html_path = f_html.name
+V_trans_post = np.array([0.0, 0.0, vz0])
+V_rot = np.cross([0, 0, omega0], r_rel)
+V_abs = V_rel + V_trans_post + V_rot
 
-    with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as f_docx:
-        docx_path = f_docx.name
+a_centr = np.cross([0, 0, omega0], np.cross([0, 0, omega0], r_rel))
+a_rot = np.cross([0, 0, alpha0], r_rel)
+a_trans_post = np.array([0.0, 0.0, az0])
+a_trans = a_centr + a_rot + a_trans_post
+a_cor = 2 * np.cross([0, 0, omega0], V_rel)
+a_abs = a_rel + a_trans + a_cor
 
-    try:
-        pypandoc.convert_file(html_path, 'docx', outputfile=docx_path)
-        with open(docx_path, 'rb') as f:
-            docx_data = f.read()
-    except Exception as e:
-        os.unlink(html_path)
-        if os.path.exists(docx_path):
-            os.unlink(docx_path)
-        return f"Ошибка генерации Word: {e}", 500
+V_abs_norm = np.linalg.norm(V_abs)
+cross = np.cross(V_abs, a_abs)
+cross_norm = np.linalg.norm(cross)
+rho = V_abs_norm**3 / cross_norm if cross_norm != 0 else float('inf')
 
-    os.unlink(html_path)
-    os.unlink(docx_path)
+point_abs = (x0, y0, zp0)
 
-    return send_file(
-        io.BytesIO(docx_data),
-        as_attachment=True,
-        download_name='report.docx',
-        mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    )
+data = {
+    't': t0,
+    'point': point_abs,
+    'zp': zp0,
+    'V_rel': V_rel,
+    'V_rot': V_rot,
+    'V_trans_post': V_trans_post,
+    'V_abs': V_abs,
+    'a_rel': a_rel,
+    'a_centr': a_centr,
+    'a_rot': a_rot,
+    'a_trans_post': a_trans_post,
+    'a_cor': a_cor,
+    'a_abs': a_abs,
+    'rho': rho,
+    'omega': omega0,
+    'alpha': alpha0,
+    'dzpdt': vz0,
+    'd2zpdt2': az0,
+    'phi': phi0,
+    'dphi_dt': omega0,
+    'd2phi_dt2': alpha0,
+    'V_rel_mod': np.linalg.norm(V_rel),
+    'V_rot_mod': np.linalg.norm(V_rot),
+    'V_trans_post_mod': np.linalg.norm(V_trans_post),
+    'V_abs_mod': V_abs_norm,
+    'a_rel_mod': np.linalg.norm(a_rel),
+    'a_centr_mod': np.linalg.norm(a_centr),
+    'a_rot_mod': np.linalg.norm(a_rot),
+    'a_trans_post_mod': np.linalg.norm(a_trans_post),
+    'a_cor_mod': np.linalg.norm(a_cor),
+    'a_abs_mod': np.linalg.norm(a_abs),
+}
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=False)
+formulas = {
+    'x': sp.latex(x_expr),
+    'y': sp.latex(y_expr),
+    'dxdt': sp.latex(vx_expr),
+    'dydt': sp.latex(vy_expr),
+    'd2xdt2': sp.latex(ax_expr),
+    'd2ydt2': sp.latex(ay_expr),
+    'zp': sp.latex(z_expr),
+    'dzpdt': sp.latex(vz_expr),
+    'd2zpdt2': sp.latex(az_expr),
+    'phi': sp.latex(phi_expr),
+    'dphi_dt': sp.latex(omega_expr),
+    'd2phi_dt2': sp.latex(alpha_expr),
+}
+
+def compute_complex_motion(t=1):
+    return data, formulas
