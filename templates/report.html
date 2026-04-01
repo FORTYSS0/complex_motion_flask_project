@@ -199,12 +199,12 @@
 
     <h2>6. Итоговая таблица результатов</h2>
     <div class="table-wrapper">
-         <table>
+        <table>
             <thead>
                 <tr><th>Величина</th><th>Значение</th><th>Размерность</th></tr>
             </thead>
             <tbody>
-                <tr><td>Координаты точки M</td><td>({{ "%.4f"|format(data.point[0]) }}, {{ "%.4f"|format(data.point[1]) }}, {{ "%.4f"|format(data.point[2]) }})</td><td>м</td></tr>
+                <tr><td>Координаты точки M</td><td>({{ "%.4f"|format(data.point[0]) }}, {{ "%.4f"|format(data.point[1]) }}, {{ "%.4f"|format(data.point[2]) }})</td><td>м</td> </tr>
                 <tr><td>Относительная скорость \(V_{\text{отн}}\)</td><td>{{ "%.4f"|format(data.V_rel_mod) }}</td><td>м/с</td></tr>
                 <tr><td>Переносная скорость (вращательная) \(V_{\text{вр}}\)</td><td>{{ "%.4f"|format(data.V_rot_mod) }}</td><td>м/с</td></tr>
                 <tr><td>Переносная скорость (поступательная) \(V_{\text{пост}}\)</td><td>{{ "%.4f"|format(data.V_trans_post_mod) }}</td><td>м/с</td></tr>
@@ -217,7 +217,7 @@
                 <tr><td>Абсолютное ускорение \(a_{\text{абс}}\)</td><td>{{ "%.4f"|format(data.a_abs_mod) }}</td><td>м/с²</td></tr>
                 <tr><td>Радиус кривизны \(\rho\)</td><td>{{ "%.4f"|format(data.rho) }}</td><td>м</td></tr>
             </tbody>
-         </table>
+        </table>
     </div>
 
     <div class="footer">
@@ -227,12 +227,31 @@
 </div>
 
 <script>
-    var traj = {{ traj_json | safe }};
-    var vel = {{ vel_json | safe }};
-    var acc = {{ acc_json | safe }};
-    Plotly.newPlot('trajectory-plot', traj.data, traj.layout);
-    Plotly.newPlot('velocities-plot', vel.data, vel.layout);
-    Plotly.newPlot('accelerations-plot', acc.data, acc.layout);
+    window.addEventListener('load', function() {
+        function renderPlot(divId, jsonData, fallbackImgUrl) {
+            try {
+                var data = JSON.parse(jsonData);
+                Plotly.newPlot(divId, data.data, data.layout);
+            } catch (e) {
+                console.error('Ошибка рендеринга графика', divId, e);
+                // fallback: показываем статичное изображение
+                var container = document.getElementById(divId);
+                if (container) {
+                    var img = document.createElement('img');
+                    img.src = fallbackImgUrl;
+                    img.style.width = '100%';
+                    img.style.border = '1px solid #ccc';
+                    img.style.borderRadius = '5px';
+                    container.innerHTML = '';
+                    container.appendChild(img);
+                }
+            }
+        }
+
+        renderPlot('trajectory-plot', '{{ traj_json | safe }}', '{{ static_paths.trajectory }}');
+        renderPlot('velocities-plot', '{{ vel_json | safe }}', '{{ static_paths.velocities }}');
+        renderPlot('accelerations-plot', '{{ acc_json | safe }}', '{{ static_paths.accelerations }}');
+    });
 </script>
 </body>
 </html>
