@@ -329,7 +329,6 @@ def generate_interactive_trajectory(data):
         name='Траектория'
     ))
 
-    # Горизонтальная проекция траектории
     z_const = data['point'][2]
     fig.add_trace(go.Scatter3d(
         x=x_t, y=y_t, z=np.full_like(z_t, z_const),
@@ -338,7 +337,7 @@ def generate_interactive_trajectory(data):
         name='Проекция траектории (z = const)'
     ))
 
-    # Стрелка направления в конце траектории (один конус)
+    # Стрелка направления в конце траектории
     i_end = len(t_vals)-1
     dx = x_t[-1] - x_t[-2]
     dy = y_t[-1] - y_t[-2]
@@ -359,7 +358,6 @@ def generate_interactive_trajectory(data):
             name='Направление движения'
         ))
 
-    # Точка M
     fig.add_trace(go.Scatter3d(
         x=[data['point'][0]], y=[data['point'][1]], z=[data['point'][2]],
         mode='markers',
@@ -367,59 +365,50 @@ def generate_interactive_trajectory(data):
         name='M (t=1)'
     ))
 
-    # Определяем длину осей
     all_points = np.vstack([np.column_stack([x_t, y_t, z_t]), [data['point']], [0,0,0]])
     min_vals = np.min(all_points, axis=0)
     max_vals = np.max(all_points, axis=0)
     max_range = np.max(max_vals - min_vals)
     axis_len = max_range * 0.3
 
-    # Неподвижные оси (чёрные) с конусами
-    # Ось X'
+    # Неподвижные оси
     fig.add_trace(go.Scatter3d(x=[0, axis_len], y=[0,0], z=[0,0], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[axis_len], y=[0], z=[0], u=[axis_len*0.2], v=[0], w=[0],
                           colorscale=[[0,'black'],[1,'black']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[axis_len*0.9], y=[0], z=[0], mode='text', text=["X'"], textfont=dict(color='black', size=10), showlegend=False))
-    # Ось Y'
     fig.add_trace(go.Scatter3d(x=[0,0], y=[0, axis_len], z=[0,0], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[0], y=[axis_len], z=[0], u=[0], v=[axis_len*0.2], w=[0],
                           colorscale=[[0,'black'],[1,'black']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[0], y=[axis_len*0.9], z=[0], mode='text', text=["Y'"], textfont=dict(color='black', size=10), showlegend=False))
-    # Ось Z'
     fig.add_trace(go.Scatter3d(x=[0,0], y=[0,0], z=[0, axis_len], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[0], y=[0], z=[axis_len], u=[0], v=[0], w=[axis_len*0.2],
                           colorscale=[[0,'black'],[1,'black']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[0], y=[0], z=[axis_len*0.9], mode='text', text=["Z'"], textfont=dict(color='black', size=10), showlegend=False))
 
-    # Подвижные оси (красные) из точки O
+    # Подвижные оси
     O = np.array([0.0, 0.0, data['zp']])
-    # Ось X
     fig.add_trace(go.Scatter3d(x=[O[0], O[0]+axis_len], y=[O[1], O[1]], z=[O[2], O[2]], mode='lines',
                                line=dict(color='red', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[O[0]+axis_len], y=[O[1]], z=[O[2]], u=[axis_len*0.2], v=[0], w=[0],
                           colorscale=[[0,'red'],[1,'red']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[O[0]+axis_len*0.9], y=[O[1]], z=[O[2]], mode='text', text=["X"], textfont=dict(color='red', size=10), showlegend=False))
-    # Ось Y
     fig.add_trace(go.Scatter3d(x=[O[0], O[0]], y=[O[1], O[1]+axis_len], z=[O[2], O[2]], mode='lines',
                                line=dict(color='red', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[O[0]], y=[O[1]+axis_len], z=[O[2]], u=[0], v=[axis_len*0.2], w=[0],
                           colorscale=[[0,'red'],[1,'red']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[O[0]], y=[O[1]+axis_len*0.9], z=[O[2]], mode='text', text=["Y"], textfont=dict(color='red', size=10), showlegend=False))
-    # Ось Z (ω)
     fig.add_trace(go.Scatter3d(x=[O[0], O[0]], y=[O[1], O[1]], z=[O[2], O[2]+axis_len], mode='lines',
                                line=dict(color='red', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[O[0]], y=[O[1]], z=[O[2]+axis_len], u=[0], v=[0], w=[axis_len*0.2],
                           colorscale=[[0,'red'],[1,'red']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[O[0]], y=[O[1]], z=[O[2]+axis_len*0.9], mode='text', text=["ω"], textfont=dict(color='red', size=10), showlegend=False))
 
-    # Точка O
     fig.add_trace(go.Scatter3d(x=[O[0]], y=[O[1]], z=[O[2]], mode='markers',
                                marker=dict(color='blue', size=6), name='O (начало подвижной)'))
 
-    # Вектор абсолютной скорости (масштабированный)
     V_abs = data['V_abs']
     V_norm = V_abs / (np.linalg.norm(V_abs) + 1e-8)
     arrow_len = axis_len * 0.4
@@ -429,22 +418,16 @@ def generate_interactive_trajectory(data):
                                z=[data['point'][2], data['point'][2]+V_scaled[2]],
                                mode='lines+text', line=dict(color='purple', width=3),
                                text=['', f'V_abs = {data["V_abs_mod"]:.2f}'], textposition='middle right', name='V_abs'))
-    # Стрелка в конце V_abs
     end_x = data['point'][0] + V_scaled[0]
     end_y = data['point'][1] + V_scaled[1]
     end_z = data['point'][2] + V_scaled[2]
-    fig.add_trace(go.Cone(
-        x=[end_x], y=[end_y], z=[end_z],
-        u=[V_scaled[0]*0.15], v=[V_scaled[1]*0.15], w=[V_scaled[2]*0.15],
-        colorscale=[[0, 'purple'], [1, 'purple']],
-        showscale=False,
-        sizemode='scaled',
-        sizeref=0.5,
-        name='V_abs direction',
-        showlegend=False
-    ))
+    fig.add_trace(go.Cone(x=[end_x], y=[end_y], z=[end_z],
+                          u=[V_scaled[0]*0.15], v=[V_scaled[1]*0.15], w=[V_scaled[2]*0.15],
+                          colorscale=[[0, 'purple'], [1, 'purple']],
+                          showscale=False, sizemode='scaled', sizeref=0.5,
+                          name='V_abs direction', showlegend=False))
 
-    # --- Дуга вращения (ω) с увеличенной стрелкой (конусом) в начале дуги, развёрнутой в противоположную сторону ---
+    # Дуга ω
     theta = np.linspace(0, -np.pi/2, 50)
     radius = axis_len * 0.6
     x_arc = O[0] + radius * np.cos(theta)
@@ -452,45 +435,27 @@ def generate_interactive_trajectory(data):
     z_arc = O[2] + axis_len * 0.05
     fig.add_trace(go.Scatter3d(x=x_arc, y=y_arc, z=np.full_like(x_arc, z_arc), mode='lines',
                                line=dict(color='green', width=2), name='ω'))
-    # Стрелка (конус) в начале дуги, развёрнутая
     start_x = x_arc[0]
     start_y = y_arc[0]
     start_z = z_arc
     dx_arc = x_arc[1] - x_arc[0]
     dy_arc = y_arc[1] - y_arc[0]
-    dz_arc = 0
-    len_arc = np.sqrt(dx_arc**2 + dy_arc**2 + dz_arc**2)
+    len_arc = np.sqrt(dx_arc**2 + dy_arc**2)
     if len_arc > 1e-8:
         arrow_scale_arc = 0.3 * radius
         u_arc = -dx_arc / len_arc * arrow_scale_arc
         v_arc = -dy_arc / len_arc * arrow_scale_arc
-        w_arc = 0
-        fig.add_trace(go.Cone(
-            x=[start_x], y=[start_y], z=[start_z],
-            u=[u_arc], v=[v_arc], w=[w_arc],
-            colorscale=[[0, 'green'], [1, 'green']],
-            showscale=False,
-            sizemode='scaled',
-            sizeref=0.3,
-            name='ω direction'
-        ))
-    # Подпись ω (без знака минус)
+        fig.add_trace(go.Cone(x=[start_x], y=[start_y], z=[start_z],
+                              u=[u_arc], v=[v_arc], w=[0],
+                              colorscale=[[0,'green'],[1,'green']], showscale=False, sizemode='scaled', sizeref=0.3, name='ω direction'))
     mid = len(theta)//2
     fig.add_trace(go.Scatter3d(x=[x_arc[mid]], y=[y_arc[mid]], z=[z_arc + 0.02], mode='text',
                                text=[f'ω = {abs(data["omega"]):.2f}'], textfont=dict(color='green', size=10), showlegend=False))
 
-    # --- Настройка макета с горизонтальной легендой внизу и уменьшенными полями ---
     fig.update_layout(
         title='Способ задания движения (абсолютная траектория)',
         scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='auto'),
-        legend=dict(
-            orientation='h',
-            yanchor='top',
-            y=-0.1,
-            xanchor='center',
-            x=0.5,
-            font=dict(size=10)
-        ),
+        legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5, font=dict(size=10)),
         margin=dict(l=0, r=0, t=30, b=50)
     )
     return fig.to_json()
@@ -528,13 +493,11 @@ def generate_interactive_velocities(data):
     labels = ['V_rel', 'V_rot', 'V_trans_post', 'V_abs']
     numeric_vals = [np.linalg.norm(v) for v in [V_rel, V_rot, V_trans, V_abs]]
     for vec, col, lab, val in zip(vectors, colors, labels, numeric_vals):
-        # Линия вектора
         fig.add_trace(go.Scatter3d(x=[point_new[0], point_new[0]+vec[0]],
                                    y=[point_new[1], point_new[1]+vec[1]],
                                    z=[point_new[2], point_new[2]+vec[2]],
                                    mode='lines+text', line=dict(color=col, width=3),
                                    text=['', f'{lab} = {val:.2f}'], textposition='middle right', name=lab))
-        # Стрелка-конус в конце
         end_x = point_new[0] + vec[0]
         end_y = point_new[1] + vec[1]
         end_z = point_new[2] + vec[2]
@@ -542,18 +505,12 @@ def generate_interactive_velocities(data):
         u = vec[0] * arrow_scale
         v = vec[1] * arrow_scale
         w = vec[2] * arrow_scale
-        fig.add_trace(go.Cone(
-            x=[end_x], y=[end_y], z=[end_z],
-            u=[u], v=[v], w=[w],
-            colorscale=[[0, col], [1, col]],
-            showscale=False,
-            sizemode='scaled',
-            sizeref=0.3,
-            name=f'{lab} direction',
-            showlegend=False
-        ))
+        fig.add_trace(go.Cone(x=[end_x], y=[end_y], z=[end_z],
+                              u=[u], v=[v], w=[w],
+                              colorscale=[[0, col], [1, col]],
+                              showscale=False, sizemode='scaled', sizeref=0.3,
+                              name=f'{lab} direction', showlegend=False))
 
-    # Оси новой системы (чёрные) с конусами
     all_pts = [point_new] + [point_new+v for v in vectors] + [np.zeros(3)]
     all_arr = np.array(all_pts)
     min_vals = np.min(all_arr, axis=0)
@@ -561,7 +518,6 @@ def generate_interactive_velocities(data):
     max_range = np.max(max_vals - min_vals)
     axis_len = max_range * 0.25
 
-    # Ось X (V_отн)
     fig.add_trace(go.Scatter3d(x=[point_new[0], point_new[0]+axis_len], y=[point_new[1], point_new[1]],
                                z=[point_new[2], point_new[2]], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
@@ -570,7 +526,6 @@ def generate_interactive_velocities(data):
                           colorscale=[[0,'black'],[1,'black']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[point_new[0]+axis_len*0.9], y=[point_new[1]], z=[point_new[2]],
                                mode='text', text=['V_отн'], textfont=dict(color='black', size=10), showlegend=False))
-    # Ось Y (a_cor)
     fig.add_trace(go.Scatter3d(x=[point_new[0], point_new[0]], y=[point_new[1], point_new[1]+axis_len],
                                z=[point_new[2], point_new[2]], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
@@ -579,7 +534,6 @@ def generate_interactive_velocities(data):
                           colorscale=[[0,'black'],[1,'black']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[point_new[0]], y=[point_new[1]+axis_len*0.9], z=[point_new[2]],
                                mode='text', text=['a_cor'], textfont=dict(color='black', size=10), showlegend=False))
-    # Ось Z (ω)
     fig.add_trace(go.Scatter3d(x=[point_new[0], point_new[0]], y=[point_new[1], point_new[1]],
                                z=[point_new[2], point_new[2]+axis_len], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
@@ -589,18 +543,10 @@ def generate_interactive_velocities(data):
     fig.add_trace(go.Scatter3d(x=[point_new[0]], y=[point_new[1]], z=[point_new[2]+axis_len*0.9],
                                mode='text', text=['ω'], textfont=dict(color='black', size=10), showlegend=False))
 
-    # --- Настройка макета с горизонтальной легендой внизу и уменьшенными полями ---
     fig.update_layout(
         title='Векторы скоростей в точке M (оси: V_отн, a_cor, ω)',
         scene=dict(xaxis_title="V_отн", yaxis_title="a_cor", zaxis_title="ω", aspectmode='auto'),
-        legend=dict(
-            orientation='h',
-            yanchor='top',
-            y=-0.1,
-            xanchor='center',
-            x=0.5,
-            font=dict(size=10)
-        ),
+        legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5, font=dict(size=10)),
         margin=dict(l=0, r=0, t=30, b=50)
     )
     return fig.to_json()
@@ -642,13 +588,11 @@ def generate_interactive_accelerations(data):
     labels = ['a_rel', 'a_centr', 'a_rot', 'a_trans_post', 'a_cor', 'a_abs']
     numeric_vals = [np.linalg.norm(v) for v in [a_rel, a_centr, a_rot, a_trans, a_cor, a_abs]]
     for vec, col, lab, val in zip(vectors, colors, labels, numeric_vals):
-        # Линия вектора
         fig.add_trace(go.Scatter3d(x=[point_new[0], point_new[0]+vec[0]],
                                    y=[point_new[1], point_new[1]+vec[1]],
                                    z=[point_new[2], point_new[2]+vec[2]],
                                    mode='lines+text', line=dict(color=col, width=3),
                                    text=['', f'{lab} = {val:.2f}'], textposition='middle right', name=lab))
-        # Стрелка-конус в конце
         end_x = point_new[0] + vec[0]
         end_y = point_new[1] + vec[1]
         end_z = point_new[2] + vec[2]
@@ -656,18 +600,12 @@ def generate_interactive_accelerations(data):
         u = vec[0] * arrow_scale
         v = vec[1] * arrow_scale
         w = vec[2] * arrow_scale
-        fig.add_trace(go.Cone(
-            x=[end_x], y=[end_y], z=[end_z],
-            u=[u], v=[v], w=[w],
-            colorscale=[[0, col], [1, col]],
-            showscale=False,
-            sizemode='scaled',
-            sizeref=0.3,
-            name=f'{lab} direction',
-            showlegend=False
-        ))
+        fig.add_trace(go.Cone(x=[end_x], y=[end_y], z=[end_z],
+                              u=[u], v=[v], w=[w],
+                              colorscale=[[0, col], [1, col]],
+                              showscale=False, sizemode='scaled', sizeref=0.3,
+                              name=f'{lab} direction', showlegend=False))
 
-    # Оси новой системы (чёрные) с конусами
     all_pts = [point_new] + [point_new+v for v in vectors] + [np.zeros(3)]
     all_arr = np.array(all_pts)
     min_vals = np.min(all_arr, axis=0)
@@ -675,7 +613,6 @@ def generate_interactive_accelerations(data):
     max_range = np.max(max_vals - min_vals)
     axis_len = max_range * 0.25
 
-    # Ось X (a_отн⊥)
     fig.add_trace(go.Scatter3d(x=[point_new[0], point_new[0]+axis_len], y=[point_new[1], point_new[1]],
                                z=[point_new[2], point_new[2]], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
@@ -684,7 +621,6 @@ def generate_interactive_accelerations(data):
                           colorscale=[[0,'black'],[1,'black']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[point_new[0]+axis_len*0.9], y=[point_new[1]], z=[point_new[2]],
                                mode='text', text=['a_отн⊥'], textfont=dict(color='black', size=10), showlegend=False))
-    # Ось Y (a_cor)
     fig.add_trace(go.Scatter3d(x=[point_new[0], point_new[0]], y=[point_new[1], point_new[1]+axis_len],
                                z=[point_new[2], point_new[2]], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
@@ -693,7 +629,6 @@ def generate_interactive_accelerations(data):
                           colorscale=[[0,'black'],[1,'black']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[point_new[0]], y=[point_new[1]+axis_len*0.9], z=[point_new[2]],
                                mode='text', text=['a_cor'], textfont=dict(color='black', size=10), showlegend=False))
-    # Ось Z (ω)
     fig.add_trace(go.Scatter3d(x=[point_new[0], point_new[0]], y=[point_new[1], point_new[1]],
                                z=[point_new[2], point_new[2]+axis_len], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
@@ -703,18 +638,10 @@ def generate_interactive_accelerations(data):
     fig.add_trace(go.Scatter3d(x=[point_new[0]], y=[point_new[1]], z=[point_new[2]+axis_len*0.9],
                                mode='text', text=['ω'], textfont=dict(color='black', size=10), showlegend=False))
 
-    # --- Настройка макета с горизонтальной легендой внизу и уменьшенными полями ---
     fig.update_layout(
         title='Векторы ускорений в точке M (оси: ω, a_cor, a_отн⊥)',
         scene=dict(xaxis_title="a_отн⊥", yaxis_title="a_cor", zaxis_title="ω", aspectmode='auto'),
-        legend=dict(
-            orientation='h',
-            yanchor='top',
-            y=-0.1,
-            xanchor='center',
-            x=0.5,
-            font=dict(size=10)
-        ),
+        legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5, font=dict(size=10)),
         margin=dict(l=0, r=0, t=30, b=50)
     )
     return fig.to_json()
@@ -729,7 +656,6 @@ def generate_interactive_trajectory_with_velocities(data):
 
     fig = go.Figure()
 
-    # Траектория
     fig.add_trace(go.Scatter3d(
         x=x_t, y=y_t, z=z_t,
         mode='lines',
@@ -737,7 +663,6 @@ def generate_interactive_trajectory_with_velocities(data):
         name='Траектория'
     ))
 
-    # Горизонтальная проекция траектории
     z_const = data['point'][2]
     fig.add_trace(go.Scatter3d(
         x=x_t, y=y_t, z=np.full_like(z_t, z_const),
@@ -746,7 +671,6 @@ def generate_interactive_trajectory_with_velocities(data):
         name='Проекция траектории (z = const)'
     ))
 
-    # Точка M
     fig.add_trace(go.Scatter3d(
         x=[data['point'][0]], y=[data['point'][1]], z=[data['point'][2]],
         mode='markers',
@@ -754,59 +678,51 @@ def generate_interactive_trajectory_with_velocities(data):
         name='M (t=1)'
     ))
 
-    # Определяем длину осей
     all_points = np.vstack([np.column_stack([x_t, y_t, z_t]), [data['point']], [0,0,0]])
     min_vals = np.min(all_points, axis=0)
     max_vals = np.max(all_points, axis=0)
     max_range = np.max(max_vals - min_vals)
     axis_len = max_range * 0.3
 
-    # Неподвижные оси (чёрные) с конусами (аналогично первому графику)
-    # Ось X'
+    # Неподвижные оси
     fig.add_trace(go.Scatter3d(x=[0, axis_len], y=[0,0], z=[0,0], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[axis_len], y=[0], z=[0], u=[axis_len*0.2], v=[0], w=[0],
                           colorscale=[[0,'black'],[1,'black']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[axis_len*0.9], y=[0], z=[0], mode='text', text=["X'"], textfont=dict(color='black', size=10), showlegend=False))
-    # Ось Y'
     fig.add_trace(go.Scatter3d(x=[0,0], y=[0, axis_len], z=[0,0], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[0], y=[axis_len], z=[0], u=[0], v=[axis_len*0.2], w=[0],
                           colorscale=[[0,'black'],[1,'black']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[0], y=[axis_len*0.9], z=[0], mode='text', text=["Y'"], textfont=dict(color='black', size=10), showlegend=False))
-    # Ось Z'
     fig.add_trace(go.Scatter3d(x=[0,0], y=[0,0], z=[0, axis_len], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[0], y=[0], z=[axis_len], u=[0], v=[0], w=[axis_len*0.2],
                           colorscale=[[0,'black'],[1,'black']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[0], y=[0], z=[axis_len*0.9], mode='text', text=["Z'"], textfont=dict(color='black', size=10), showlegend=False))
 
-    # Подвижные оси (красные) из точки O
+    # Подвижные оси
     O = np.array([0.0, 0.0, data['zp']])
-    # Ось X
     fig.add_trace(go.Scatter3d(x=[O[0], O[0]+axis_len], y=[O[1], O[1]], z=[O[2], O[2]], mode='lines',
                                line=dict(color='red', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[O[0]+axis_len], y=[O[1]], z=[O[2]], u=[axis_len*0.2], v=[0], w=[0],
                           colorscale=[[0,'red'],[1,'red']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[O[0]+axis_len*0.9], y=[O[1]], z=[O[2]], mode='text', text=["X"], textfont=dict(color='red', size=10), showlegend=False))
-    # Ось Y
     fig.add_trace(go.Scatter3d(x=[O[0], O[0]], y=[O[1], O[1]+axis_len], z=[O[2], O[2]], mode='lines',
                                line=dict(color='red', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[O[0]], y=[O[1]+axis_len], z=[O[2]], u=[0], v=[axis_len*0.2], w=[0],
                           colorscale=[[0,'red'],[1,'red']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[O[0]], y=[O[1]+axis_len*0.9], z=[O[2]], mode='text', text=["Y"], textfont=dict(color='red', size=10), showlegend=False))
-    # Ось Z (ω)
     fig.add_trace(go.Scatter3d(x=[O[0], O[0]], y=[O[1], O[1]], z=[O[2], O[2]+axis_len], mode='lines',
                                line=dict(color='red', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[O[0]], y=[O[1]], z=[O[2]+axis_len], u=[0], v=[0], w=[axis_len*0.2],
                           colorscale=[[0,'red'],[1,'red']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[O[0]], y=[O[1]], z=[O[2]+axis_len*0.9], mode='text', text=["ω"], textfont=dict(color='red', size=10), showlegend=False))
 
-    # Точка O
     fig.add_trace(go.Scatter3d(x=[O[0]], y=[O[1]], z=[O[2]], mode='markers',
                                marker=dict(color='blue', size=6), name='O (начало подвижной)'))
 
-    # --- Дуга вращения (ω) ---
+    # Дуга ω
     theta = np.linspace(0, -np.pi/2, 50)
     radius = axis_len * 0.6
     x_arc = O[0] + radius * np.cos(theta)
@@ -814,7 +730,6 @@ def generate_interactive_trajectory_with_velocities(data):
     z_arc = O[2] + axis_len * 0.05
     fig.add_trace(go.Scatter3d(x=x_arc, y=y_arc, z=np.full_like(x_arc, z_arc), mode='lines',
                                line=dict(color='green', width=2), name='ω'))
-    # Стрелка в начале дуги, развёрнутая
     start_x = x_arc[0]
     start_y = y_arc[0]
     start_z = z_arc
@@ -825,33 +740,29 @@ def generate_interactive_trajectory_with_velocities(data):
         arrow_scale_arc = 0.3 * radius
         u_arc = -dx_arc / len_arc * arrow_scale_arc
         v_arc = -dy_arc / len_arc * arrow_scale_arc
-        fig.add_trace(go.Cone(x=[start_x], y=[start_y], z=[start_z], u=[u_arc], v=[v_arc], w=[0],
+        fig.add_trace(go.Cone(x=[start_x], y=[start_y], z=[start_z],
+                              u=[u_arc], v=[v_arc], w=[0],
                               colorscale=[[0,'green'],[1,'green']], showscale=False, sizemode='scaled', sizeref=0.3, name='ω direction'))
-    # Подпись ω
     mid = len(theta)//2
     fig.add_trace(go.Scatter3d(x=[x_arc[mid]], y=[y_arc[mid]], z=[z_arc + 0.02], mode='text',
                                text=[f'ω = {abs(data["omega"]):.2f}'], textfont=dict(color='green', size=10), showlegend=False))
 
-    # --- Векторы скоростей (из data) – все масштабированы до одинаковой длины, увеличены в 2 раза ---
-    vectors = [data['V_rel'], data['V_rot'], data['V_trans_post'], data['V_abs']]
-    colors = ['blue', 'green', 'orange', 'purple']
-    labels = ['V_rel', 'V_rot', 'V_trans_post', 'V_abs']
+    # Векторы скоростей (масштабированные, одинаковой длины)
     scale_len = axis_len * 0.6
-
-    for vec, col, lab in zip(vectors, colors, labels):
+    for vec, col, lab in zip([data['V_rel'], data['V_rot'], data['V_trans_post'], data['V_abs']],
+                             ['blue', 'green', 'orange', 'purple'],
+                             ['V_rel', 'V_rot', 'V_trans_post', 'V_abs']):
         norm = np.linalg.norm(vec)
         if norm > 1e-8:
             unit = vec / norm
             scaled_vec = unit * scale_len
         else:
             scaled_vec = np.zeros(3)
-        # Линия вектора – увеличиваем толщину
         fig.add_trace(go.Scatter3d(x=[data['point'][0], data['point'][0]+scaled_vec[0]],
                                    y=[data['point'][1], data['point'][1]+scaled_vec[1]],
                                    z=[data['point'][2], data['point'][2]+scaled_vec[2]],
                                    mode='lines+text', line=dict(color=col, width=6),
                                    text=['', f'{lab}'], textposition='middle right', name=lab))
-        # Стрелка-конус в конце
         end_x = data['point'][0] + scaled_vec[0]
         end_y = data['point'][1] + scaled_vec[1]
         end_z = data['point'][2] + scaled_vec[2]
@@ -859,22 +770,15 @@ def generate_interactive_trajectory_with_velocities(data):
         u = scaled_vec[0] * arrow_scale
         v = scaled_vec[1] * arrow_scale
         w = scaled_vec[2] * arrow_scale
-        fig.add_trace(go.Cone(x=[end_x], y=[end_y], z=[end_z], u=[u], v=[v], w=[w],
+        fig.add_trace(go.Cone(x=[end_x], y=[end_y], z=[end_z],
+                              u=[u], v=[v], w=[w],
                               colorscale=[[0,col],[1,col]], showscale=False, sizemode='scaled', sizeref=0.3,
                               name=f'{lab} direction', showlegend=False))
 
-    # --- Настройка макета с горизонтальной легендой внизу и уменьшенными полями ---
     fig.update_layout(
         title='Траектория и векторы скоростей (исходная система, векторы масштабированы)',
         scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='auto'),
-        legend=dict(
-            orientation='h',
-            yanchor='top',
-            y=-0.1,
-            xanchor='center',
-            x=0.5,
-            font=dict(size=10)
-        ),
+        legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5, font=dict(size=10)),
         margin=dict(l=0, r=0, t=30, b=50)
     )
     return fig.to_json()
@@ -889,7 +793,6 @@ def generate_interactive_trajectory_with_accelerations(data):
 
     fig = go.Figure()
 
-    # Траектория
     fig.add_trace(go.Scatter3d(
         x=x_t, y=y_t, z=z_t,
         mode='lines',
@@ -897,7 +800,6 @@ def generate_interactive_trajectory_with_accelerations(data):
         name='Траектория'
     ))
 
-    # Горизонтальная проекция траектории
     z_const = data['point'][2]
     fig.add_trace(go.Scatter3d(
         x=x_t, y=y_t, z=np.full_like(z_t, z_const),
@@ -906,7 +808,6 @@ def generate_interactive_trajectory_with_accelerations(data):
         name='Проекция траектории (z = const)'
     ))
 
-    # Точка M
     fig.add_trace(go.Scatter3d(
         x=[data['point'][0]], y=[data['point'][1]], z=[data['point'][2]],
         mode='markers',
@@ -914,59 +815,51 @@ def generate_interactive_trajectory_with_accelerations(data):
         name='M (t=1)'
     ))
 
-    # Определяем длину осей
     all_points = np.vstack([np.column_stack([x_t, y_t, z_t]), [data['point']], [0,0,0]])
     min_vals = np.min(all_points, axis=0)
     max_vals = np.max(all_points, axis=0)
     max_range = np.max(max_vals - min_vals)
     axis_len = max_range * 0.3
 
-    # Неподвижные оси (чёрные) с конусами
-    # Ось X'
+    # Неподвижные оси
     fig.add_trace(go.Scatter3d(x=[0, axis_len], y=[0,0], z=[0,0], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[axis_len], y=[0], z=[0], u=[axis_len*0.2], v=[0], w=[0],
                           colorscale=[[0,'black'],[1,'black']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[axis_len*0.9], y=[0], z=[0], mode='text', text=["X'"], textfont=dict(color='black', size=10), showlegend=False))
-    # Ось Y'
     fig.add_trace(go.Scatter3d(x=[0,0], y=[0, axis_len], z=[0,0], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[0], y=[axis_len], z=[0], u=[0], v=[axis_len*0.2], w=[0],
                           colorscale=[[0,'black'],[1,'black']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[0], y=[axis_len*0.9], z=[0], mode='text', text=["Y'"], textfont=dict(color='black', size=10), showlegend=False))
-    # Ось Z'
     fig.add_trace(go.Scatter3d(x=[0,0], y=[0,0], z=[0, axis_len], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[0], y=[0], z=[axis_len], u=[0], v=[0], w=[axis_len*0.2],
                           colorscale=[[0,'black'],[1,'black']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[0], y=[0], z=[axis_len*0.9], mode='text', text=["Z'"], textfont=dict(color='black', size=10), showlegend=False))
 
-    # Подвижные оси (красные) из точки O
+    # Подвижные оси
     O = np.array([0.0, 0.0, data['zp']])
-    # Ось X
     fig.add_trace(go.Scatter3d(x=[O[0], O[0]+axis_len], y=[O[1], O[1]], z=[O[2], O[2]], mode='lines',
                                line=dict(color='red', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[O[0]+axis_len], y=[O[1]], z=[O[2]], u=[axis_len*0.2], v=[0], w=[0],
                           colorscale=[[0,'red'],[1,'red']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[O[0]+axis_len*0.9], y=[O[1]], z=[O[2]], mode='text', text=["X"], textfont=dict(color='red', size=10), showlegend=False))
-    # Ось Y
     fig.add_trace(go.Scatter3d(x=[O[0], O[0]], y=[O[1], O[1]+axis_len], z=[O[2], O[2]], mode='lines',
                                line=dict(color='red', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[O[0]], y=[O[1]+axis_len], z=[O[2]], u=[0], v=[axis_len*0.2], w=[0],
                           colorscale=[[0,'red'],[1,'red']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[O[0]], y=[O[1]+axis_len*0.9], z=[O[2]], mode='text', text=["Y"], textfont=dict(color='red', size=10), showlegend=False))
-    # Ось Z (ω)
     fig.add_trace(go.Scatter3d(x=[O[0], O[0]], y=[O[1], O[1]], z=[O[2], O[2]+axis_len], mode='lines',
                                line=dict(color='red', width=2), showlegend=False))
     fig.add_trace(go.Cone(x=[O[0]], y=[O[1]], z=[O[2]+axis_len], u=[0], v=[0], w=[axis_len*0.2],
                           colorscale=[[0,'red'],[1,'red']], showscale=False, sizemode='scaled', sizeref=0.3, showlegend=False))
     fig.add_trace(go.Scatter3d(x=[O[0]], y=[O[1]], z=[O[2]+axis_len*0.9], mode='text', text=["ω"], textfont=dict(color='red', size=10), showlegend=False))
 
-    # Точка O
     fig.add_trace(go.Scatter3d(x=[O[0]], y=[O[1]], z=[O[2]], mode='markers',
                                marker=dict(color='blue', size=6), name='O (начало подвижной)'))
 
-    # --- Дуга вращения (ω) ---
+    # Дуга ω
     theta = np.linspace(0, -np.pi/2, 50)
     radius = axis_len * 0.6
     x_arc = O[0] + radius * np.cos(theta)
@@ -974,7 +867,6 @@ def generate_interactive_trajectory_with_accelerations(data):
     z_arc = O[2] + axis_len * 0.05
     fig.add_trace(go.Scatter3d(x=x_arc, y=y_arc, z=np.full_like(x_arc, z_arc), mode='lines',
                                line=dict(color='green', width=2), name='ω'))
-    # Стрелка в начале дуги, развёрнутая
     start_x = x_arc[0]
     start_y = y_arc[0]
     start_z = z_arc
@@ -985,34 +877,30 @@ def generate_interactive_trajectory_with_accelerations(data):
         arrow_scale_arc = 0.3 * radius
         u_arc = -dx_arc / len_arc * arrow_scale_arc
         v_arc = -dy_arc / len_arc * arrow_scale_arc
-        fig.add_trace(go.Cone(x=[start_x], y=[start_y], z=[start_z], u=[u_arc], v=[v_arc], w=[0],
+        fig.add_trace(go.Cone(x=[start_x], y=[start_y], z=[start_z],
+                              u=[u_arc], v=[v_arc], w=[0],
                               colorscale=[[0,'green'],[1,'green']], showscale=False, sizemode='scaled', sizeref=0.3, name='ω direction'))
-    # Подпись ω
     mid = len(theta)//2
     fig.add_trace(go.Scatter3d(x=[x_arc[mid]], y=[y_arc[mid]], z=[z_arc + 0.02], mode='text',
                                text=[f'ω = {abs(data["omega"]):.2f}'], textfont=dict(color='green', size=10), showlegend=False))
 
-    # --- Векторы ускорений (из data) – все масштабированы до одинаковой длины, увеличены в 2 раза ---
-    vectors = [data['a_rel'], data['a_centr'], data['a_rot'],
-               data['a_trans_post'], data['a_cor'], data['a_abs']]
-    colors = ['blue', 'green', 'orange', 'brown', 'cyan', 'purple']
-    labels = ['a_rel', 'a_centr', 'a_rot', 'a_trans_post', 'a_cor', 'a_abs']
+    # Векторы ускорений (масштабированные, одинаковой длины)
     scale_len = axis_len * 0.6
-
-    for vec, col, lab in zip(vectors, colors, labels):
+    for vec, col, lab in zip([data['a_rel'], data['a_centr'], data['a_rot'],
+                              data['a_trans_post'], data['a_cor'], data['a_abs']],
+                             ['blue', 'green', 'orange', 'brown', 'cyan', 'purple'],
+                             ['a_rel', 'a_centr', 'a_rot', 'a_trans_post', 'a_cor', 'a_abs']):
         norm = np.linalg.norm(vec)
         if norm > 1e-8:
             unit = vec / norm
             scaled_vec = unit * scale_len
         else:
             scaled_vec = np.zeros(3)
-        # Линия вектора – увеличиваем толщину
         fig.add_trace(go.Scatter3d(x=[data['point'][0], data['point'][0]+scaled_vec[0]],
                                    y=[data['point'][1], data['point'][1]+scaled_vec[1]],
                                    z=[data['point'][2], data['point'][2]+scaled_vec[2]],
                                    mode='lines+text', line=dict(color=col, width=6),
                                    text=['', f'{lab}'], textposition='middle right', name=lab))
-        # Стрелка-конус в конце
         end_x = data['point'][0] + scaled_vec[0]
         end_y = data['point'][1] + scaled_vec[1]
         end_z = data['point'][2] + scaled_vec[2]
@@ -1020,22 +908,15 @@ def generate_interactive_trajectory_with_accelerations(data):
         u = scaled_vec[0] * arrow_scale
         v = scaled_vec[1] * arrow_scale
         w = scaled_vec[2] * arrow_scale
-        fig.add_trace(go.Cone(x=[end_x], y=[end_y], z=[end_z], u=[u], v=[v], w=[w],
+        fig.add_trace(go.Cone(x=[end_x], y=[end_y], z=[end_z],
+                              u=[u], v=[v], w=[w],
                               colorscale=[[0,col],[1,col]], showscale=False, sizemode='scaled', sizeref=0.3,
                               name=f'{lab} direction', showlegend=False))
 
-    # --- Настройка макета с горизонтальной легендой внизу и уменьшенными полями ---
     fig.update_layout(
         title='Траектория и векторы ускорений (исходная система, векторы масштабированы)',
         scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='auto'),
-        legend=dict(
-            orientation='h',
-            yanchor='top',
-            y=-0.1,
-            xanchor='center',
-            x=0.5,
-            font=dict(size=10)
-        ),
+        legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5, font=dict(size=10)),
         margin=dict(l=0, r=0, t=30, b=50)
     )
     return fig.to_json()
