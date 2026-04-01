@@ -3,6 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <title>Отчёт: Сложное движение точки (подробное решение)</title>
+    {% if landscape %}
+    <style>
+        @page {
+            size: landscape;
+        }
+        body {
+            margin: 0;
+            padding: 10px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
+    {% endif %}
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f9f9f9; color: #333; }
         .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
@@ -16,6 +28,11 @@
         .graph img { max-width: 100%; border: 1px solid #ccc; border-radius: 5px; }
         .footer { font-size: 0.9em; color: #777; text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
         .formula img { vertical-align: middle; margin: 0 5px; }
+        @media print {
+            body { margin: 0; padding: 0; background: white; }
+            .container { box-shadow: none; padding: 0; }
+            .graph img { page-break-inside: avoid; }
+        }
     </style>
 </head>
 <body>
@@ -25,29 +42,25 @@
 
     <h2>1. Исходные данные и условия задачи</h2>
     <div class="explanation">
-        <p>Точка движется в подвижной системе координат \(xOy\) по закону:</p>
+        <p>Нам дана точка, которая движется в подвижной системе координат \(xOy\) по закону:</p>
         <div class="formula">
             <img src="data:image/png;base64,{{ formula_images.x }}" alt="x(t)">
             <img src="data:image/png;base64,{{ formula_images.y }}" alt="y(t)">
         </div>
-        <p>Подвижная система \(xOy\) перемещается относительно неподвижной \(x'O'y'\):</p>
+        <p>Это <strong>относительное движение</strong>. Одновременно подвижная система \(xOy\) перемещается относительно неподвижной \(x'O'y'\):</p>
         <div class="formula">
             <img src="data:image/png;base64,{{ formula_images.zp }}" alt="z'(t)">
             <img src="data:image/png;base64,{{ formula_images.phi }}" alt="φ'(t)">
         </div>
-        <p>В момент \(t=1\) требуется найти абсолютные скорость, ускорение, радиус кривизны траектории и построить графики.</p>
+        <p>Здесь \(z'(t)\) – смещение начала \(O\) по вертикали (ось \(z'\)), а \(\varphi'(t)\) – угол поворота подвижных осей вокруг вертикальной оси. В момент времени \(t=1\) нужно найти скорость и ускорение точки в абсолютном пространстве, радиус кривизны траектории и построить графики.</p>
     </div>
 
-    <h2>2. Относительное движение (в подвижной системе)</h2>
+    <h2>2. Относительное движение (в подвижной системе \(xOy\))</h2>
     <div class="explanation">
-        <p>Координаты точки в подвижной системе:</p>
-        <div class="formula">
-            <img src="data:image/png;base64,{{ formula_images.x }}" alt="x(t)">
-            <img src="data:image/png;base64,{{ formula_images.y }}" alt="y(t)">
-        </div>
+        <p>Подвижная система вращается и движется поступательно, но в ней точка имеет координаты, заданные выше. Найдём скорость и ускорение в относительном движении – производные по времени.</p>
     </div>
 
-    <h3>Скорость</h3>
+    <h3>Скорость точки относительно подвижной системы</h3>
     <div class="formula">
         <img src="data:image/png;base64,{{ formula_images.dxdt }}" alt="ẋ">
         <img src="data:image/png;base64,{{ formula_images.dydt }}" alt="ẏ">
@@ -57,7 +70,7 @@
         V<sub>отн</sub> = √(ẋ² + ẏ²) = {{ "%.4f"|format(data.V_rel_mod) }} м/с
     </div>
 
-    <h3>Ускорение</h3>
+    <h3>Ускорение точки относительно подвижной системы</h3>
     <div class="formula">
         <img src="data:image/png;base64,{{ formula_images.d2xdt2 }}" alt="ẍ">
         <img src="data:image/png;base64,{{ formula_images.d2ydt2 }}" alt="ÿ">
@@ -66,10 +79,9 @@
         ẍ = {{ "%.4f"|format(data.a_rel[0]) }},  ÿ = {{ "%.4f"|format(data.a_rel[1]) }}
     </div>
 
-    <h2>3. Переносное движение (движение системы отсчёта)</h2>
+    <h2>3. Переносное движение (движение подвижной системы)</h2>
     <div class="explanation">
-        <p>Поступательное перемещение начала \(O\) по вертикали: \(z'(t) = 2t^2 + 4\).<br>
-        Вращение вокруг вертикальной оси: \(\varphi'(t) = 2\sin(\pi t)\).</p>
+        <p>Подвижная система движется двумя способами: поступательно (вертикальное смещение) и вращательно (поворот вокруг вертикальной оси).</p>
     </div>
 
     <h3>Поступательная часть</h3>
@@ -94,7 +106,7 @@
     </div>
 
     <div class="explanation">
-        <p>Радиус-вектор точки в подвижной системе: \(\mathbf{r}_{\text{отн}} = ({{ "%.4f"|format(data.V_rel[0]) }}, {{ "%.4f"|format(data.V_rel[1]) }}, 0)\).</p>
+        <p>Радиус-вектор точки \(M\) в подвижной системе в момент \(t=1\): \(\mathbf{r}_{\text{отн}} = ({{ "%.4f"|format(data.V_rel[0]) }}, {{ "%.4f"|format(data.V_rel[1]) }}, 0)\).</p>
     </div>
 
     <h3>Переносная скорость (вращательная)</h3>
@@ -156,28 +168,35 @@
         <img src="{{ images.velocities }}" alt="Скорости">
     </div>
     <div class="graph">
+        <h3>Рис. 2a. Траектория и векторы скоростей (исходная система координат)</h3>
+        <img src="{{ images.trajectory }}" alt="Траектория с векторами скоростей">
+    </div>
+    <div class="graph">
         <h3>Рис. 3. Векторы ускорений в точке \(M\) (оси: \(\omega,\ a_{\text{cor}},\ a_{\text{отн}}\))</h3>
         <img src="{{ images.accelerations }}" alt="Ускорения">
+    </div>
+    <div class="graph">
+        <h3>Рис. 3a. Траектория и векторы ускорений (исходная система координат)</h3>
+        <img src="{{ images.trajectory }}" alt="Траектория с векторами ускорений">
     </div>
 
     <h2>6. Итоговая таблица результатов</h2>
     <table>
         <thead>
-            <tr><th>Величина</th><th>Значение</th><th>Размерность</th></tr>
-        </thead>
+            <tr><th>Величина</th><th>Значение</th><th>Размерность</th> </thead>
         <tbody>
-            <tr><td>Координаты точки M</td><td>({{ "%.4f"|format(data.point[0]) }}, {{ "%.4f"|format(data.point[1]) }}, {{ "%.4f"|format(data.point[2]) }})</td><td>м</td></tr>
-            <tr><td>Относительная скорость V<sub>отн</sub></td><td>{{ "%.4f"|format(data.V_rel_mod) }}</td><td>м/с</td></tr>
-            <tr><td>Переносная скорость (вращательная) V<sub>вр</sub></td><td>{{ "%.4f"|format(data.V_rot_mod) }}</td><td>м/с</td></tr>
-            <tr><td>Переносная скорость (поступательная) V<sub>пост</sub></td><td>{{ "%.4f"|format(data.V_trans_post_mod) }}</td><td>м/с</td></tr>
-            <tr><td>Абсолютная скорость V<sub>абс</sub></td><td>{{ "%.4f"|format(data.V_abs_mod) }}</td><td>м/с</td></tr>
-            <tr><td>Относительное ускорение a<sub>отн</sub></td><td>{{ "%.4f"|format(data.a_rel_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Центростремительное ускорение a<sub>ц</sub></td><td>{{ "%.4f"|format(data.a_centr_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Вращательное ускорение a<sub>вр</sub></td><td>{{ "%.4f"|format(data.a_rot_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Поступательное ускорение a<sub>пост</sub></td><td>{{ "%.4f"|format(data.a_trans_post_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Ускорение Кориолиса a<sub>кор</sub></td><td>{{ "%.4f"|format(data.a_cor_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Абсолютное ускорение a<sub>абс</sub></td><td>{{ "%.4f"|format(data.a_abs_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Радиус кривизны ρ</td><td>{{ "%.4f"|format(data.rho) }}</td><td>м</td></tr>
+            <tr><td>Координаты точки M</td><td>({{ "%.4f"|format(data.point[0]) }}, {{ "%.4f"|format(data.point[1]) }}, {{ "%.4f"|format(data.point[2]) }})</td><td>м</td> </tr>
+            <tr><td>Относительная скорость V<sub>отн</sub></td><td>{{ "%.4f"|format(data.V_rel_mod) }}</td><td>м/с</td> </tr>
+            <tr><td>Переносная скорость (вращательная) V<sub>вр</sub></td><td>{{ "%.4f"|format(data.V_rot_mod) }}</td><td>м/с</td> </tr>
+            <tr><td>Переносная скорость (поступательная) V<sub>пост</sub></td><td>{{ "%.4f"|format(data.V_trans_post_mod) }}</td><td>м/с</td> </tr>
+            <tr><td>Абсолютная скорость V<sub>абс</sub></td><td>{{ "%.4f"|format(data.V_abs_mod) }}</td><td>м/с</td> </tr>
+            <tr><td>Относительное ускорение a<sub>отн</sub></td><td>{{ "%.4f"|format(data.a_rel_mod) }}</td><td>м/с²</td> </tr>
+            <tr><td>Центростремительное ускорение a<sub>ц</sub></td><td>{{ "%.4f"|format(data.a_centr_mod) }}</td><td>м/с²</td> </tr>
+            <tr><td>Вращательное ускорение a<sub>вр</sub></td><td>{{ "%.4f"|format(data.a_rot_mod) }}</td><td>м/с²</td> </tr>
+            <tr><td>Поступательное ускорение a<sub>пост</sub></td><td>{{ "%.4f"|format(data.a_trans_post_mod) }}</td><td>м/с²</td> </tr>
+            <tr><td>Ускорение Кориолиса a<sub>кор</sub></td><td>{{ "%.4f"|format(data.a_cor_mod) }}</td><td>м/с²</td> </tr>
+            <tr><td>Абсолютное ускорение a<sub>абс</sub></td><td>{{ "%.4f"|format(data.a_abs_mod) }}</td><td>м/с²</td> </tr>
+            <tr><td>Радиус кривизны ρ</td><td>{{ "%.4f"|format(data.rho) }}</td><td>м</td> </tr>
         </tbody>
     </table>
 
