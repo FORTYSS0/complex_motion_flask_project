@@ -215,7 +215,7 @@ def generate_all_plots(data):
 
 def generate_interactive_trajectory(data):
     """Возвращает JSON для интерактивного графика траектории с одной стрелкой направления в конце,
-       увеличенной стрелкой ω (в начале дуги) и горизонтальной проекцией траектории (жирная линия)."""
+       увеличенной стрелкой ω (в начале дуги, развёрнутой в противоположную сторону) и горизонтальной проекцией траектории (жирная линия)."""
     t_vals = np.linspace(0, 2.5, 200)
     x_t = 8 * np.cos(np.pi * t_vals**2 / 3)
     y_t = 16 * np.sin(np.pi * t_vals**2 / 3)
@@ -346,7 +346,7 @@ def generate_interactive_trajectory(data):
         showlegend=False
     ))
 
-    # --- Дуга вращения (ω) с увеличенной стрелкой (конусом) в начале дуги ---
+    # --- Дуга вращения (ω) с увеличенной стрелкой (конусом) в начале дуги, развёрнутой в противоположную сторону ---
     theta = np.linspace(0, -np.pi/2, 50)
     radius = axis_len * 0.6
     x_arc = O[0] + radius * np.cos(theta)
@@ -354,19 +354,19 @@ def generate_interactive_trajectory(data):
     z_arc = O[2] + axis_len * 0.05
     fig.add_trace(go.Scatter3d(x=x_arc, y=y_arc, z=np.full_like(x_arc, z_arc), mode='lines',
                                line=dict(color='green', width=2), name='ω'))
-    # Стрелка (конус) в начале дуги
+    # Стрелка (конус) в начале дуги, развёрнутая
     start_x = x_arc[0]
     start_y = y_arc[0]
     start_z = z_arc
-    # Вектор направления дуги в первой точке (касательная)
+    # Вектор направления дуги в первой точке (касательная) – разворачиваем знак
     dx_arc = x_arc[1] - x_arc[0]
     dy_arc = y_arc[1] - y_arc[0]
     dz_arc = 0
     len_arc = np.sqrt(dx_arc**2 + dy_arc**2 + dz_arc**2)
     if len_arc > 1e-8:
         arrow_scale_arc = 0.3 * radius  # размер стрелки
-        u_arc = dx_arc / len_arc * arrow_scale_arc
-        v_arc = dy_arc / len_arc * arrow_scale_arc
+        u_arc = -dx_arc / len_arc * arrow_scale_arc   # знак минус для разворота
+        v_arc = -dy_arc / len_arc * arrow_scale_arc
         w_arc = 0
         fig.add_trace(go.Cone(
             x=[start_x], y=[start_y], z=[start_z],
