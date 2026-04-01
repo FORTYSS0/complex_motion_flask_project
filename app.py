@@ -16,7 +16,22 @@ from plots import (generate_all_plots, generate_interactive_trajectory,
 app = Flask(__name__)
 os.makedirs('static', exist_ok=True)
 
+# ----------------------------------------------------------------------
+# Настройка пути к wkhtmltopdf (для PDF экспорта)
+# ----------------------------------------------------------------------
+# Укажите реальный путь к wkhtmltopdf на вашем сервере.
+# Узнать его можно командой: which wkhtmltopdf
+WKHTMLTOPDF_PATH = '/usr/bin/wkhtmltopdf'          # или '/usr/local/bin/wkhtmltopdf'
+# Проверяем существование файла (если нет – будет ошибка, но продолжим)
+if os.path.exists(WKHTMLTOPDF_PATH):
+    PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
+else:
+    # Если путь не найден, используем стандартное поведение (может не работать)
+    print(f"Предупреждение: wkhtmltopdf не найден по пути {WKHTMLTOPDF_PATH}")
+    PDFKIT_CONFIG = pdfkit.configuration()
+
 def latex_to_png(latex_str):
+    """Преобразует LaTeX-строку в base64-изображение PNG."""
     fig, ax = plt.subplots(figsize=(0.8, 0.4))
     fig.patch.set_visible(False)
     ax.axis('off')
@@ -48,8 +63,9 @@ def index():
                            static_paths=static_paths)
 
 def prepare_export_data():
+    """Возвращает data, formulas, formula_images и пути к PNG для экспорта."""
     data, formulas = compute_complex_motion(t=1)
-    generate_all_plots(data)
+    generate_all_plots(data)  # создаём PNG
     formula_images = {key: latex_to_png(latex) for key, latex in formulas.items()}
     extra_formulas = {
         'V_abs_eq': r'\mathbf{V}_{\text{абс}} = \mathbf{V}_{\text{отн}} + \mathbf{V}_{\text{пер,пост}} + \mathbf{V}_{\text{пер,вр}}',
@@ -73,6 +89,7 @@ def prepare_export_data():
     return data, formulas, formula_images, img_files
 
 def generate_export_pdf(landscape=False):
+    """Вспомогательная функция: генерирует PDF, возвращает (pdf_data, error)."""
     data, formulas, formula_images, img_files = prepare_export_data()
     rendered = render_template('report_export.html', data=data, formulas=formulas,
                                formula_images=formula_images, images=img_files,
@@ -85,7 +102,7 @@ def generate_export_pdf(landscape=False):
     if landscape:
         options['orientation'] = 'Landscape'
     try:
-        pdfkit.from_file(html_path, pdf_path, options=options)
+        pdfkit.from_file(html_path, pdf_path, options=options, configuration=PDFKIT_CONFIG)
     except Exception as e:
         os.unlink(html_path)
         return None, f"Ошибка генерации PDF: {e}"
@@ -112,6 +129,7 @@ def export_pdf_16_9():
                      download_name='report_16_9.pdf', mimetype='application/pdf')
 
 def generate_export_word(landscape=False):
+    """Вспомогательная функция: генерирует Word (docx), возвращает (docx_data, error)."""
     data, formulas, formula_images, img_files = prepare_export_data()
     rendered = render_template('report_export.html', data=data, formulas=formulas,
                                formula_images=formula_images, images=img_files,
