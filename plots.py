@@ -31,7 +31,7 @@ def draw_axes(ax, origin=(0,0,0), length=None, color='black', labels=['X', 'Y', 
                 color=color, fontsize=10, ha='center', va='center')
 
 def generate_all_plots(data):
-    """Создаёт статичные PNG‑графики для экспорта."""
+    """Создаёт статичные PNG‑графики для экспорта (5 графиков)."""
     # ---- 1. Траектория ----
     t_vals = np.linspace(0, 2.5, 200)
     x_t = 8 * np.cos(np.pi * t_vals**2 / 3)
@@ -208,6 +208,106 @@ def generate_all_plots(data):
     ax.legend(loc='upper left')
     plt.tight_layout()
     plt.savefig(os.path.join('static', 'accelerations.png'), dpi=150)
+    plt.close()
+
+    # ---- 4. Комбинированный график: траектория + векторы скоростей ----
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot(x_t, y_t, z_t, label='Траектория')
+    ax.scatter(data['point'][0], data['point'][1], data['point'][2],
+               color='red', s=50, label='M (t=1)')
+    # Горизонтальная проекция
+    z_const = data['point'][2]
+    ax.plot(x_t, y_t, np.full_like(z_t, z_const), color='orange', linestyle='--', linewidth=2, label='Проекция')
+
+    # Оси (аналогично первому графику)
+    draw_axes(ax, origin=(0,0,0), length=axis_length, color='black', labels=["X'", "Y'", "Z'"])
+    draw_axes(ax, origin=O, length=axis_length, color='red', labels=['X', 'Y', 'Z'])
+    ax.scatter(O[0], O[1], O[2], color='blue', s=40, label='O (начало подвижной)')
+    ax.text(O[0], O[1], O[2], ' O', color='blue', fontsize=10)
+
+    # Дуга ω
+    ax.plot(x_arc, y_arc, np.full_like(x_arc, z_arc), color='green', linewidth=2, label='ω')
+    arrow = Arrow3D([x_arc[-2], x_arc[-1]], [y_arc[-2], y_arc[-1]],
+                    [z_arc_arr[-2], z_arc_arr[-1]],
+                    mutation_scale=20, lw=2, arrowstyle='->', color='green')
+    ax.add_artist(arrow)
+    ax.text(x_arc[mid], y_arc[mid], z_arc_arr[mid]+0.02, f'ω = {abs(data["omega"]):.2f}',
+            color='green', fontsize=9)
+
+    # Векторы скоростей (масштабированные, одинаковой длины)
+    scale_len = axis_length * 0.6
+    for vec, col, lab in zip([data['V_rel'], data['V_rot'], data['V_trans_post'], data['V_abs']],
+                             ['blue', 'green', 'orange', 'purple'],
+                             ['V_rel', 'V_rot', 'V_trans_post', 'V_abs']):
+        norm = np.linalg.norm(vec)
+        if norm > 1e-8:
+            unit = vec / norm
+            scaled_vec = unit * scale_len
+        else:
+            scaled_vec = np.zeros(3)
+        ax.quiver(data['point'][0], data['point'][1], data['point'][2],
+                  scaled_vec[0], scaled_vec[1], scaled_vec[2],
+                  color=col, label=lab, arrow_length_ratio=0.03, linewidth=2)
+        end = np.array(data['point']) + scaled_vec
+        ax.text(end[0], end[1], end[2], f'{lab}', color=col, fontsize=8, ha='center', va='center')
+
+    ax.set_xlabel("X'")
+    ax.set_ylabel("Y'")
+    ax.set_zlabel("Z'")
+    ax.set_title('Траектория и векторы скоростей')
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc='upper left')
+    plt.tight_layout()
+    plt.savefig(os.path.join('static', 'trajectory_with_velocities.png'), dpi=150)
+    plt.close()
+
+    # ---- 5. Комбинированный график: траектория + векторы ускорений ----
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot(x_t, y_t, z_t, label='Траектория')
+    ax.scatter(data['point'][0], data['point'][1], data['point'][2],
+               color='red', s=50, label='M (t=1)')
+    ax.plot(x_t, y_t, np.full_like(z_t, z_const), color='orange', linestyle='--', linewidth=2, label='Проекция')
+
+    draw_axes(ax, origin=(0,0,0), length=axis_length, color='black', labels=["X'", "Y'", "Z'"])
+    draw_axes(ax, origin=O, length=axis_length, color='red', labels=['X', 'Y', 'Z'])
+    ax.scatter(O[0], O[1], O[2], color='blue', s=40, label='O (начало подвижной)')
+    ax.text(O[0], O[1], O[2], ' O', color='blue', fontsize=10)
+
+    ax.plot(x_arc, y_arc, np.full_like(x_arc, z_arc), color='green', linewidth=2, label='ω')
+    arrow = Arrow3D([x_arc[-2], x_arc[-1]], [y_arc[-2], y_arc[-1]],
+                    [z_arc_arr[-2], z_arc_arr[-1]],
+                    mutation_scale=20, lw=2, arrowstyle='->', color='green')
+    ax.add_artist(arrow)
+    ax.text(x_arc[mid], y_arc[mid], z_arc_arr[mid]+0.02, f'ω = {abs(data["omega"]):.2f}',
+            color='green', fontsize=9)
+
+    # Векторы ускорений (масштабированные, одинаковой длины)
+    for vec, col, lab in zip([data['a_rel'], data['a_centr'], data['a_rot'],
+                              data['a_trans_post'], data['a_cor'], data['a_abs']],
+                             ['blue', 'green', 'orange', 'brown', 'cyan', 'purple'],
+                             ['a_rel', 'a_centr', 'a_rot', 'a_trans_post', 'a_cor', 'a_abs']):
+        norm = np.linalg.norm(vec)
+        if norm > 1e-8:
+            unit = vec / norm
+            scaled_vec = unit * scale_len
+        else:
+            scaled_vec = np.zeros(3)
+        ax.quiver(data['point'][0], data['point'][1], data['point'][2],
+                  scaled_vec[0], scaled_vec[1], scaled_vec[2],
+                  color=col, label=lab, arrow_length_ratio=0.03, linewidth=2)
+        end = np.array(data['point']) + scaled_vec
+        ax.text(end[0], end[1], end[2], f'{lab}', color=col, fontsize=8, ha='center', va='center')
+
+    ax.set_xlabel("X'")
+    ax.set_ylabel("Y'")
+    ax.set_zlabel("Z'")
+    ax.set_title('Траектория и векторы ускорений')
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc='upper left', ncol=2)
+    plt.tight_layout()
+    plt.savefig(os.path.join('static', 'trajectory_with_accelerations.png'), dpi=150)
     plt.close()
 
 
