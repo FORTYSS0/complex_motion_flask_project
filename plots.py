@@ -5,22 +5,20 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-def draw_axes(ax, origin=(0,0,0), length=None, color='black', labels=['X', 'Y', 'Z']):
-    """Рисует оси координат из точки origin с автоматическим подбором длины."""
-    # Получаем текущие лимиты осей, чтобы определить длину
+def draw_axes(ax, origin=(0,0,0), length_scale=0.4, color='black', labels=['X', 'Y', 'Z']):
+    """Рисует оси координат из точки origin. Длина подстраивается под текущие лимиты осей."""
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
     zlim = ax.get_zlim()
+    # Максимальный размах по осям
     max_range = max(xlim[1]-xlim[0], ylim[1]-ylim[0], zlim[1]-zlim[0])
-    if length is None:
-        length = max_range * 0.2   # 20% от размаха
+    length = max_range * length_scale
     for i, label in enumerate(labels):
         vec = [0,0,0]
         vec[i] = length
         ax.quiver(origin[0], origin[1], origin[2],
                   vec[0], vec[1], vec[2],
                   color=color, label=label, arrow_length_ratio=0.1, linewidth=2)
-        # Подпись в конце оси
         ax.text(origin[0]+vec[0], origin[1]+vec[1], origin[2]+vec[2], label,
                 color=color, fontsize=12, ha='center', va='center')
 
@@ -33,10 +31,6 @@ def plot_vectors(title, point, vectors, colors, labels, filename):
     ax.set_zlabel('Z')
     ax.set_title(title)
 
-    # Отрисовка осей координат (базисных векторов) из начала координат
-    draw_axes(ax, origin=(0,0,0), color='black')
-    ax.grid(True, alpha=0.3)   # размерная сетка
-
     # Точка M
     ax.scatter(point[0], point[1], point[2], color='red', s=50, label='Point M')
 
@@ -46,13 +40,19 @@ def plot_vectors(title, point, vectors, colors, labels, filename):
                   vec[0], vec[1], vec[2],
                   color=color, label=label, arrow_length_ratio=0.1)
 
-    ax.legend()
     # Автоматическое масштабирование
-    max_abs = max([abs(v) for vec in vectors for v in vec] + [abs(p) for p in point])
-    lim = max_abs * 1.2
-    ax.set_xlim([point[0]-lim, point[0]+lim])
-    ax.set_ylim([point[1]-lim, point[1]+lim])
-    ax.set_zlim([point[2]-lim, point[2]+lim])
+    all_points = [point] + [point + v for v in vectors]
+    min_vals = np.min(all_points, axis=0)
+    max_vals = np.max(all_points, axis=0)
+    margin = 0.2
+    ax.set_xlim([min_vals[0]-margin, max_vals[0]+margin])
+    ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
+    ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
+
+    # Оси рисуем после установки лимитов, чтобы длина определялась по окончательному масштабу
+    draw_axes(ax, origin=(0,0,0), length_scale=0.5)
+    ax.grid(True, alpha=0.3)
+    ax.legend()
 
     plt.tight_layout()
     plt.savefig(os.path.join('static', filename), dpi=150)
@@ -60,8 +60,8 @@ def plot_vectors(title, point, vectors, colors, labels, filename):
 
 def generate_all_plots(data):
     """Создаёт три графика для отчёта."""
-    # 1. Траектория
-    t_vals = np.linspace(0, 1.2, 100)
+    # 1. Траектория (увеличиваем временной интервал до 2.5)
+    t_vals = np.linspace(0, 2.5, 200)
     x_t = 8 * np.cos(np.pi * t_vals**2 / 3)
     y_t = 16 * np.sin(np.pi * t_vals**2 / 3)
     z_t = 2 * t_vals**2 + 4
@@ -74,7 +74,15 @@ def generate_all_plots(data):
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
     ax.set_title('Способ задания движения (абсолютная траектория)')
-    draw_axes(ax, color='black')
+    # Масштабируем по данным траектории
+    all_points = np.vstack([np.column_stack([x_t, y_t, z_t]), [data['point']]])
+    min_vals = np.min(all_points, axis=0)
+    max_vals = np.max(all_points, axis=0)
+    margin = 0.2
+    ax.set_xlim([min_vals[0]-margin, max_vals[0]+margin])
+    ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
+    ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
+    draw_axes(ax, origin=(0,0,0), length_scale=0.4)
     ax.grid(True, alpha=0.3)
     ax.legend()
     plt.tight_layout()
