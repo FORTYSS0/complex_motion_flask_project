@@ -19,14 +19,10 @@ os.makedirs('static', exist_ok=True)
 # ----------------------------------------------------------------------
 # Настройка пути к wkhtmltopdf (для PDF экспорта)
 # ----------------------------------------------------------------------
-# Укажите реальный путь к wkhtmltopdf на вашем сервере.
-# Узнать его можно командой: which wkhtmltopdf
-WKHTMLTOPDF_PATH = '/usr/bin/wkhtmltopdf'          # или '/usr/local/bin/wkhtmltopdf'
-# Проверяем существование файла (если нет – будет ошибка, но продолжим)
+WKHTMLTOPDF_PATH = '/usr/bin/wkhtmltopdf'
 if os.path.exists(WKHTMLTOPDF_PATH):
     PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
 else:
-    # Если путь не найден, используем стандартное поведение (может не работать)
     print(f"Предупреждение: wkhtmltopdf не найден по пути {WKHTMLTOPDF_PATH}")
     PDFKIT_CONFIG = pdfkit.configuration()
 
@@ -63,9 +59,9 @@ def index():
                            static_paths=static_paths)
 
 def prepare_export_data():
-    """Возвращает data, formulas, formula_images и пути к PNG для экспорта."""
+    """Возвращает data, formulas, formula_images и пути к PNG для экспорта (5 графиков)."""
     data, formulas = compute_complex_motion(t=1)
-    generate_all_plots(data)  # создаём PNG
+    generate_all_plots(data)  # создаёт все PNG (включая новые комбинированные)
     formula_images = {key: latex_to_png(latex) for key, latex in formulas.items()}
     extra_formulas = {
         'V_abs_eq': r'\mathbf{V}_{\text{абс}} = \mathbf{V}_{\text{отн}} + \mathbf{V}_{\text{пер,пост}} + \mathbf{V}_{\text{пер,вр}}',
@@ -85,6 +81,8 @@ def prepare_export_data():
         'trajectory': os.path.join(static_abs_path, 'trajectory.png'),
         'velocities': os.path.join(static_abs_path, 'velocities.png'),
         'accelerations': os.path.join(static_abs_path, 'accelerations.png'),
+        'trajectory_with_velocities': os.path.join(static_abs_path, 'trajectory_with_velocities.png'),
+        'trajectory_with_accelerations': os.path.join(static_abs_path, 'trajectory_with_accelerations.png'),
     }
     return data, formulas, formula_images, img_files
 
