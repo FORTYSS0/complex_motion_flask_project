@@ -1,4 +1,4 @@
-from flask import Flask, render_template, send_file, make_response
+from flask import Flask, render_template, send_file
 import os
 import io
 import base64
@@ -12,7 +12,6 @@ from plots import generate_all_plots
 
 app = Flask(__name__)
 
-# Создаём папку для статики, если её нет
 os.makedirs('static', exist_ok=True)
 
 def latex_to_png(latex_str):
@@ -33,29 +32,44 @@ def index():
     generate_all_plots(data)
     return render_template('report.html', data=data, formulas=formulas)
 
-@app.route('/export/pdf')
-def export_pdf():
-    """Экспорт отчёта в PDF."""
+def prepare_export_data():
+    """Возвращает data, formulas и formula_images для экспорта."""
     data, formulas = compute_complex_motion(t=1)
     generate_all_plots(data)
 
-    # Преобразуем все формулы в изображения
+    # Базовые формулы из calc.py
     formula_images = {}
     for key, latex in formulas.items():
         formula_images[key] = latex_to_png(latex)
 
-    # Получаем абсолютные пути к графикам
+    # Дополнительные формулы, используемые в экспортном шаблоне
+    extra_formulas = {
+        'V_abs_eq': r'\mathbf{V}_{\text{абс}} = \mathbf{V}_{\text{отн}} + \mathbf{V}_{\text{пер,пост}} + \mathbf{V}_{\text{пер,вр}}',
+        'V_rot_eq': r'\mathbf{V}_{\text{пер,вр}} = \boldsymbol{\omega} \times \mathbf{r}_{\text{отн}}',
+        'a_abs_eq': r'\mathbf{a}_{\text{абс}} = \mathbf{a}_{\text{отн}} + \mathbf{a}_{\text{пер}} + \mathbf{a}_{\text{кор}}',
+        'a_trans_eq': r'\mathbf{a}_{\text{пер}} = \mathbf{a}_{\text{пер,пост}} + \mathbf{a}_{\text{пер,ц}} + \mathbf{a}_{\text{пер,вр}}',
+        'a_centr_eq': r'\mathbf{a}_{\text{пер,ц}} = -\omega^2 \mathbf{r}_{\text{отн}}',
+        'a_rot_eq': r'\mathbf{a}_{\text{пер,вр}} = \boldsymbol{\alpha} \times \mathbf{r}_{\text{отн}}',
+        'a_cor_eq': r'\mathbf{a}_{\text{кор}} = 2\,\boldsymbol{\omega} \times \mathbf{V}_{\text{отн}}',
+        'rho_eq': r'\rho = \frac{V_{\text{абс}}^3}{|\mathbf{V}_{\text{абс}} \times \mathbf{a}_{\text{абс}}|}',
+    }
+    for key, latex in extra_formulas.items():
+        formula_images[key] = latex_to_png(latex)
+
     static_abs_path = os.path.abspath('static')
     img_files = {
         'trajectory': os.path.join(static_abs_path, 'trajectory.png'),
         'velocities': os.path.join(static_abs_path, 'velocities.png'),
         'accelerations': os.path.join(static_abs_path, 'accelerations.png'),
     }
+    return data, formulas, formula_images, img_files
 
+@app.route('/export/pdf')
+def export_pdf():
+    data, formulas, formula_images, img_files = prepare_export_data()
     rendered = render_template('report_export.html', data=data, formulas=formulas,
                                formula_images=formula_images, images=img_files, export=True)
 
-    # Сохраняем HTML во временный файл
     with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as f:
         f.write(rendered.encode('utf-8'))
         html_path = f.name
@@ -81,21 +95,7 @@ def export_pdf():
 
 @app.route('/export/word')
 def export_word():
-    """Экспорт отчёта в Word (docx)."""
-    data, formulas = compute_complex_motion(t=1)
-    generate_all_plots(data)
-
-    formula_images = {}
-    for key, latex in formulas.items():
-        formula_images[key] = latex_to_png(latex)
-
-    static_abs_path = os.path.abspath('static')
-    img_files = {
-        'trajectory': os.path.join(static_abs_path, 'trajectory.png'),
-        'velocities': os.path.join(static_abs_path, 'velocities.png'),
-        'accelerations': os.path.join(static_abs_path, 'accelerations.png'),
-    }
-
+    data, formulas, formula_images, img_files = prepare_export_data()
     rendered = render_template('report_export.html', data=data, formulas=formulas,
                                formula_images=formula_images, images=img_files, export=True)
 
