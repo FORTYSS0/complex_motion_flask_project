@@ -29,7 +29,9 @@ def latex_to_png(latex_str):
 @app.route('/')
 def index():
     data, formulas = compute_complex_motion(t=1)
-    # Генерируем интерактивные графики
+    # Генерируем статичные PNG для экспорта (можно вызывать только при экспорте, но оставим здесь)
+    generate_all_plots(data)
+    # Интерактивные графики
     traj_json = generate_interactive_trajectory(data)
     vel_json = generate_interactive_velocities(data)
     acc_json = generate_interactive_accelerations(data)
@@ -39,14 +41,12 @@ def index():
 def prepare_export_data():
     """Возвращает data, formulas и formula_images для экспорта."""
     data, formulas = compute_complex_motion(t=1)
-    # Генерируем PNG для экспорта
-    generate_all_plots(data)
+    generate_all_plots(data)  # PNG для экспорта
 
     formula_images = {}
     for key, latex in formulas.items():
         formula_images[key] = latex_to_png(latex)
 
-    # Дополнительные формулы, используемые в экспортном шаблоне
     extra_formulas = {
         'V_abs_eq': r'\mathbf{V}_{\text{абс}} = \mathbf{V}_{\text{отн}} + \mathbf{V}_{\text{пер,пост}} + \mathbf{V}_{\text{пер,вр}}',
         'V_rot_eq': r'\mathbf{V}_{\text{пер,вр}} = \boldsymbol{\omega} \times \mathbf{r}_{\text{отн}}',
