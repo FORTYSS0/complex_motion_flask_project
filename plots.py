@@ -92,9 +92,10 @@ def generate_all_plots(data):
     ax.plot(x_t, y_t, z_t, label='Траектория точки')
     ax.scatter(data['point'][0], data['point'][1], data['point'][2],
                color='red', s=50, label='Положение при t=1')
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
+    # Подписи осей для неподвижной системы координат
+    ax.set_xlabel("X'")
+    ax.set_ylabel("Y'")
+    ax.set_zlabel("Z'")
     ax.set_title('Способ задания движения (абсолютная траектория)')
 
     # Собираем точки траектории, точку M и начало координат для расчёта лимитов
@@ -116,7 +117,9 @@ def generate_all_plots(data):
     ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
     ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
 
-    draw_axes(ax, origin=(0,0,0), length=axis_length, color='black')
+    # Рисуем оси с подписями X', Y', Z' (неподвижная система)
+    draw_axes(ax, origin=(0,0,0), length=axis_length, color='black',
+              labels=["X'", "Y'", "Z'"])
     ax.grid(True, alpha=0.3)
 
     # Добавляем вектор абсолютной скорости в точке M (нормированный, короткий)
@@ -141,7 +144,7 @@ def generate_all_plots(data):
     plt.savefig(os.path.join('static', 'trajectory.png'), dpi=150)
     plt.close()
 
-    # 2. Скорости
+    # 2. Скорости (подвижная система координат)
     point = data['point']
     vectors = [data['V_rel'], data['V_rot'], data['V_trans_post'], data['V_abs']]
     colors = ['blue', 'green', 'orange', 'purple']
@@ -150,7 +153,7 @@ def generate_all_plots(data):
     plot_vectors('Векторы скоростей в точке M', point, vectors, colors, labels,
                  'velocities.png', numeric_values=numeric_vals)
 
-    # 3. Ускорения
+    # 3. Ускорения (подвижная система координат)
     vectors = [data['a_rel'], data['a_centr'], data['a_rot'],
                data['a_trans_post'], data['a_cor'], data['a_abs']]
     colors = ['blue', 'green', 'orange', 'brown', 'cyan', 'purple']
