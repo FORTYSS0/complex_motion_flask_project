@@ -56,7 +56,6 @@ def prepare_export_data():
     }
     for key, latex in extra_formulas.items():
         formula_images[key] = latex_to_png(latex)
-
     static_abs_path = os.path.abspath('static')
     img_files = {
         'trajectory': os.path.join(static_abs_path, 'trajectory.png'),
