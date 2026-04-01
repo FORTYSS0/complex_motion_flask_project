@@ -29,7 +29,7 @@ def draw_axes(ax, origin=(0,0,0), length=None, color='black', labels=['X', 'Y', 
 
 def generate_all_plots(data):
     # ------------------------------------------------------------
-    # 1. Траектория (без изменений)
+    # 1. Траектория (неподвижная система)
     # ------------------------------------------------------------
     t_vals = np.linspace(0, 2.5, 200)
     x_t = 8 * np.cos(np.pi * t_vals**2 / 3)
@@ -109,7 +109,7 @@ def generate_all_plots(data):
     plt.close()
 
     # ------------------------------------------------------------
-    # 2. Скорости (без осей X,Y,Z, только базисные векторы ω, a_cor, V_отн)
+    # 2. Скорости (новые оси: ω, V_отн, a_cor)
     # ------------------------------------------------------------
     point = data['point']
     vectors = [data['V_rel'], data['V_rot'], data['V_trans_post'], data['V_abs']]
@@ -120,17 +120,14 @@ def generate_all_plots(data):
 
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(111, projection='3d')
-    # Убираем подписи осей
-    ax.set_xlabel('')
-    ax.set_ylabel('')
-    ax.set_zlabel('')
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_zticks([])
-    ax.set_title('Векторы скоростей в точке M')
+    ax.set_title('Векторы скоростей в точке M (оси: ω, V_отн, a_cor)')
+    # Убираем стандартные оси и сетку
+    ax.set_axis_off()
 
+    # Точка M
     ax.scatter(point[0], point[1], point[2], color='red', s=50, label='Point M')
 
+    # Реальные векторы скоростей
     for idx, (vec, color, label) in enumerate(zip(vectors, colors, labels)):
         ax.quiver(point[0], point[1], point[2],
                   vec[0], vec[1], vec[2],
@@ -143,49 +140,53 @@ def generate_all_plots(data):
                     f'{label} = {numeric_vals[idx]:.2f}',
                     color=color, fontsize=8, ha='center', va='center')
 
-    omega_vec = np.array([0.0, 0.0, data['omega']])
-    a_cor_vec = data['a_cor']
-    V_rel_vec = data['V_rel']
+    # Базисные векторы для новых осей
+    omega_vec = np.array([0.0, 0.0, data['omega']])          # ось Z (вертикаль)
+    V_rel_vec = data['V_rel']                                 # ось X (вперёд)
+    a_cor_vec = data['a_cor']                                 # ось Y (вправо)
 
+    # Определяем масштаб для новых осей
     all_points_for_scale = [np.array(point)] + [np.array(point) + v for v in vectors] + [np.array([0,0,0])]
     all_arr = np.array(all_points_for_scale)
     max_range = np.max(np.max(all_arr, axis=0) - np.min(all_arr, axis=0))
-    basis_length = max_range * 0.3
+    axis_length = max_range * 0.3   # длина новых осей
 
-    def scaled_basis(vec, target_length):
-        if np.linalg.norm(vec) < 1e-8:
+    def normalized_vec(vec):
+        n = np.linalg.norm(vec)
+        if n < 1e-8:
             return np.zeros(3)
-        return vec / np.linalg.norm(vec) * target_length
+        return vec / n
 
-    omega_basis = scaled_basis(omega_vec, basis_length * 0.4)
-    a_cor_basis = scaled_basis(a_cor_vec, basis_length)
-    V_rel_basis = scaled_basis(V_rel_vec, basis_length)
+    # Орты новых осей
+    e_omega = normalized_vec(omega_vec)
+    e_Vrel = normalized_vec(V_rel_vec)
+    e_acor = normalized_vec(a_cor_vec)
 
-    # Базисные векторы чёрным цветом
+    # Рисуем новые оси из точки M
+    # Ось ω (вертикаль)
     ax.quiver(point[0], point[1], point[2],
-              omega_basis[0], omega_basis[1], omega_basis[2],
-              color='black', label='ω (basis)', arrow_length_ratio=0.05, linewidth=2)
-    end_omega = np.array(point) + omega_basis
-    ax.text(end_omega[0], end_omega[1], end_omega[2], 'ω',
-            color='black', fontsize=10, ha='center', va='center')
+              e_omega[0] * axis_length, e_omega[1] * axis_length, e_omega[2] * axis_length,
+              color='black', arrow_length_ratio=0.05, linewidth=2)
+    end_omega = np.array(point) + e_omega * axis_length
+    ax.text(end_omega[0], end_omega[1], end_omega[2], 'ω', color='black', fontsize=10, ha='center', va='center')
 
+    # Ось V_отн (вперёд)
     ax.quiver(point[0], point[1], point[2],
-              a_cor_basis[0], a_cor_basis[1], a_cor_basis[2],
-              color='black', label='a_cor (basis)', arrow_length_ratio=0.05, linewidth=2)
-    end_acor = np.array(point) + a_cor_basis
-    ax.text(end_acor[0], end_acor[1], end_acor[2], 'a_cor',
-            color='black', fontsize=10, ha='center', va='center')
+              e_Vrel[0] * axis_length, e_Vrel[1] * axis_length, e_Vrel[2] * axis_length,
+              color='black', arrow_length_ratio=0.05, linewidth=2)
+    end_Vrel = np.array(point) + e_Vrel * axis_length
+    ax.text(end_Vrel[0], end_Vrel[1], end_Vrel[2], 'V_отн', color='black', fontsize=10, ha='center', va='center')
 
+    # Ось a_cor (вправо)
     ax.quiver(point[0], point[1], point[2],
-              V_rel_basis[0], V_rel_basis[1], V_rel_basis[2],
-              color='black', label='V_отн (basis)', arrow_length_ratio=0.05, linewidth=2)
-    end_vrel = np.array(point) + V_rel_basis
-    ax.text(end_vrel[0], end_vrel[1], end_vrel[2], 'V_отн',
-            color='black', fontsize=10, ha='center', va='center')
+              e_acor[0] * axis_length, e_acor[1] * axis_length, e_acor[2] * axis_length,
+              color='black', arrow_length_ratio=0.05, linewidth=2)
+    end_acor = np.array(point) + e_acor * axis_length
+    ax.text(end_acor[0], end_acor[1], end_acor[2], 'a_cor', color='black', fontsize=10, ha='center', va='center')
 
-    # Устанавливаем лимиты с учётом всех объектов
+    # Лимиты с учётом всех векторов и концов новых осей
     all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + \
-                 [np.array(point) + omega_basis, np.array(point) + a_cor_basis, np.array(point) + V_rel_basis, np.array([0,0,0])]
+                 [end_omega, end_Vrel, end_acor, np.array([0,0,0])]
     all_arr = np.array(all_points)
     min_vals = np.min(all_arr, axis=0)
     max_vals = np.max(all_arr, axis=0)
@@ -194,14 +195,14 @@ def generate_all_plots(data):
     ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
     ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
 
-    ax.grid(True, alpha=0.3)
+    # Легенда (можно оставить)
     ax.legend(loc='upper left')
     plt.tight_layout()
     plt.savefig(os.path.join('static', 'velocities.png'), dpi=150)
     plt.close()
 
     # ------------------------------------------------------------
-    # 3. Ускорения (без осей X,Y,Z, только базисные ω, a_cor, a_отн)
+    # 3. Ускорения (стандартные оси X,Y,Z + базисные ω, a_cor, a_отн)
     # ------------------------------------------------------------
     vectors = [data['a_rel'], data['a_centr'], data['a_rot'],
                data['a_trans_post'], data['a_cor'], data['a_abs']]
@@ -212,12 +213,9 @@ def generate_all_plots(data):
 
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(111, projection='3d')
-    ax.set_xlabel('')
-    ax.set_ylabel('')
-    ax.set_zlabel('')
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_zticks([])
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
     ax.set_title('Векторы ускорений в точке M')
 
     ax.scatter(point[0], point[1], point[2], color='red', s=50, label='Point M')
@@ -243,6 +241,11 @@ def generate_all_plots(data):
     max_range = np.max(np.max(all_arr, axis=0) - np.min(all_arr, axis=0))
     basis_length = max_range * 0.3
 
+    def scaled_basis(vec, target_length):
+        if np.linalg.norm(vec) < 1e-8:
+            return np.zeros(3)
+        return vec / np.linalg.norm(vec) * target_length
+
     omega_basis = scaled_basis(omega_vec, basis_length * 0.4)
     a_cor_basis = scaled_basis(a_cor_vec, basis_length)
     a_rel_basis = scaled_basis(a_rel_vec, basis_length)
@@ -251,26 +254,29 @@ def generate_all_plots(data):
               omega_basis[0], omega_basis[1], omega_basis[2],
               color='black', label='ω (basis)', arrow_length_ratio=0.05, linewidth=2)
     end_omega = np.array(point) + omega_basis
-    ax.text(end_omega[0], end_omega[1], end_omega[2], 'ω',
-            color='black', fontsize=10, ha='center', va='center')
+    ax.text(end_omega[0], end_omega[1], end_omega[2], 'ω', color='black', fontsize=10, ha='center', va='center')
 
     ax.quiver(point[0], point[1], point[2],
               a_cor_basis[0], a_cor_basis[1], a_cor_basis[2],
               color='black', label='a_cor (basis)', arrow_length_ratio=0.05, linewidth=2)
     end_acor = np.array(point) + a_cor_basis
-    ax.text(end_acor[0], end_acor[1], end_acor[2], 'a_cor',
-            color='black', fontsize=10, ha='center', va='center')
+    ax.text(end_acor[0], end_acor[1], end_acor[2], 'a_cor', color='black', fontsize=10, ha='center', va='center')
 
     ax.quiver(point[0], point[1], point[2],
               a_rel_basis[0], a_rel_basis[1], a_rel_basis[2],
               color='black', label='a_отн (basis)', arrow_length_ratio=0.05, linewidth=2)
     end_arel = np.array(point) + a_rel_basis
-    ax.text(end_arel[0], end_arel[1], end_arel[2], 'a_отн',
-            color='black', fontsize=10, ha='center', va='center')
+    ax.text(end_arel[0], end_arel[1], end_arel[2], 'a_отн', color='black', fontsize=10, ha='center', va='center')
 
     all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + \
-                 [np.array(point) + omega_basis, np.array(point) + a_cor_basis, np.array(point) + a_rel_basis, np.array([0,0,0])]
+                 [end_omega, end_acor, end_arel, np.array([0,0,0])]
     all_arr = np.array(all_points)
+    min_vals = np.min(all_arr, axis=0)
+    max_vals = np.max(all_arr, axis=0)
+    max_range = np.max(max_vals - min_vals)
+    axis_length = max_range * 0.25
+    axis_ends = [[axis_length,0,0], [0,axis_length,0], [0,0,axis_length]]
+    all_arr = np.vstack([all_arr, axis_ends])
     min_vals = np.min(all_arr, axis=0)
     max_vals = np.max(all_arr, axis=0)
     margin = 0.2
@@ -278,6 +284,7 @@ def generate_all_plots(data):
     ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
     ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
 
+    draw_axes(ax, origin=(0,0,0), length=axis_length, color='black')
     ax.grid(True, alpha=0.3)
     ax.legend(loc='upper left')
     plt.tight_layout()
