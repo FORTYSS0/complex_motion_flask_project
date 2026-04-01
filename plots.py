@@ -5,11 +5,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D, proj3d
 from matplotlib.patches import FancyArrowPatch
-import plotly.graph_objects as go
 
-# ------------------------------------------------------------
-# Статичные графики для экспорта (оставляем как есть)
-# ------------------------------------------------------------
+# ==================== Статичные PNG-графики для экспорта ====================
 
 class Arrow3D(FancyArrowPatch):
     def __init__(self, xs, ys, zs, *args, **kwargs):
@@ -33,15 +30,190 @@ def draw_axes(ax, origin=(0,0,0), length=None, color='black', labels=['X', 'Y', 
                 color=color, fontsize=10, ha='center', va='center')
 
 def generate_all_plots(data):
-    # Статичные PNG для экспорта (код остаётся как в последней стабильной версии)
-    # ... (ваш существующий код для PNG) ...
-    # Для краткости я не буду повторять весь код, он должен быть таким же, как в предыдущем ответе.
-    # Вы можете скопировать его из файла на сервере.
-    pass
+    """Создаёт статичные PNG‑графики для экспорта."""
+    # ---- 1. Траектория ----
+    t_vals = np.linspace(0, 2.5, 200)
+    x_t = 8 * np.cos(np.pi * t_vals**2 / 3)
+    y_t = 16 * np.sin(np.pi * t_vals**2 / 3)
+    z_t = 2 * t_vals**2 + 4
 
-# ------------------------------------------------------------
-# Интерактивные графики через Plotly
-# ------------------------------------------------------------
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot(x_t, y_t, z_t, label='Траектория точки')
+    ax.scatter(data['point'][0], data['point'][1], data['point'][2],
+               color='red', s=50, label='Положение при t=1')
+    ax.set_xlabel("X'")
+    ax.set_ylabel("Y'")
+    ax.set_zlabel("Z'")
+    ax.set_title('Способ задания движения (абсолютная траектория)')
+
+    O = np.array([0.0, 0.0, data['zp']])
+
+    all_points = np.vstack([np.column_stack([x_t, y_t, z_t]),
+                            [data['point']], [0,0,0], O])
+    min_vals = np.min(all_points, axis=0)
+    max_vals = np.max(all_points, axis=0)
+    max_range = np.max(max_vals - min_vals)
+    axis_length = max_range * 0.25
+
+    axis_ends = [[axis_length,0,0], [0,axis_length,0], [0,0,axis_length]]
+    red_ends = [O + np.array([axis_length,0,0]),
+                O + np.array([0,axis_length,0]),
+                O + np.array([0,0,axis_length])]
+    all_points = np.vstack([all_points, axis_ends, red_ends])
+    min_vals = np.min(all_points, axis=0)
+    max_vals = np.max(all_points, axis=0)
+    margin = 0.2
+    ax.set_xlim([min_vals[0]-margin, max_vals[0]+margin])
+    ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
+    ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
+
+    draw_axes(ax, origin=(0,0,0), length=axis_length, color='black',
+              labels=["X'", "Y'", "Z'"])
+    draw_axes(ax, origin=O, length=axis_length, color='red', labels=['X', 'Y', 'Z'])
+    ax.scatter(O[0], O[1], O[2], color='blue', s=40, label='O (начало подвижной)')
+    ax.text(O[0], O[1], O[2], ' O', color='blue', fontsize=10)
+
+    V_abs = data['V_abs']
+    V_norm = V_abs / (np.linalg.norm(V_abs) + 1e-8)
+    arrow_length = axis_length * 0.4
+    V_scaled = V_norm * arrow_length
+    ax.quiver(data['point'][0], data['point'][1], data['point'][2],
+              V_scaled[0], V_scaled[1], V_scaled[2],
+              color='purple', label='V_abs', arrow_length_ratio=0.03)
+    end = np.array(data['point']) + V_scaled
+    offset = V_norm * 0.1
+    text_pos = end + offset
+    ax.text(text_pos[0], text_pos[1], text_pos[2],
+            f'V_abs = {data["V_abs_mod"]:.2f}',
+            color='purple', fontsize=8, ha='center', va='center')
+
+    theta = np.linspace(0, -np.pi/2, 50)
+    radius = axis_length * 0.6
+    x_arc = O[0] + radius * np.cos(theta)
+    y_arc = O[1] + radius * np.sin(theta)
+    z_arc = O[2] + axis_length * 0.05
+    z_arc_arr = np.full_like(x_arc, z_arc)
+    ax.plot(x_arc, y_arc, z_arc_arr, color='green', linewidth=2)
+    arrow = Arrow3D([x_arc[-2], x_arc[-1]], [y_arc[-2], y_arc[-1]],
+                    [z_arc_arr[-2], z_arc_arr[-1]],
+                    mutation_scale=20, lw=2, arrowstyle='->', color='green')
+    ax.add_artist(arrow)
+    mid = len(theta)//2
+    ax.text(x_arc[mid], y_arc[mid], z_arc_arr[mid]+0.02, f'ω = {data["omega"]:.2f}',
+            color='green', fontsize=9)
+
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc='upper left')
+    plt.tight_layout()
+    plt.savefig(os.path.join('static', 'trajectory.png'), dpi=150)
+    plt.close()
+
+    # ---- 2. Скорости (статичные) ----
+    point = data['point']
+    vectors = [data['V_rel'], data['V_rot'], data['V_trans_post'], data['V_abs']]
+    colors = ['blue', 'green', 'orange', 'purple']
+    labels = ['V_rel', 'V_rot', 'V_trans_post', 'V_abs']
+    numeric_vals = [data['V_rel_mod'], data['V_rot_mod'],
+                    data['V_trans_post_mod'], data['V_abs_mod']]
+
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('Векторы скоростей в точке M')
+
+    ax.scatter(point[0], point[1], point[2], color='red', s=50, label='Point M')
+    for idx, (vec, color, label) in enumerate(zip(vectors, colors, labels)):
+        ax.quiver(point[0], point[1], point[2],
+                  vec[0], vec[1], vec[2],
+                  color=color, label=label, arrow_length_ratio=0.03)
+        if numeric_vals and idx < len(numeric_vals):
+            end = np.array(point) + vec
+            offset = vec / (np.linalg.norm(vec) + 1e-8) * 0.1
+            text_pos = end + offset
+            ax.text(text_pos[0], text_pos[1], text_pos[2],
+                    f'{label} = {numeric_vals[idx]:.2f}',
+                    color=color, fontsize=8, ha='center', va='center')
+
+    all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + [np.array([0,0,0])]
+    all_arr = np.array(all_points)
+    min_vals = np.min(all_arr, axis=0)
+    max_vals = np.max(all_arr, axis=0)
+    max_range = np.max(max_vals - min_vals)
+    axis_length = max_range * 0.25
+    axis_ends = [[axis_length,0,0], [0,axis_length,0], [0,0,axis_length]]
+    all_arr = np.vstack([all_arr, axis_ends])
+    min_vals = np.min(all_arr, axis=0)
+    max_vals = np.max(all_arr, axis=0)
+    margin = 0.2
+    ax.set_xlim([min_vals[0]-margin, max_vals[0]+margin])
+    ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
+    ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
+
+    draw_axes(ax, origin=(0,0,0), length=axis_length, color='black')
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc='upper left')
+    plt.tight_layout()
+    plt.savefig(os.path.join('static', 'velocities.png'), dpi=150)
+    plt.close()
+
+    # ---- 3. Ускорения (статичные) ----
+    vectors = [data['a_rel'], data['a_centr'], data['a_rot'],
+               data['a_trans_post'], data['a_cor'], data['a_abs']]
+    colors = ['blue', 'green', 'orange', 'brown', 'cyan', 'purple']
+    labels = ['a_rel', 'a_centr', 'a_rot', 'a_trans_post', 'a_cor', 'a_abs']
+    numeric_vals = [data['a_rel_mod'], data['a_centr_mod'], data['a_rot_mod'],
+                    data['a_trans_post_mod'], data['a_cor_mod'], data['a_abs_mod']]
+
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('Векторы ускорений в точке M')
+
+    ax.scatter(point[0], point[1], point[2], color='red', s=50, label='Point M')
+    for idx, (vec, color, label) in enumerate(zip(vectors, colors, labels)):
+        ax.quiver(point[0], point[1], point[2],
+                  vec[0], vec[1], vec[2],
+                  color=color, label=label, arrow_length_ratio=0.03)
+        if numeric_vals and idx < len(numeric_vals):
+            end = np.array(point) + vec
+            offset = vec / (np.linalg.norm(vec) + 1e-8) * 0.1
+            text_pos = end + offset
+            ax.text(text_pos[0], text_pos[1], text_pos[2],
+                    f'{label} = {numeric_vals[idx]:.2f}',
+                    color=color, fontsize=8, ha='center', va='center')
+
+    all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + [np.array([0,0,0])]
+    all_arr = np.array(all_points)
+    min_vals = np.min(all_arr, axis=0)
+    max_vals = np.max(all_arr, axis=0)
+    max_range = np.max(max_vals - min_vals)
+    axis_length = max_range * 0.25
+    axis_ends = [[axis_length,0,0], [0,axis_length,0], [0,0,axis_length]]
+    all_arr = np.vstack([all_arr, axis_ends])
+    min_vals = np.min(all_arr, axis=0)
+    max_vals = np.max(all_arr, axis=0)
+    margin = 0.2
+    ax.set_xlim([min_vals[0]-margin, max_vals[0]+margin])
+    ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
+    ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
+
+    draw_axes(ax, origin=(0,0,0), length=axis_length, color='black')
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc='upper left')
+    plt.tight_layout()
+    plt.savefig(os.path.join('static', 'accelerations.png'), dpi=150)
+    plt.close()
+
+
+# ==================== Интерактивные графики (Plotly) ====================
+
+import plotly.graph_objects as go
+import numpy as np
 
 def generate_interactive_trajectory(data):
     """Возвращает JSON для интерактивного графика траектории."""
@@ -68,8 +240,14 @@ def generate_interactive_trajectory(data):
         name='M (t=1)'
     ))
 
+    # Определяем длину осей
+    all_points = np.vstack([np.column_stack([x_t, y_t, z_t]), [data['point']], [0,0,0]])
+    min_vals = np.min(all_points, axis=0)
+    max_vals = np.max(all_points, axis=0)
+    max_range = np.max(max_vals - min_vals)
+    axis_len = max_range * 0.3
+
     # Неподвижные оси (чёрные)
-    axis_len = 3.0
     # Ось X'
     fig.add_trace(go.Scatter3d(
         x=[0, axis_len], y=[0,0], z=[0,0],
@@ -132,7 +310,7 @@ def generate_interactive_trajectory(data):
 
     # Вектор абсолютной скорости (масштабированный)
     V_abs = data['V_abs']
-    V_norm = V_abs / np.linalg.norm(V_abs)
+    V_norm = V_abs / (np.linalg.norm(V_abs) + 1e-8)
     arrow_len = axis_len * 0.4
     V_scaled = V_norm * arrow_len
     fig.add_trace(go.Scatter3d(
@@ -158,7 +336,7 @@ def generate_interactive_trajectory(data):
         line=dict(color='green', width=2),
         name='ω'
     ))
-    # Стрелка в конце дуги (короткая линия)
+    # Добавляем стрелку в конце дуги (просто линия)
     fig.add_trace(go.Scatter3d(
         x=[x_arc[-2], x_arc[-1]],
         y=[y_arc[-2], y_arc[-1]],
@@ -167,14 +345,15 @@ def generate_interactive_trajectory(data):
         line=dict(color='green', width=3),
         showlegend=False
     ))
-    # Текст ω
+    # Текст ω (используем annotation в 2D, но в 3D он не поддерживается; добавим как текст в точке)
     mid = len(theta)//2
-    fig.add_annotation(
-        x=x_arc[mid], y=y_arc[mid], z=z_arc[mid]+0.02,
-        text=f'ω = {data["omega"]:.2f}',
-        showarrow=False,
-        font=dict(color='green', size=10)
-    )
+    fig.add_trace(go.Scatter3d(
+        x=[x_arc[mid]], y=[y_arc[mid]], z=[z_arc[mid]+0.02],
+        mode='text',
+        text=[f'ω = {data["omega"]:.2f}'],
+        textfont=dict(color='green', size=10),
+        showlegend=False
+    ))
 
     fig.update_layout(
         title='Способ задания движения (абсолютная траектория)',
@@ -188,6 +367,7 @@ def generate_interactive_trajectory(data):
     )
     return fig.to_json()
 
+
 def generate_interactive_velocities(data):
     """Интерактивный график скоростей в новой системе координат (V_отн, a_cor, ω)."""
     point = data['point']
@@ -197,10 +377,10 @@ def generate_interactive_velocities(data):
     V_abs = data['V_abs']
 
     # Новые ортонормированные базисные векторы
-    e_x = V_rel / np.linalg.norm(V_rel)          # V_отн
-    e_z = np.array([0.0, 0.0, 1.0])              # ω
-    e_y = np.cross(e_z, e_x)                     # a_cor
-    e_y = e_y / np.linalg.norm(e_y)
+    e_x = V_rel / (np.linalg.norm(V_rel) + 1e-8)          # V_отн
+    e_z = np.array([0.0, 0.0, 1.0])                       # ω
+    e_y = np.cross(e_z, e_x)
+    e_y = e_y / (np.linalg.norm(e_y) + 1e-8)              # a_cor
     R = np.array([e_x, e_y, e_z])
 
     def transform(v):
@@ -226,8 +406,7 @@ def generate_interactive_velocities(data):
     vectors = [V_rel_new, V_rot_new, V_trans_new, V_abs_new]
     colors = ['blue', 'green', 'orange', 'purple']
     labels = ['V_rel', 'V_rot', 'V_trans_post', 'V_abs']
-    numeric_vals = [np.linalg.norm(V_rel), np.linalg.norm(V_rot),
-                    np.linalg.norm(V_trans), np.linalg.norm(V_abs)]
+    numeric_vals = [np.linalg.norm(v) for v in [V_rel, V_rot, V_trans, V_abs]]
     for vec, col, lab, val in zip(vectors, colors, labels, numeric_vals):
         fig.add_trace(go.Scatter3d(
             x=[point_new[0], point_new[0]+vec[0]],
@@ -241,7 +420,14 @@ def generate_interactive_velocities(data):
         ))
 
     # Оси новой системы (чёрные)
-    axis_len = 2.0
+    # Найдём масштаб для осей
+    all_pts = [point_new] + [point_new+v for v in vectors] + [np.zeros(3)]
+    all_arr = np.array(all_pts)
+    min_vals = np.min(all_arr, axis=0)
+    max_vals = np.max(all_arr, axis=0)
+    max_range = np.max(max_vals - min_vals)
+    axis_len = max_range * 0.25
+
     # Ось X (V_отн)
     fig.add_trace(go.Scatter3d(
         x=[point_new[0], point_new[0]+axis_len],
@@ -288,6 +474,7 @@ def generate_interactive_velocities(data):
     )
     return fig.to_json()
 
+
 def generate_interactive_accelerations(data):
     """Интерактивный график ускорений в новой системе координат (ω, a_cor, a_отн⊥)."""
     point = data['point']
@@ -300,9 +487,9 @@ def generate_interactive_accelerations(data):
 
     # Базис: e_z = ω, e_y = a_cor, e_x = e_y × e_z
     e_z = np.array([0.0, 0.0, 1.0])
-    e_y = a_cor / np.linalg.norm(a_cor)
+    e_y = a_cor / (np.linalg.norm(a_cor) + 1e-8)
     e_x = np.cross(e_y, e_z)
-    e_x = e_x / np.linalg.norm(e_x)
+    e_x = e_x / (np.linalg.norm(e_x) + 1e-8)
     R = np.array([e_x, e_y, e_z])
 
     def transform(v):
@@ -344,7 +531,13 @@ def generate_interactive_accelerations(data):
         ))
 
     # Оси новой системы (чёрные)
-    axis_len = 2.0
+    all_pts = [point_new] + [point_new+v for v in vectors] + [np.zeros(3)]
+    all_arr = np.array(all_pts)
+    min_vals = np.min(all_arr, axis=0)
+    max_vals = np.max(all_arr, axis=0)
+    max_range = np.max(max_vals - min_vals)
+    axis_len = max_range * 0.25
+
     # Ось X (a_отн⊥)
     fig.add_trace(go.Scatter3d(
         x=[point_new[0], point_new[0]+axis_len],
