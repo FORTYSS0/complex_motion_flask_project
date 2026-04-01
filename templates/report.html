@@ -3,100 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Отчёт: Сложное движение точки</title>
+    <title>Отчёт: Сложное движение точки (подробное решение)</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
     <style>
-        /* Дополнительные стили для адаптивности поверх style.css */
-        body {
-            margin: 0;
-            padding: 10px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f9f9f9;
-            color: #333;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h1 { font-size: 1.8rem; }
-        h2 { font-size: 1.5rem; }
-        h3 { font-size: 1.2rem; }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-        .btn {
-            display: inline-block;
-            padding: 10px 16px;
-            background-color: #0066cc;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 500;
-            transition: background 0.2s;
-            text-align: center;
-            min-width: 100px;
-        }
+        body { margin: 0; padding: 10px; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f9f9f9; color: #333; line-height: 1.5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1, h2, h3 { color: #0066cc; }
+        .btn-group { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-bottom: 20px; }
+        .btn { display: inline-block; padding: 10px 16px; background-color: #0066cc; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; transition: background 0.2s; text-align: center; min-width: 100px; }
         .btn:hover { background-color: #004c99; }
         .btn-green { background-color: #28a745; }
         .btn-green:hover { background-color: #1e7e34; }
-        .formula {
-            background: #f0f0f0;
-            padding: 10px;
-            border-radius: 5px;
-            overflow-x: auto;
-            margin: 10px 0;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            overflow-x: auto;
-            display: block;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
+        .formula { background: #f0f0f0; padding: 10px; border-radius: 5px; overflow-x: auto; margin: 10px 0; }
+        .explanation { background: #e8f4fd; padding: 10px; border-left: 4px solid #0066cc; margin: 15px 0; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; overflow-x: auto; display: block; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #0066cc; color: white; }
-        .graph {
-            text-align: center;
-            margin: 20px 0;
-        }
-        .graph img {
-            max-width: 100%;
-            height: auto;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .footer {
-            font-size: 0.9em;
-            color: #777;
-            text-align: center;
-            margin-top: 30px;
-            border-top: 1px solid #eee;
-            padding-top: 10px;
-        }
+        .graph { text-align: center; margin: 20px 0; }
+        .graph img { max-width: 100%; height: auto; border: 1px solid #ccc; border-radius: 5px; }
+        .footer { font-size: 0.9em; color: #777; text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
         @media (max-width: 768px) {
             .container { padding: 10px; }
             h1 { font-size: 1.5rem; }
-            h2 { font-size: 1.3rem; }
-            .btn { padding: 8px 12px; min-width: 80px; font-size: 0.9rem; }
-            th, td { padding: 6px; font-size: 0.85rem; }
-            .formula { font-size: 0.9rem; }
+            .btn { padding: 8px 12px; min-width: 80px; }
         }
         @media (max-width: 480px) {
             .btn-group { justify-content: center; }
             .btn { flex: 1; text-align: center; }
-            th, td { font-size: 0.75rem; }
         }
     </style>
 </head>
@@ -106,100 +40,215 @@
         <a href="/export/pdf" class="btn">Скачать PDF</a>
         <a href="/export/word" class="btn btn-green">Скачать Word</a>
     </div>
-    <h1>Отчёт по сложному движению точки</h1>
+    <h1>Отчёт по сложному движению точки (подробное решение)</h1>
     <p><strong>Бригада 2</strong>, момент времени \( t = {{ data.t }} \)</p>
 
-    <h2>1. Исходные данные</h2>
-    <div class="formula">
+    <!-- ----------------------------------------------------------------- -->
+    <h2>1. Исходные данные и условия задачи</h2>
+    <div class="explanation">
+        <p>Нам дана точка, которая движется в подвижной системе координат \(xOy\) по закону:</p>
         \[
-        \begin{cases}
-        x(t) = {{ formulas.x }} \\[4pt]
-        y(t) = {{ formulas.y }} \\[4pt]
-        t = {{ data.t }}
-        \end{cases}
+        x(t) = 8\cos\left(\frac{\pi t^2}{3}\right), \qquad 
+        y(t) = 16\sin\left(\frac{\pi t^2}{3}\right)
+        \]
+        <p>Это <strong>относительное движение</strong>. Одновременно подвижная система \(xOy\) перемещается относительно неподвижной \(x'O'y'\):</p>
+        \[
+        z'(t) = 2t^2 + 4, \qquad \varphi'(t) = 2\sin(\pi t)
+        \]
+        <p>Здесь \(z'(t)\) – смещение начала \(O\) по вертикали (ось \(z'\)), а \(\varphi'(t)\) – угол поворота подвижных осей вокруг вертикальной оси. В момент времени \(t=1\) нужно найти:</p>
+        <ul>
+            <li>скорость и ускорение точки в абсолютном (неподвижном) пространстве;</li>
+            <li>радиус кривизны абсолютной траектории;</li>
+            <li>построить графики.</li>
+        </ul>
+    </div>
+
+    <!-- ----------------------------------------------------------------- -->
+    <h2>2. Относительное движение (в подвижной системе \(xOy\))</h2>
+    <div class="explanation">
+        <p>Подвижная система вращается и движется поступательно, но в ней точка имеет координаты:</p>
+        \[
+        x(t) = 8\cos\left(\frac{\pi t^2}{3}\right), \quad
+        y(t) = 16\sin\left(\frac{\pi t^2}{3}\right)
+        \]
+        <p>Найдём скорость и ускорение в относительном движении. Это просто производные по времени.</p>
+    </div>
+
+    <h3>Скорость точки относительно подвижной системы</h3>
+    <div class="formula">
+        <p>Производная от косинуса: \(\frac{d}{dt}\cos(u) = -\sin(u) \cdot \frac{du}{dt}\). Здесь \(u = \frac{\pi t^2}{3}\), \(\frac{du}{dt} = \frac{2\pi t}{3}\).</p>
+        \[
+        \dot x = 8 \cdot \left[ -\sin\left(\frac{\pi t^2}{3}\right) \cdot \frac{2\pi t}{3} \right]
+        = -\frac{16\pi t}{3} \sin\left(\frac{\pi t^2}{3}\right)
+        \]
+        <p>Аналогично для \(y\): \(\frac{d}{dt}\sin(u) = \cos(u) \cdot \frac{du}{dt}\).</p>
+        \[
+        \dot y = 16 \cdot \left[ \cos\left(\frac{\pi t^2}{3}\right) \cdot \frac{2\pi t}{3} \right]
+        = \frac{32\pi t}{3} \cos\left(\frac{\pi t^2}{3}\right)
+        \]
+        <p>Подставляем \(t = {{ data.t }}\):</p>
+        \[
+        \dot x = -\frac{16\pi}{3} \sin\left(\frac{\pi}{3}\right) = -\frac{16\pi}{3} \cdot \frac{\sqrt{3}}{2}
+        = -\frac{8\pi\sqrt{3}}{3} \approx {{ "%.4f"|format(data.V_rel[0]) }}
         \]
         \[
-        \begin{cases}
-        z'(t) = {{ formulas.zp }} \\[4pt]
-        \varphi'(t) = {{ formulas.phi }}
-        \end{cases}
+        \dot y = \frac{32\pi}{3} \cos\left(\frac{\pi}{3}\right) = \frac{32\pi}{3} \cdot \frac{1}{2}
+        = \frac{16\pi}{3} \approx {{ "%.4f"|format(data.V_rel[1]) }}
+        \]
+        <p>Модуль относительной скорости:</p>
+        \[
+        V_{\text{отн}} = \sqrt{\dot x^2 + \dot y^2}
+        = \sqrt{\left(-\frac{8\pi\sqrt{3}}{3}\right)^2 + \left(\frac{16\pi}{3}\right)^2}
+        = \frac{8\pi}{3}\sqrt{3 + 4} = \frac{8\pi\sqrt{7}}{3} \approx {{ "%.4f"|format(data.V_rel_mod) }}
         \]
     </div>
 
-    <h2>2. Относительное движение (в подвижной системе)</h2>
-    <p>Скорость точки в относительном движении:</p>
+    <h3>Ускорение точки относительно подвижной системы</h3>
     <div class="formula">
+        <p>Вторая производная. Сначала для \(x\):</p>
         \[
-        \dot x = {{ formulas.dxdt }},\quad
-        \dot y = {{ formulas.dydt }}
+        \ddot x = \frac{d}{dt}\left( -\frac{16\pi t}{3} \sin\left(\frac{\pi t^2}{3}\right) \right)
+        = -\frac{16\pi}{3}\sin\left(\frac{\pi t^2}{3}\right)
+        - \frac{16\pi t}{3}\cos\left(\frac{\pi t^2}{3}\right)\cdot\frac{2\pi t}{3}
+        = -\frac{16\pi}{3}\sin\left(\frac{\pi t^2}{3}\right)
+        - \frac{32\pi^2 t^2}{9}\cos\left(\frac{\pi t^2}{3}\right)
         \]
-        При \( t = {{ data.t }} \):
+        <p>Для \(y\):</p>
         \[
-        \dot x = {{ "%.4f"|format(data.V_rel[0]) }},\quad
-        \dot y = {{ "%.4f"|format(data.V_rel[1]) }},\quad
-        V_{\text{отн}} = \sqrt{\dot x^2 + \dot y^2} = {{ "%.4f"|format(data.V_rel_mod) }}
+        \ddot y = \frac{d}{dt}\left( \frac{32\pi t}{3} \cos\left(\frac{\pi t^2}{3}\right) \right)
+        = \frac{32\pi}{3}\cos\left(\frac{\pi t^2}{3}\right)
+        - \frac{32\pi t}{3}\sin\left(\frac{\pi t^2}{3}\right)\cdot\frac{2\pi t}{3}
+        = \frac{32\pi}{3}\cos\left(\frac{\pi t^2}{3}\right)
+        - \frac{64\pi^2 t^2}{9}\sin\left(\frac{\pi t^2}{3}\right)
         \]
-    </div>
-    <p>Ускорение в относительном движении:</p>
-    <div class="formula">
+        <p>Подставляем \(t=1\):</p>
         \[
-        \ddot x = {{ formulas.d2xdt2 }},\quad
-        \ddot y = {{ formulas.d2ydt2 }}
+        \ddot x(1) = -\frac{8\pi\sqrt{3}}{3} - \frac{32\pi^2}{9} \cdot \frac12 = -\frac{8\pi\sqrt{3}}{3} - \frac{16\pi^2}{9} \approx {{ "%.4f"|format(data.a_rel[0]) }}
         \]
-        При \( t = {{ data.t }} \):
         \[
-        \ddot x = {{ "%.4f"|format(data.a_rel[0]) }},\quad
-        \ddot y = {{ "%.4f"|format(data.a_rel[1]) }}
-        \]
-    </div>
-
-    <h2>3. Переносное движение (движение системы отсчёта)</h2>
-    <p>Поступательное движение начала \( O \):</p>
-    <div class="formula">
-        \[
-        z'(t) = {{ formulas.zp }},\quad \dot z' = {{ formulas.dzpdt }},\quad \ddot z' = {{ formulas.d2zpdt2 }}
-        \]
-        При \( t = {{ data.t }} \):
-        \[
-        \dot z' = {{ "%.4f"|format(data.dzpdt) }},\quad \ddot z' = {{ "%.4f"|format(data.d2zpdt2) }}
-        \]
-    </div>
-    <p>Вращательное движение:</p>
-    <div class="formula">
-        \[
-        \varphi'(t) = {{ formulas.phi }},\quad \dot\varphi' = {{ formulas.dphi_dt }},\quad \ddot\varphi' = {{ formulas.d2phi_dt2 }}
-        \]
-        При \( t = {{ data.t }} \):
-        \[
-        \varphi' = {{ "%.4f"|format(data.phi) }},\quad
-        \omega = \dot\varphi' = {{ "%.4f"|format(data.omega) }},\quad
-        \alpha = \ddot\varphi' = {{ "%.4f"|format(data.alpha) }}
+        \ddot y(1) = \frac{16\pi}{3} - \frac{64\pi^2}{9} \cdot \frac{\sqrt{3}}{2} = \frac{16\pi}{3} - \frac{32\pi^2\sqrt{3}}{9} \approx {{ "%.4f"|format(data.a_rel[1]) }}
         \]
     </div>
 
-    <h2>4. Кинематические характеристики сложного движения</h2>
-    <h3>Абсолютная скорость</h3>
+    <!-- ----------------------------------------------------------------- -->
+    <h2>3. Переносное движение (движение подвижной системы)</h2>
+    <div class="explanation">
+        <p>Подвижная система движется двумя способами:</p>
+        <ul>
+            <li><strong>Поступательно</strong> – её начало \(O\) перемещается по вертикали по закону \(z'(t) = 2t^2 + 4\).</li>
+            <li><strong>Вращательно</strong> – система поворачивается вокруг вертикальной оси \(Z'\) на угол \(\varphi'(t) = 2\sin(\pi t)\).</li>
+        </ul>
+    </div>
+
+    <h3>Поступательная часть</h3>
     <div class="formula">
         \[
-        \mathbf{V}_{\text{абс}} = \mathbf{V}_{\text{отн}} + \mathbf{V}_{\text{пер,пост}} + \mathbf{V}_{\text{пер,вр}}
+        z'(t) = 2t^2 + 4, \quad \dot z'(t) = 4t, \quad \ddot z'(t) = 4
         \]
+        При \(t=1\):
+        \[
+        \dot z' = 4 \ \text{м/с}, \quad \ddot z' = 4 \ \text{м/с}^2
+        \]
+        Скорость поступательного переноса: \(\mathbf{V}_{\text{пер,пост}} = (0,0,4)\).
+        Ускорение: \(\mathbf{a}_{\text{пер,пост}} = (0,0,4)\).
+    </div>
+
+    <h3>Вращательная часть</h3>
+    <div class="formula">
+        <p>Угловая скорость и угловое ускорение:</p>
+        \[
+        \varphi'(t) = 2\sin(\pi t) \;\Rightarrow\; \omega = \dot\varphi' = 2\pi\cos(\pi t), \quad
+        \alpha = \ddot\varphi' = -2\pi^2\sin(\pi t)
+        \]
+        При \(t=1\):
+        \[
+        \omega = 2\pi\cos\pi = -2\pi \ \text{рад/с}, \quad \alpha = -2\pi^2\sin\pi = 0
+        \]
+        <p>Вектор угловой скорости направлен вдоль оси \(Z\): \(\boldsymbol{\omega} = (0,0,\omega)\).</p>
+    </div>
+
+    <div class="explanation">
+        <p>Радиус-вектор точки \(M\) в подвижной системе в момент \(t=1\):</p>
+        \[
+        \mathbf{r}_{\text{отн}} = (x(1), y(1), 0) = (4,\ 8\sqrt{3},\ 0)
+        \]
+    </div>
+
+    <h3>Переносная скорость (вращательная)</h3>
+    <div class="formula">
         \[
         \mathbf{V}_{\text{пер,вр}} = \boldsymbol{\omega} \times \mathbf{r}_{\text{отн}}
         \]
-        Вычисленные компоненты:
         \[
-        \mathbf{V}_{\text{отн}} = ({{ "%.4f"|format(data.V_rel[0]) }},\ {{ "%.4f"|format(data.V_rel[1]) }},\ 0)
+        \begin{vmatrix}
+        \mathbf{i} & \mathbf{j} & \mathbf{k}\\
+        0 & 0 & -2\pi\\
+        4 & 8\sqrt{3} & 0
+        \end{vmatrix}
+        = (16\pi\sqrt{3},\ -8\pi,\ 0) \approx ({{ "%.4f"|format(data.V_rot[0]) }}, {{ "%.4f"|format(data.V_rot[1]) }}, 0)
+        \]
+        Модуль: \(V_{\text{вр}} = \sqrt{(16\pi\sqrt{3})^2 + (-8\pi)^2} = 8\pi\sqrt{12+1} = 8\pi\sqrt{13} \approx {{ "%.4f"|format(data.V_rot_mod) }}\).
+    </div>
+
+    <h3>Переносное ускорение</h3>
+    <div class="formula">
+        <p>Центростремительное (нормальное) ускорение:</p>
+        \[
+        \mathbf{a}_{\text{пер,ц}} = -\omega^2 \mathbf{r}_{\text{отн}} = - (2\pi)^2 (4,\ 8\sqrt{3},\ 0) = (-16\pi^2,\ -32\pi^2\sqrt{3},\ 0)
+        \]
+        <p>Вращательное (тангенциальное) ускорение: \(\mathbf{a}_{\text{пер,вр}} = \boldsymbol{\alpha} \times \mathbf{r}_{\text{отн}} = 0\), так как \(\alpha=0\).</p>
+        <p>Поступательное ускорение: \(\mathbf{a}_{\text{пер,пост}} = (0,0,4)\).</p>
+        <p>Суммируем:</p>
+        \[
+        \mathbf{a}_{\text{пер}} = \mathbf{a}_{\text{пер,ц}} + \mathbf{a}_{\text{пер,вр}} + \mathbf{a}_{\text{пер,пост}}
+        = \left(-16\pi^2,\ -32\pi^2\sqrt{3},\ 4\right) \approx ({{ "%.4f"|format(data.a_centr[0]) }},\ {{ "%.4f"|format(data.a_centr[1]) }},\ 4)
+        \]
+    </div>
+
+    <!-- ----------------------------------------------------------------- -->
+    <h2>4. Сложное движение (абсолютные скорость и ускорение)</h2>
+    <div class="explanation">
+        <p>Теорема сложения скоростей: \(\mathbf{V}_{\text{абс}} = \mathbf{V}_{\text{отн}} + \mathbf{V}_{\text{пер,пост}} + \mathbf{V}_{\text{пер,вр}}\).</p>
+        <p>Теорема сложения ускорений (с учётом вращения): \(\mathbf{a}_{\text{абс}} = \mathbf{a}_{\text{отн}} + \mathbf{a}_{\text{пер}} + \mathbf{a}_{\text{кор}}\), где \(\mathbf{a}_{\text{кор}} = 2\,\boldsymbol{\omega}\times\mathbf{V}_{\text{отн}}\).</p>
+    </div>
+
+    <h3>Абсолютная скорость</h3>
+    <div class="formula">
+        \[
+        \mathbf{V}_{\text{отн}} = \left(-\frac{8\pi\sqrt{3}}{3},\ \frac{16\pi}{3},\ 0\right),\quad
+        \mathbf{V}_{\text{пер,пост}} = (0,0,4),\quad
+        \mathbf{V}_{\text{пер,вр}} = \left(16\pi\sqrt{3},\ -8\pi,\ 0\right)
+        \]
+        Складываем покомпонентно:
+        \[
+        V_x = -\frac{8\pi\sqrt{3}}{3} + 16\pi\sqrt{3} = \frac{40\pi\sqrt{3}}{3} \approx {{ "%.4f"|format(data.V_abs[0]) }}
         \]
         \[
-        \mathbf{V}_{\text{пер,вр}} = ({{ "%.4f"|format(data.V_rot[0]) }},\ {{ "%.4f"|format(data.V_rot[1]) }},\ {{ "%.4f"|format(data.V_rot[2]) }})
+        V_y = \frac{16\pi}{3} - 8\pi = -\frac{8\pi}{3} \approx {{ "%.4f"|format(data.V_abs[1]) }}
         \]
         \[
-        \mathbf{V}_{\text{пер,пост}} = (0,0,{{ "%.4f"|format(data.V_trans_post[2]) }})
+        V_z = 0 + 4 + 0 = 4
         \]
+        Модуль:
         \[
-        \mathbf{V}_{\text{абс}} = ({{ "%.4f"|format(data.V_abs[0]) }},\ {{ "%.4f"|format(data.V_abs[1]) }},\ {{ "%.4f"|format(data.V_abs[2]) }})
+        V_{\text{абс}} = \sqrt{\left(\frac{40\pi\sqrt{3}}{3}\right)^2 + \left(-\frac{8\pi}{3}\right)^2 + 4^2}
+        = \sqrt{\frac{4800\pi^2}{9} + \frac{64\pi^2}{9} + 16} = \sqrt{\frac{4864\pi^2}{9}+16} \approx {{ "%.4f"|format(data.V_abs_mod) }}
         \]
-        Модуль: \( V_{\text{абс}} = {{ "%.4f"|format(data.V_abs_mod) }} \) м/с.
+    </div>
+
+    <h3>Ускорение Кориолиса</h3>
+    <div class="formula">
+        \[
+        \mathbf{a}_{\text{кор}} = 2\,\boldsymbol{\omega}\times\mathbf{V}_{\text{отn}}
+        = 2 \begin{vmatrix}
+        \mathbf{i} & \mathbf{j} & \mathbf{k}\\
+        0 & 0 & -2\pi\\
+        -\frac{8\pi\sqrt{3}}{3} & \frac{16\pi}{3} & 0
+        \end{vmatrix}
+        = 2\left(\frac{32\pi^2}{3},\ \frac{16\pi^2\sqrt{3}}{3},\ 0\right)
+        = \left(\frac{64\pi^2}{3},\ \frac{32\pi^2\sqrt{3}}{3},\ 0\right) \approx ({{ "%.4f"|format(data.a_cor[0]) }},\ {{ "%.4f"|format(data.a_cor[1]) }},\ 0)
+        \]
+        Модуль: \(a_{\text{кор}} = \sqrt{\left(\frac{64\pi^2}{3}\right)^2 + \left(\frac{32\pi^2\sqrt{3}}{3}\right)^2} = \frac{32\pi^2}{3}\sqrt{4+3} = \frac{32\pi^2\sqrt{7}}{3} \approx {{ "%.4f"|format(data.a_cor_mod) }}\).
     </div>
 
     <h3>Абсолютное ускорение</h3>
@@ -208,62 +257,69 @@
         \mathbf{a}_{\text{абс}} = \mathbf{a}_{\text{отн}} + \mathbf{a}_{\text{пер}} + \mathbf{a}_{\text{кор}}
         \]
         \[
-        \mathbf{a}_{\text{пер}} = \mathbf{a}_{\text{пер,пост}} + \mathbf{a}_{\text{пер,ц}} + \mathbf{a}_{\text{пер,вр}}
+        \mathbf{a}_{\text{отн}} = \left(-\frac{8\pi\sqrt{3}}{3}-\frac{16\pi^2}{9},\ \frac{16\pi}{3}-\frac{32\pi^2\sqrt{3}}{9},\ 0\right)
         \]
         \[
-        \mathbf{a}_{\text{пер,ц}} = -\omega^2 \mathbf{r}_{\text{отн}},\quad
-        \mathbf{a}_{\text{пер,вр}} = \boldsymbol{\alpha} \times \mathbf{r}_{\text{отn}}
+        \mathbf{a}_{\text{пер}} = \left(-16\pi^2,\ -32\pi^2\sqrt{3},\ 4\right)
         \]
         \[
-        \mathbf{a}_{\text{кор}} = 2\,\boldsymbol{\omega} \times \mathbf{V}_{\text{отн}}
+        \mathbf{a}_{\text{кор}} = \left(\frac{64\pi^2}{3},\ \frac{32\pi^2\sqrt{3}}{3},\ 0\right)
         \]
-        Компоненты:
+        Складываем:
         \[
-        \mathbf{a}_{\text{отн}} = ({{ "%.4f"|format(data.a_rel[0]) }},\ {{ "%.4f"|format(data.a_rel[1]) }},\ 0)
-        \]
-        \[
-        \mathbf{a}_{\text{пер,ц}} = ({{ "%.4f"|format(data.a_centr[0]) }},\ {{ "%.4f"|format(data.a_centr[1]) }},\ {{ "%.4f"|format(data.a_centr[2]) }})
-        \]
-        \[
-        \mathbf{a}_{\text{пер,вр}} = ({{ "%.4f"|format(data.a_rot[0]) }},\ {{ "%.4f"|format(data.a_rot[1]) }},\ {{ "%.4f"|format(data.a_rot[2]) }})
+        a_x = -\frac{8\pi\sqrt{3}}{3} - \frac{16\pi^2}{9} - 16\pi^2 + \frac{64\pi^2}{3}
+        = -\frac{8\pi\sqrt{3}}{3} + \left(-\frac{16\pi^2}{9} - 16\pi^2 + \frac{192\pi^2}{9}\right)
+        = -\frac{8\pi\sqrt{3}}{3} + \frac{32\pi^2}{9} \approx {{ "%.4f"|format(data.a_abs[0]) }}
         \]
         \[
-        \mathbf{a}_{\text{пер,пост}} = (0,0,{{ "%.4f"|format(data.a_trans_post[2]) }})
+        a_y = \frac{16\pi}{3} - \frac{32\pi^2\sqrt{3}}{9} - 32\pi^2\sqrt{3} + \frac{32\pi^2\sqrt{3}}{3}
+        = \frac{16\pi}{3} + \left(-\frac{32\pi^2\sqrt{3}}{9} - 32\pi^2\sqrt{3} + \frac{96\pi^2\sqrt{3}}{9}\right)
+        = \frac{16\pi}{3} - \frac{224\pi^2\sqrt{3}}{9} \approx {{ "%.4f"|format(data.a_abs[1]) }}
         \]
         \[
-        \mathbf{a}_{\text{кор}} = ({{ "%.4f"|format(data.a_cor[0]) }},\ {{ "%.4f"|format(data.a_cor[1]) }},\ {{ "%.4f"|format(data.a_cor[2]) }})
+        a_z = 0 + 4 + 0 = 4
         \]
-        \[
-        \mathbf{a}_{\text{абс}} = ({{ "%.4f"|format(data.a_abs[0]) }},\ {{ "%.4f"|format(data.a_abs[1]) }},\ {{ "%.4f"|format(data.a_abs[2]) }})
-        \]
-        Модуль: \( a_{\text{абс}} = {{ "%.4f"|format(data.a_abs_mod) }} \) м/с².
+        Модуль: \(a_{\text{абс}} \approx {{ "%.4f"|format(data.a_abs_mod) }}\) м/с².
     </div>
 
-    <h3>Радиус кривизны абсолютной траектории</h3>
-    <div class="formula">
+    <!-- ----------------------------------------------------------------- -->
+    <h2>5. Радиус кривизны абсолютной траектории</h2>
+    <div class="explanation">
+        <p>Радиус кривизны пространственной кривой вычисляется по формуле:</p>
         \[
         \rho = \frac{V_{\text{абс}}^3}{|\mathbf{V}_{\text{абс}} \times \mathbf{a}_{\text{абс}}|}
         \]
+        <p>Модуль векторного произведения:</p>
+        \[
+        |\mathbf{V}\times\mathbf{a}| = \sqrt{(V_y a_z - V_z a_y)^2 + (V_z a_x - V_x a_z)^2 + (V_x a_y - V_y a_x)^2}
+        \]
+        <p>После подстановки и вычислений получаем:</p>
         \[
         \rho \approx {{ "%.4f"|format(data.rho) }} \ \text{м}
         \]
+        <p>Это значение показывает, насколько траектория искривлена: чем меньше радиус, тем сильнее изгиб.</p>
     </div>
 
-    <h2>5. Графическое представление</h2>
+    <!-- ----------------------------------------------------------------- -->
+    <h2>6. Графическое представление</h2>
     <div class="graph">
-        <h3>Способ задания движения (абсолютная траектория)</h3>
+        <h3>Рис. 1. Абсолютная траектория точки (неподвижная система \(X',Y',Z'\))</h3>
         <img src="{{ url_for('static', filename='trajectory.png') }}" alt="Траектория">
+        <p><em>Красные оси – подвижная система \(X,Y,Z\) из точки \(O\). Зелёная дуга – направление вращения (угловая скорость \(\omega\)). Фиолетовый вектор – абсолютная скорость (масштабирован для наглядности).</em></p>
     </div>
     <div class="graph">
-        <h3>Векторы скоростей в точке M</h3>
+        <h3>Рис. 2. Векторы скоростей в точке \(M\) (оси: \(V_{\text{отн}},\ a_{\text{cor}},\ \omega\))</h3>
         <img src="{{ url_for('static', filename='velocities.png') }}" alt="Скорости">
+        <p><em>Все векторы пересчитаны в систему координат, где оси направлены вдоль относительной скорости, ускорения Кориолиса и угловой скорости.</em></p>
     </div>
     <div class="graph">
-        <h3>Векторы ускорений в точке M</h3>
+        <h3>Рис. 3. Векторы ускорений в точке \(M\) (оси: \(\omega,\ a_{\text{cor}},\ a_{\text{отн}}\))</h3>
         <img src="{{ url_for('static', filename='accelerations.png') }}" alt="Ускорения">
+        <p><em>Аналогично, ускорения показаны в системе, где оси совпадают с направлениями \(\omega\), \(a_{\text{cor}}\) и перпендикулярной компонентой \(a_{\text{отн}}\).</em></p>
     </div>
 
-    <h2>6. Итоговая таблица результатов</h2>
+    <!-- ----------------------------------------------------------------- -->
+    <h2>7. Итоговая таблица результатов</h2>
     <div style="overflow-x: auto;">
         <table>
             <thead>
@@ -287,7 +343,8 @@
     </div>
 
     <div class="footer">
-        Отчёт сгенерирован автоматически. Все расчёты выполнены для момента времени \( t = {{ data.t }} \).
+        Отчёт сгенерирован автоматически. Все расчёты выполнены для момента времени \( t = {{ data.t }} \).<br>
+        Подробные выкладки позволяют проследить каждый этап решения.
     </div>
 </div>
 </body>
