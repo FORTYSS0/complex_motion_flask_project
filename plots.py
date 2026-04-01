@@ -39,7 +39,6 @@ def plot_vectors(title, point, vectors, colors, labels, filename, numeric_values
         # Подпись с числовым значением, если передано
         if numeric_values and idx < len(numeric_values):
             end = np.array(point) + vec
-            # Небольшое смещение вдоль вектора
             offset = vec / (np.linalg.norm(vec) + 1e-8) * 0.1
             text_pos = end + offset
             ax.text(text_pos[0], text_pos[1], text_pos[2],
@@ -120,14 +119,18 @@ def generate_all_plots(data):
     draw_axes(ax, origin=(0,0,0), length=axis_length, color='black')
     ax.grid(True, alpha=0.3)
 
-    # Добавляем вектор абсолютной скорости в точке M
+    # Добавляем вектор абсолютной скорости в точке M (нормированный, короткий)
     V_abs = data['V_abs']
+    # Нормируем вектор скорости и делаем его длину = axis_length * 0.4 (небольшая, для направления)
+    V_norm = V_abs / (np.linalg.norm(V_abs) + 1e-8)
+    arrow_length = axis_length * 0.4
+    V_scaled = V_norm * arrow_length
     ax.quiver(data['point'][0], data['point'][1], data['point'][2],
-              V_abs[0], V_abs[1], V_abs[2],
-              color='purple', label='V_abs', arrow_length_ratio=0.02)   # уменьшено с 0.03
-    # Подпись с числовым значением
-    end = np.array(data['point']) + V_abs
-    offset = V_abs / (np.linalg.norm(V_abs) + 1e-8) * 0.1
+              V_scaled[0], V_scaled[1], V_scaled[2],
+              color='purple', label='V_abs', arrow_length_ratio=0.03)
+    # Подпись с числовым значением (реальное)
+    end = np.array(data['point']) + V_scaled
+    offset = V_norm * 0.1  # смещение вдоль направления
     text_pos = end + offset
     ax.text(text_pos[0], text_pos[1], text_pos[2],
             f'V_abs = {data["V_abs_mod"]:.2f}',
