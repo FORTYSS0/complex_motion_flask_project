@@ -87,7 +87,6 @@ def generate_all_plots(data):
             f'V_abs = {data["V_abs_mod"]:.2f}',
             color='purple', fontsize=8, ha='center', va='center')
 
-    # Дуга вращения
     theta = np.linspace(0, -np.pi/2, 50)
     radius = axis_length * 0.6
     x_arc = O[0] + radius * np.cos(theta)
@@ -110,7 +109,7 @@ def generate_all_plots(data):
     plt.close()
 
     # ------------------------------------------------------------
-    # 2. Скорости (без осей, базис ω, a_кор, V_отн)
+    # 2. Скорости (базис: ω, a_кор, V_отн)
     # ------------------------------------------------------------
     point = data['point']
     vectors = [data['V_rel'], data['V_rot'], data['V_trans_post'], data['V_abs']]
@@ -121,13 +120,18 @@ def generate_all_plots(data):
 
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(111, projection='3d')
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
     ax.set_title('Векторы скоростей в точке M')
+    # Убираем подписи осей, т.к. оси заменены базисными векторами
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+    ax.set_zlabel('')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_zticks([])
 
     ax.scatter(point[0], point[1], point[2], color='red', s=50, label='Point M')
 
+    # Реальные векторы скоростей
     for idx, (vec, color, label) in enumerate(zip(vectors, colors, labels)):
         ax.quiver(point[0], point[1], point[2],
                   vec[0], vec[1], vec[2],
@@ -140,47 +144,48 @@ def generate_all_plots(data):
                     f'{label} = {numeric_vals[idx]:.2f}',
                     color=color, fontsize=8, ha='center', va='center')
 
-    # Базисные векторы
+    # Базисные векторы (оси координат)
     omega_vec = np.array([0.0, 0.0, data['omega']])
     a_cor_vec = data['a_cor']
     V_rel_vec = data['V_rel']
 
+    # Определяем масштаб для базисных векторов (чтобы они были видны, но не мешали)
     all_points_for_scale = [np.array(point)] + [np.array(point) + v for v in vectors] + [np.array([0,0,0])]
     all_arr = np.array(all_points_for_scale)
     max_range = np.max(np.max(all_arr, axis=0) - np.min(all_arr, axis=0))
-    basis_length = max_range * 0.25
+    basis_length = max_range * 0.3   # чуть больше, чем раньше, чтобы были заметны
 
     def scaled_basis(vec, target_length):
         if np.linalg.norm(vec) < 1e-8:
             return np.zeros(3)
         return vec / np.linalg.norm(vec) * target_length
 
-    omega_basis = scaled_basis(omega_vec, basis_length * 0.3)
+    omega_basis = scaled_basis(omega_vec, basis_length * 0.4)   # ω короче, т.к. вертикальный
     a_cor_basis = scaled_basis(a_cor_vec, basis_length)
     V_rel_basis = scaled_basis(V_rel_vec, basis_length)
 
     ax.quiver(point[0], point[1], point[2],
               omega_basis[0], omega_basis[1], omega_basis[2],
-              color='magenta', label='ω (basis)', arrow_length_ratio=0.05)
+              color='black', label='ω (ось)', arrow_length_ratio=0.05, linewidth=2)
     end_omega = np.array(point) + omega_basis
-    ax.text(end_omega[0], end_omega[1], end_omega[2],
-            f'ω = {data["omega"]:.2f}', color='magenta', fontsize=8)
+    ax.text(end_omega[0], end_omega[1], end_omega[2], 'ω',
+            color='black', fontsize=10, ha='center', va='center')
 
     ax.quiver(point[0], point[1], point[2],
               a_cor_basis[0], a_cor_basis[1], a_cor_basis[2],
-              color='cyan', label='a_кор (basis)', arrow_length_ratio=0.05)
+              color='black', label='a_кор (ось)', arrow_length_ratio=0.05, linewidth=2)
     end_acor = np.array(point) + a_cor_basis
-    ax.text(end_acor[0], end_acor[1], end_acor[2],
-            f'a_кор = {data["a_cor_mod"]:.2f}', color='cyan', fontsize=8)
+    ax.text(end_acor[0], end_acor[1], end_acor[2], 'a_кор',
+            color='black', fontsize=10, ha='center', va='center')
 
     ax.quiver(point[0], point[1], point[2],
               V_rel_basis[0], V_rel_basis[1], V_rel_basis[2],
-              color='lime', label='V_отн (basis)', arrow_length_ratio=0.05)
+              color='black', label='V_отн (ось)', arrow_length_ratio=0.05, linewidth=2)
     end_vrel = np.array(point) + V_rel_basis
-    ax.text(end_vrel[0], end_vrel[1], end_vrel[2],
-            f'V_отн = {data["V_rel_mod"]:.2f}', color='lime', fontsize=8)
+    ax.text(end_vrel[0], end_vrel[1], end_vrel[2], 'V_отн',
+            color='black', fontsize=10, ha='center', va='center')
 
-    # Лимиты
+    # Лимиты с учётом всех векторов
     all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + \
                  [np.array(point) + omega_basis, np.array(point) + a_cor_basis, np.array(point) + V_rel_basis, np.array([0,0,0])]
     all_arr = np.array(all_points)
@@ -198,7 +203,7 @@ def generate_all_plots(data):
     plt.close()
 
     # ------------------------------------------------------------
-    # 3. Ускорения (без осей, базис ω, a_кор, a_отн)
+    # 3. Ускорения (базис: ω, a_кор, a_отн)
     # ------------------------------------------------------------
     vectors = [data['a_rel'], data['a_centr'], data['a_rot'],
                data['a_trans_post'], data['a_cor'], data['a_abs']]
@@ -209,10 +214,13 @@ def generate_all_plots(data):
 
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(111, projection='3d')
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
     ax.set_title('Векторы ускорений в точке M')
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+    ax.set_zlabel('')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_zticks([])
 
     ax.scatter(point[0], point[1], point[2], color='red', s=50, label='Point M')
 
@@ -236,40 +244,33 @@ def generate_all_plots(data):
     all_points_for_scale = [np.array(point)] + [np.array(point) + v for v in vectors] + [np.array([0,0,0])]
     all_arr = np.array(all_points_for_scale)
     max_range = np.max(np.max(all_arr, axis=0) - np.min(all_arr, axis=0))
-    basis_length = max_range * 0.25
+    basis_length = max_range * 0.3
 
-    def scaled_basis(vec, target_length):
-        if np.linalg.norm(vec) < 1e-8:
-            return np.zeros(3)
-        return vec / np.linalg.norm(vec) * target_length
-
-    omega_basis = scaled_basis(omega_vec, basis_length * 0.3)   # короче
+    omega_basis = scaled_basis(omega_vec, basis_length * 0.4)
     a_cor_basis = scaled_basis(a_cor_vec, basis_length)
     a_rel_basis = scaled_basis(a_rel_vec, basis_length)
 
-    # Рисуем базисные векторы (цвета не повторяются с предыдущими рисунками)
     ax.quiver(point[0], point[1], point[2],
               omega_basis[0], omega_basis[1], omega_basis[2],
-              color='magenta', label='ω (basis)', arrow_length_ratio=0.05)
+              color='black', label='ω (ось)', arrow_length_ratio=0.05, linewidth=2)
     end_omega = np.array(point) + omega_basis
-    ax.text(end_omega[0], end_omega[1], end_omega[2],
-            f'ω = {data["omega"]:.2f}', color='magenta', fontsize=8)
+    ax.text(end_omega[0], end_omega[1], end_omega[2], 'ω',
+            color='black', fontsize=10, ha='center', va='center')
 
     ax.quiver(point[0], point[1], point[2],
               a_cor_basis[0], a_cor_basis[1], a_cor_basis[2],
-              color='cyan', label='a_кор (basis)', arrow_length_ratio=0.05)
+              color='black', label='a_кор (ось)', arrow_length_ratio=0.05, linewidth=2)
     end_acor = np.array(point) + a_cor_basis
-    ax.text(end_acor[0], end_acor[1], end_acor[2],
-            f'a_кор = {data["a_cor_mod"]:.2f}', color='cyan', fontsize=8)
+    ax.text(end_acor[0], end_acor[1], end_acor[2], 'a_кор',
+            color='black', fontsize=10, ha='center', va='center')
 
     ax.quiver(point[0], point[1], point[2],
               a_rel_basis[0], a_rel_basis[1], a_rel_basis[2],
-              color='orange', label='a_отн (basis)', arrow_length_ratio=0.05)
+              color='black', label='a_отн (ось)', arrow_length_ratio=0.05, linewidth=2)
     end_arel = np.array(point) + a_rel_basis
-    ax.text(end_arel[0], end_arel[1], end_arel[2],
-            f'a_отн = {data["a_rel_mod"]:.2f}', color='orange', fontsize=8)
+    ax.text(end_arel[0], end_arel[1], end_arel[2], 'a_отн',
+            color='black', fontsize=10, ha='center', va='center')
 
-    # Лимиты (учитываем все реальные векторы ускорений и масштабированные базисные)
     all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + \
                  [np.array(point) + omega_basis, np.array(point) + a_cor_basis, np.array(point) + a_rel_basis, np.array([0,0,0])]
     all_arr = np.array(all_points)
