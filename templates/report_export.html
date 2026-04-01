@@ -169,7 +169,7 @@
     </div>
     <div class="graph">
         <h3>Рис. 2a. Траектория и векторы скоростей (исходная система координат)</h3>
-        <img src="{{ images.trajectory }}" alt="Траектория с векторами скоростей">
+        <img src="{{ images.trajectory_with_velocities }}" alt="Траектория с векторами скоростей">
     </div>
     <div class="graph">
         <h3>Рис. 3. Векторы ускорений в точке \(M\) (оси: \(\omega,\ a_{\text{cor}},\ a_{\text{отн}}\))</h3>
@@ -177,11 +177,11 @@
     </div>
     <div class="graph">
         <h3>Рис. 3a. Траектория и векторы ускорений (исходная система координат)</h3>
-        <img src="{{ images.trajectory }}" alt="Траектория с векторами ускорений">
+        <img src="{{ images.trajectory_with_accelerations }}" alt="Траектория с векторами ускорений">
     </div>
 
     <h2>6. Итоговая таблица результатов</h2>
-    <table>
+    表
         <thead>
             <tr><th>Величина</th><th>Значение</th><th>Размерность</th> </thead>
         <tbody>
@@ -198,7 +198,7 @@
             <tr><td>Абсолютное ускорение a<sub>абс</sub></td><td>{{ "%.4f"|format(data.a_abs_mod) }}</td><td>м/с²</td> </tr>
             <tr><td>Радиус кривизны ρ</td><td>{{ "%.4f"|format(data.rho) }}</td><td>м</td> </tr>
         </tbody>
-    </table>
+    表
 
     <div class="footer">
         Отчёт сгенерирован автоматически. Все расчёты выполнены для момента времени t = {{ data.t }}.
