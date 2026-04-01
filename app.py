@@ -17,26 +17,18 @@ app = Flask(__name__)
 os.makedirs('static', exist_ok=True)
 
 # ----------------------------------------------------------------------
-# Настройка путей к внешним утилитам (wkhtmltopdf, pandoc)
+# Настройка пути к wkhtmltopdf (для PDF экспорта)
 # ----------------------------------------------------------------------
-# Узнайте правильные пути на вашем сервере:
-#   which wkhtmltopdf
-#   which pandoc
+# Укажите реальный путь к wkhtmltopdf на вашем сервере.
+# Узнать его можно командой: which wkhtmltopdf
 WKHTMLTOPDF_PATH = '/usr/bin/wkhtmltopdf'          # или '/usr/local/bin/wkhtmltopdf'
-PANDOC_PATH = '/usr/bin/pandoc'                    # или '/usr/local/bin/pandoc'
-
-# Проверяем существование wkhtmltopdf
+# Проверяем существование файла (если нет – будет ошибка, но продолжим)
 if os.path.exists(WKHTMLTOPDF_PATH):
     PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
 else:
+    # Если путь не найден, используем стандартное поведение (может не работать)
     print(f"Предупреждение: wkhtmltopdf не найден по пути {WKHTMLTOPDF_PATH}")
     PDFKIT_CONFIG = pdfkit.configuration()
-
-# Проверяем существование pandoc и указываем его явно
-if os.path.exists(PANDOC_PATH):
-    pypandoc.set_pandoc_path(PANDOC_PATH)
-else:
-    print(f"Предупреждение: pandoc не найден по пути {PANDOC_PATH}")
 
 def latex_to_png(latex_str):
     """Преобразует LaTeX-строку в base64-изображение PNG."""
