@@ -72,31 +72,50 @@ def prepare_export_data():
     }
     return data, formulas, formula_images, img_files
 
-@app.route('/export/pdf')
-def export_pdf():
+def generate_export_pdf(landscape=False):
     data, formulas, formula_images, img_files = prepare_export_data()
     rendered = render_template('report_export.html', data=data, formulas=formulas,
-                               formula_images=formula_images, images=img_files, export=True)
+                               formula_images=formula_images, images=img_files,
+                               export=True, landscape=landscape)
     with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as f:
         f.write(rendered.encode('utf-8'))
         html_path = f.name
     pdf_path = html_path.replace('.html', '.pdf')
+    options = {'enable-local-file-access': None}
+    if landscape:
+        options['orientation'] = 'Landscape'
     try:
-        pdfkit.from_file(html_path, pdf_path, options={'enable-local-file-access': None})
+        pdfkit.from_file(html_path, pdf_path, options=options)
     except Exception as e:
         os.unlink(html_path)
-        return f"Ошибка генерации PDF: {e}", 500
+        return None, f"Ошибка генерации PDF: {e}"
     with open(pdf_path, 'rb') as f:
         pdf_data = f.read()
     os.unlink(html_path)
     os.unlink(pdf_path)
-    return send_file(io.BytesIO(pdf_data), as_attachment=True, download_name='report.pdf', mimetype='application/pdf')
+    return pdf_data, None
 
-@app.route('/export/word')
-def export_word():
+@app.route('/export/pdf')
+def export_pdf():
+    pdf_data, error = generate_export_pdf(landscape=False)
+    if error:
+        return error, 500
+    return send_file(io.BytesIO(pdf_data), as_attachment=True,
+                     download_name='report.pdf', mimetype='application/pdf')
+
+@app.route('/export/pdf16_9')
+def export_pdf_16_9():
+    pdf_data, error = generate_export_pdf(landscape=True)
+    if error:
+        return error, 500
+    return send_file(io.BytesIO(pdf_data), as_attachment=True,
+                     download_name='report_16_9.pdf', mimetype='application/pdf')
+
+def generate_export_word(landscape=False):
     data, formulas, formula_images, img_files = prepare_export_data()
     rendered = render_template('report_export.html', data=data, formulas=formulas,
-                               formula_images=formula_images, images=img_files, export=True)
+                               formula_images=formula_images, images=img_files,
+                               export=True, landscape=landscape)
     with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as f_html:
         f_html.write(rendered.encode('utf-8'))
         html_path = f_html.name
@@ -110,10 +129,26 @@ def export_word():
         os.unlink(html_path)
         if os.path.exists(docx_path):
             os.unlink(docx_path)
-        return f"Ошибка генерации Word: {e}", 500
+        return None, f"Ошибка генерации Word: {e}"
     os.unlink(html_path)
     os.unlink(docx_path)
-    return send_file(io.BytesIO(docx_data), as_attachment=True, download_name='report.docx', mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    return docx_data, None
+
+@app.route('/export/word')
+def export_word():
+    docx_data, error = generate_export_word(landscape=False)
+    if error:
+        return error, 500
+    return send_file(io.BytesIO(docx_data), as_attachment=True,
+                     download_name='report.docx', mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+
+@app.route('/export/word16_9')
+def export_word_16_9():
+    docx_data, error = generate_export_word(landscape=True)
+    if error:
+        return error, 500
+    return send_file(io.BytesIO(docx_data), as_attachment=True,
+                     download_name='report_16_9.docx', mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=False)
