@@ -22,17 +22,40 @@
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #0066cc; color: white; }
         .table-wrapper { overflow-x: auto; margin: 20px 0; }
-        .graph { margin: 20px 0; }
+        .graph { margin: 10px 0; }
+        #trajectory-plot, #velocities-plot, #accelerations-plot {
+            width: 100%;
+            height: 70vh;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
         .footer { font-size: 0.9em; color: #777; text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
+
+        /* Адаптация для планшетов */
+        @media (max-width: 992px) {
+            #trajectory-plot, #velocities-plot, #accelerations-plot {
+                height: 60vh;
+            }
+        }
+        /* Адаптация для мобильных */
         @media (max-width: 768px) {
             .container { padding: 10px; }
             h1 { font-size: 1.5rem; }
             .btn { padding: 8px 12px; min-width: 80px; }
-            th, td { padding: 6px; }
+            th, td { padding: 6px; font-size: 0.9rem; }
+            #trajectory-plot, #velocities-plot, #accelerations-plot {
+                height: 50vh;
+            }
+            .formula, .explanation {
+                font-size: 0.9rem;
+            }
         }
         @media (max-width: 480px) {
             .btn-group { justify-content: center; }
             .btn { flex: 1; text-align: center; }
+            .graph p {
+                font-size: 0.85rem;
+            }
         }
     </style>
 </head>
@@ -189,24 +212,24 @@
     <h2>5. Интерактивные 3D-графики</h2>
     <div class="graph">
         <h3>Рис. 1. Абсолютная траектория точки (неподвижная система \(X',Y',Z'\))</h3>
-        <div id="trajectory-plot" style="width:100%; height:600px;"></div>
+        <div id="trajectory-plot"></div>
         <p><em>Красные оси – подвижная система \(X,Y,Z\) из точки \(O\). Зелёная дуга – направление вращения (угловая скорость \(\omega\)). Фиолетовый вектор – абсолютная скорость (масштабирован).</em></p>
     </div>
     <div class="graph">
         <h3>Рис. 2. Векторы скоростей в точке \(M\) (оси: \(V_{\text{отн}},\ a_{\text{cor}},\ \omega\))</h3>
-        <div id="velocities-plot" style="width:100%; height:600px;"></div>
+        <div id="velocities-plot"></div>
         <p><em>Все векторы пересчитаны в систему координат, где оси направлены вдоль относительной скорости, ускорения Кориолиса и угловой скорости.</em></p>
     </div>
     <div class="graph">
         <h3>Рис. 3. Векторы ускорений в точке \(M\) (оси: \(\omega,\ a_{\text{cor}},\ a_{\text{отн}}\))</h3>
-        <div id="accelerations-plot" style="width:100%; height:600px;"></div>
+        <div id="accelerations-plot"></div>
         <p><em>Ускорения показаны в системе, где оси совпадают с направлениями \(\omega\), \(a_{\text{cor}}\) и перпендикулярной компонентой \(a_{\text{отн}}\).</em></p>
     </div>
 
     <h2>6. Итоговая таблица результатов</h2>
     <div class="table-wrapper">
-         <table>
-            <thead><tr><th>Величина</th><th>Значение</th><th>Размерность</th></tr></thead>
+        表
+            <thead><tr><th>Величина</th><th>Значение</th><th>Размерность</th> </thead>
             <tbody>
                 <tr><td>Координаты точки M</td><td>({{ "%.4f"|format(data.point[0]) }}, {{ "%.4f"|format(data.point[1]) }}, {{ "%.4f"|format(data.point[2]) }})</td><td>м</td></tr>
                 <tr><td>Относительная скорость \(V_{\text{отн}}\)</td><td>{{ "%.4f"|format(data.V_rel_mod) }}</td><td>м/с</td></tr>
@@ -221,7 +244,7 @@
                 <tr><td>Абсолютное ускорение \(a_{\text{абс}}\)</td><td>{{ "%.4f"|format(data.a_abs_mod) }}</td><td>м/с²</td></tr>
                 <tr><td>Радиус кривизны \(\rho\)</td><td>{{ "%.4f"|format(data.rho) }}</td><td>м</td></tr>
             </tbody>
-        </table>
+        表
     </div>
 
     <div class="footer">
@@ -246,7 +269,7 @@
                 console.log('Rendering', divId, 'JSON length:', jsonString.length);
                 var data = JSON.parse(jsonString);
                 console.log('Parsed data for', divId, data);
-                Plotly.newPlot(divId, data.data, data.layout);
+                Plotly.newPlot(divId, data.data, data.layout, {responsive: true, displayModeBar: true});
             } catch (e) {
                 console.error('Ошибка рендеринга графика', divId, e);
                 var container = document.getElementById(divId);
@@ -266,7 +289,6 @@
         var velJson = {{ vel_json | tojson }};
         var accJson = {{ acc_json | tojson }};
 
-        console.log('trajJson type:', typeof trajJson, 'length:', trajJson.length);
         renderPlot('trajectory-plot', trajJson, '{{ static_paths.trajectory }}');
         renderPlot('velocities-plot', velJson, '{{ static_paths.velocities }}');
         renderPlot('accelerations-plot', accJson, '{{ static_paths.accelerations }}');
