@@ -1,51 +1,18 @@
-
-### app.py
-
-#```python
-from __future__ import annotations
-
-import io
-from flask import Flask, Response, abort, render_template, send_file
-
-import calc
-import plots
+from flask import Flask, render_template
+from calc import compute_complex_motion
+from plots import generate_all_plots
+import os
 
 app = Flask(__name__)
 
-# Простой кэш PNG в памяти: name -> bytes
-_PLOT_CACHE: dict[str, bytes] = {}
+# Создаём папку для статики, если её нет
+os.makedirs('static', exist_ok=True)
 
+@app.route('/')
+def index():
+    data, formulas = compute_complex_motion(t=1)
+    generate_all_plots(data)
+    return render_template('report.html', data=data, formulas=formulas)
 
-@app.get("/")
-def report():
-    """Одностраничный отчёт."""
-    context = calc.build_context()
-    return render_template("report.html", **context)
-
-
-@app.get("/plot/<name>.png")
-def plot_png(name: str):
-    """Динамическая генерация графиков Matplotlib."""
-    if name not in plots.PLOT_REGISTRY:
-        abort(404, description=f"Unknown plot: {name}")
-
-    if name not in _PLOT_CACHE:
-        fig = plots.make_plot(name)
-        buf = io.BytesIO()
-        fig.savefig(buf, format="png", dpi=150, bbox_inches="tight")
-        buf.seek(0)
-        _PLOT_CACHE[name] = buf.getvalue()
-
-    return Response(_PLOT_CACHE[name], mimetype="image/png")
-
-
-@app.get("/download/static")
-def download_static_report():
-    """Скачивание офлайн‑версии отчёта (самодостаточный HTML)."""
-    path = calc.static_report_path()
-    return send_file(path, as_attachment=True, download_name="report_static.html")
-
-
-if __name__ == "__main__":
-    # debug=True удобно для разработки; для сдачи можно поставить False
-    app.run(host="127.0.0.1", port=5000, debug=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=False)
