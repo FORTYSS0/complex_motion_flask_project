@@ -27,42 +27,6 @@ def draw_axes(ax, origin=(0,0,0), length=None, color='black', labels=['X', 'Y', 
         ax.text(origin[0]+vec[0], origin[1]+vec[1], origin[2]+vec[2], label,
                 color=color, fontsize=10, ha='center', va='center')
 
-def draw_grid_on_basis(ax, origin, e1, e2, e3, lim_min, lim_max, num_lines=5):
-    """
-    Рисует сетку в пространстве, где оси направлены по e1, e2, e3.
-    origin - точка M, от которой отсчитываются координаты.
-    lim_min, lim_max - минимальное и максимальное значения координат вдоль каждого направления.
-    e1, e2, e3 - ортонормированные векторы (предполагается, что они ортогональны).
-    """
-    # Генерируем равномерные значения координат в диапазоне [lim_min, lim_max]
-    coords = np.linspace(lim_min, lim_max, num_lines)
-    
-    # Линии, параллельные e1 (фиксируем координаты по e2 и e3)
-    for c2 in coords:
-        for c3 in coords:
-            # Начальная точка для линии: origin + c2*e2 + c3*e3
-            start = origin + c2*e2 + c3*e3
-            # Конечная точка: start + (lim_max - lim_min)*e1
-            end = start + (lim_max - lim_min)*e1
-            ax.plot([start[0], end[0]], [start[1], end[1]], [start[2], end[2]], 
-                    color='gray', alpha=0.3, linewidth=0.5)
-    
-    # Линии, параллельные e2
-    for c1 in coords:
-        for c3 in coords:
-            start = origin + c1*e1 + c3*e3
-            end = start + (lim_max - lim_min)*e2
-            ax.plot([start[0], end[0]], [start[1], end[1]], [start[2], end[2]], 
-                    color='gray', alpha=0.3, linewidth=0.5)
-    
-    # Линии, параллельные e3
-    for c1 in coords:
-        for c2 in coords:
-            start = origin + c1*e1 + c2*e2
-            end = start + (lim_max - lim_min)*e3
-            ax.plot([start[0], end[0]], [start[1], end[1]], [start[2], end[2]], 
-                    color='gray', alpha=0.3, linewidth=0.5)
-
 def generate_all_plots(data):
     # ------------------------------------------------------------
     # 1. Траектория (неподвижная система)
@@ -145,7 +109,7 @@ def generate_all_plots(data):
     plt.close()
 
     # ------------------------------------------------------------
-    # 2. Скорости (новые оси: ω, V_отн, a_cor) + сетка на основе этих осей
+    # 2. Скорости (оси: ω, V_отн, a_cor) с сеткой и шкалой
     # ------------------------------------------------------------
     point = data['point']
     vectors = [data['V_rel'], data['V_rot'], data['V_trans_post'], data['V_abs']]
@@ -157,8 +121,14 @@ def generate_all_plots(data):
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(111, projection='3d')
     ax.set_title('Векторы скоростей в точке M (оси: ω, V_отн, a_cor)')
-    # Убираем стандартные оси
-    ax.set_axis_off()
+    # Подписи осей заменяем на новые
+    ax.set_xlabel('V_отн')
+    ax.set_ylabel('a_cor')
+    ax.set_zlabel('ω')
+    ax.set_xlim([-5, 5])
+    ax.set_ylim([-5, 5])
+    ax.set_zlim([-5, 5])
+    ax.grid(True, alpha=0.3)
 
     # Точка M
     ax.scatter(point[0], point[1], point[2], color='red', s=50, label='Point M')
@@ -176,16 +146,16 @@ def generate_all_plots(data):
                     f'{label} = {numeric_vals[idx]:.2f}',
                     color=color, fontsize=8, ha='center', va='center')
 
-    # Базисные векторы для новых осей
-    omega_vec = np.array([0.0, 0.0, data['omega']])          # ось Z (вертикаль)
-    V_rel_vec = data['V_rel']                                 # ось X (вперёд)
-    a_cor_vec = data['a_cor']                                 # ось Y (вправо)
+    # Базисные векторы (оси) из точки M
+    omega_vec = np.array([0.0, 0.0, data['omega']])
+    V_rel_vec = data['V_rel']
+    a_cor_vec = data['a_cor']
 
-    # Определяем масштаб для новых осей
+    # Определяем масштаб для осей (чтобы они были видны)
     all_points_for_scale = [np.array(point)] + [np.array(point) + v for v in vectors] + [np.array([0,0,0])]
     all_arr = np.array(all_points_for_scale)
     max_range = np.max(np.max(all_arr, axis=0) - np.min(all_arr, axis=0))
-    axis_length = max_range * 0.3   # длина новых осей
+    axis_length = max_range * 0.25
 
     def normalized_vec(vec):
         n = np.linalg.norm(vec)
@@ -193,86 +163,35 @@ def generate_all_plots(data):
             return np.zeros(3)
         return vec / n
 
-    # Орты новых осей (предполагаем, что они взаимно перпендикулярны? Необязательно, но для сетки лучше ортогонализовать)
     e_omega = normalized_vec(omega_vec)
     e_Vrel = normalized_vec(V_rel_vec)
     e_acor = normalized_vec(a_cor_vec)
 
-    # Для сетки нам нужны ортогональные оси, иначе линии будут искажены. Но можно просто нарисовать линии, параллельные этим направлениям.
-    # Построим сетку в прямоугольной области, ограниченной пределами видимости.
-    # Сначала определим текущие пределы после масштабирования, чтобы сетка не выходила за края.
-    # Но у нас пока нет лимитов, т.к. мы их установим после рисования сетки. Лучше сначала определить лимиты по всем точкам + осям, потом рисовать сетку.
-    # Поэтому временно вычислим лимиты, чтобы знать, на каком расстоянии рисовать сетку.
-    all_points_temp = [np.array(point)] + [np.array(point) + v for v in vectors] + [np.array([0,0,0])]
-    for d in [axis_length, axis_length*0.5]:
-        all_points_temp.append(point + e_omega * d)
-        all_points_temp.append(point + e_Vrel * d)
-        all_points_temp.append(point + e_acor * d)
-    all_arr_temp = np.array(all_points_temp)
-    min_vals_temp = np.min(all_arr_temp, axis=0)
-    max_vals_temp = np.max(all_arr_temp, axis=0)
-    # Определим диапазон вдоль каждого нового направления
-    # Для каждого направления найдём проекции всех точек на этот орт
-    # Проще: зададим сетку в кубе [-range, range] в координатах (e1, e2, e3)
-    # Вычислим max координату в проекциях
-    coords = []
-    for vec in all_points_temp:
-        coords.append(np.dot(vec - point, e_omega))
-    max_coord = max(abs(np.min(coords)), abs(np.max(coords)))
-    range_coord = max_coord * 1.2
-    # Теперь можно рисовать сетку в пределах [-range_coord, range_coord] по каждому направлению
-    # Но чтобы не загромождать, сделаем 5 линий в каждую сторону
-    num_lines = 5
-    coords_vals = np.linspace(-range_coord, range_coord, num_lines)
-    
-    # Рисуем сетку, параллельную каждой оси
-    # Линии, параллельные e_omega (т.е. фиксируем координаты по e_Vrel и e_acor)
-    for c2 in coords_vals:
-        for c3 in coords_vals:
-            start = point + c2*e_Vrel + c3*e_acor
-            end = start + (range_coord*2)*e_omega
-            ax.plot([start[0], end[0]], [start[1], end[1]], [start[2], end[2]],
-                    color='gray', alpha=0.2, linewidth=0.5)
-    # Линии, параллельные e_Vrel
-    for c1 in coords_vals:
-        for c3 in coords_vals:
-            start = point + c1*e_omega + c3*e_acor
-            end = start + (range_coord*2)*e_Vrel
-            ax.plot([start[0], end[0]], [start[1], end[1]], [start[2], end[2]],
-                    color='gray', alpha=0.2, linewidth=0.5)
-    # Линии, параллельные e_acor
-    for c1 in coords_vals:
-        for c2 in coords_vals:
-            start = point + c1*e_omega + c2*e_Vrel
-            end = start + (range_coord*2)*e_acor
-            ax.plot([start[0], end[0]], [start[1], end[1]], [start[2], end[2]],
-                    color='gray', alpha=0.2, linewidth=0.5)
-
-    # Теперь рисуем сами оси
+    # Рисуем оси из точки M (чёрные)
     ax.quiver(point[0], point[1], point[2],
               e_omega[0] * axis_length, e_omega[1] * axis_length, e_omega[2] * axis_length,
               color='black', arrow_length_ratio=0.05, linewidth=2)
-    end_omega = point + e_omega * axis_length
+    end_omega = np.array(point) + e_omega * axis_length
     ax.text(end_omega[0], end_omega[1], end_omega[2], 'ω', color='black', fontsize=10, ha='center', va='center')
 
     ax.quiver(point[0], point[1], point[2],
               e_Vrel[0] * axis_length, e_Vrel[1] * axis_length, e_Vrel[2] * axis_length,
               color='black', arrow_length_ratio=0.05, linewidth=2)
-    end_Vrel = point + e_Vrel * axis_length
+    end_Vrel = np.array(point) + e_Vrel * axis_length
     ax.text(end_Vrel[0], end_Vrel[1], end_Vrel[2], 'V_отн', color='black', fontsize=10, ha='center', va='center')
 
     ax.quiver(point[0], point[1], point[2],
               e_acor[0] * axis_length, e_acor[1] * axis_length, e_acor[2] * axis_length,
               color='black', arrow_length_ratio=0.05, linewidth=2)
-    end_acor = point + e_acor * axis_length
+    end_acor = np.array(point) + e_acor * axis_length
     ax.text(end_acor[0], end_acor[1], end_acor[2], 'a_cor', color='black', fontsize=10, ha='center', va='center')
 
-    # Устанавливаем лимиты (включая все векторы и концы осей)
-    all_points_final = [np.array(point)] + [np.array(point) + v for v in vectors] + \
-                       [end_omega, end_Vrel, end_acor, np.array([0,0,0])]
-    all_arr_final = np.array(all_points_final)
-    min_vals = np.min(all_arr_final, axis=0)
-    max_vals = np.max(all_arr_final, axis=0)
+    # Лимиты с учётом всех элементов
+    all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + \
+                 [end_omega, end_Vrel, end_acor, np.array([0,0,0])]
+    all_arr = np.array(all_points)
+    min_vals = np.min(all_arr, axis=0)
+    max_vals = np.max(all_arr, axis=0)
     margin = 0.2
     ax.set_xlim([min_vals[0]-margin, max_vals[0]+margin])
     ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
@@ -335,19 +254,19 @@ def generate_all_plots(data):
     ax.quiver(point[0], point[1], point[2],
               omega_basis[0], omega_basis[1], omega_basis[2],
               color='black', label='ω (basis)', arrow_length_ratio=0.05, linewidth=2)
-    end_omega = point + omega_basis
+    end_omega = np.array(point) + omega_basis
     ax.text(end_omega[0], end_omega[1], end_omega[2], 'ω', color='black', fontsize=10, ha='center', va='center')
 
     ax.quiver(point[0], point[1], point[2],
               a_cor_basis[0], a_cor_basis[1], a_cor_basis[2],
               color='black', label='a_cor (basis)', arrow_length_ratio=0.05, linewidth=2)
-    end_acor = point + a_cor_basis
+    end_acor = np.array(point) + a_cor_basis
     ax.text(end_acor[0], end_acor[1], end_acor[2], 'a_cor', color='black', fontsize=10, ha='center', va='center')
 
     ax.quiver(point[0], point[1], point[2],
               a_rel_basis[0], a_rel_basis[1], a_rel_basis[2],
               color='black', label='a_отн (basis)', arrow_length_ratio=0.05, linewidth=2)
-    end_arel = point + a_rel_basis
+    end_arel = np.array(point) + a_rel_basis
     ax.text(end_arel[0], end_arel[1], end_arel[2], 'a_отн', color='black', fontsize=10, ha='center', va='center')
 
     all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + \
