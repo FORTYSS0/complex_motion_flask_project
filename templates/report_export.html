@@ -174,13 +174,26 @@
         Модуль: {{ "%.4f"|format(data.a_abs_mod) }} м/с².
     </div>
 
-    <h3>Радиус кривизны абсолютной траектории</h3>
-    <div class="formula">
-        ρ = V<sub>абс</sub>³ / |V<sub>абс</sub> × a<sub>абс</sub>| ≈ {{ "%.4f"|format(data.rho) }} м
+    <!-- ----------------------------------------------------------------- -->
+    <h2>5. Радиус кривизны абсолютной траектории</h2>
+    <div class="explanation">
+        <p>Радиус кривизны пространственной кривой вычисляется по формуле:</p>
+        \[
+        \rho = \frac{V_{\text{абс}}^3}{|\mathbf{V}_{\text{абс}} \times \mathbf{a}_{\text{абс}}|}
+        \]
+        <p>Модуль векторного произведения:</p>
+        \[
+        |\mathbf{V}\times\mathbf{a}| = \sqrt{(V_y a_z - V_z a_y)^2 + (V_z a_x - V_x a_z)^2 + (V_x a_y - V_y a_x)^2}
+        \]
+        <p>После подстановки и вычислений получаем:</p>
+        \[
+        \rho \approx {{ "%.4f"|format(data.rho) }} \ \text{м}
+        \]
+        <p>Это значение показывает, насколько траектория искривлена: чем меньше радиус, тем сильнее изгиб.</p>
     </div>
 
     <!-- ----------------------------------------------------------------- -->
-    <h2>5. Графическое представление</h2>
+    <h2>6. Графическое представление</h2>
     <div class="graph">
         <h3>Рис. 1. Абсолютная траектория точки (неподвижная система \(X',Y',Z'\))</h3>
         <img src="{{ images.trajectory }}" alt="Траектория">
@@ -207,25 +220,28 @@
         <p><em>Траектория, оси координат, дуга ω и векторы ускорений (a_rel, a_centr, a_rot, a_trans_post, a_cor, a_abs) в неподвижной системе. Векторы масштабированы для наглядности, показывают только направление.</em></p>
     </div>
 
-    <h2>6. Итоговая таблица результатов</h2>
-    <table>
-        <thead>
-            <tr><th>Величина</th><th>Значение</th><th>Размерность</th> </thead>
-        <tbody>
-            <tr><td>Координаты точки M</td><td>({{ "%.4f"|format(data.point[0]) }}, {{ "%.4f"|format(data.point[1]) }}, {{ "%.4f"|format(data.point[2]) }})</td><td>м</td> </tr>
-            <tr><td>Относительная скорость V<sub>отн</sub></td><td>{{ "%.4f"|format(data.V_rel_mod) }}</td><td>м/с</td> </tr>
-            <tr><td>Переносная скорость (вращательная) V<sub>вр</sub></td><td>{{ "%.4f"|format(data.V_rot_mod) }}</td><td>м/с</td> </tr>
-            <tr><td>Переносная скорость (поступательная) V<sub>пост</sub></td><td>{{ "%.4f"|format(data.V_trans_post_mod) }}</td><td>м/с</td> </tr>
-            <tr><td>Абсолютная скорость V<sub>абс</sub></td><td>{{ "%.4f"|format(data.V_abs_mod) }}</td><td>м/с</td> </tr>
-            <tr><td>Относительное ускорение a<sub>отн</sub></td><td>{{ "%.4f"|format(data.a_rel_mod) }}</td><td>м/с²</td> </tr>
-            <tr><td>Центростремительное ускорение a<sub>ц</sub></td><td>{{ "%.4f"|format(data.a_centr_mod) }}</td><td>м/с²</td> </tr>
-            <tr><td>Вращательное ускорение a<sub>вр</sub></td><td>{{ "%.4f"|format(data.a_rot_mod) }}</td><td>м/с²</td> </tr>
-            <tr><td>Поступательное ускорение a<sub>пост</sub></td><td>{{ "%.4f"|format(data.a_trans_post_mod) }}</td><td>м/с²</td> </tr>
-            <tr><td>Ускорение Кориолиса a<sub>кор</sub></td><td>{{ "%.4f"|format(data.a_cor_mod) }}</td><td>м/с²</td> </tr>
-            <tr><td>Абсолютное ускорение a<sub>абс</sub></td><td>{{ "%.4f"|format(data.a_abs_mod) }}</td><td>м/с²</td> </tr>
-            <tr><td>Радиус кривизны ρ</td><td>{{ "%.4f"|format(data.rho) }}</td><td>м</td> </tr>
-        </tbody>
-    </table>
+    <!-- ----------------------------------------------------------------- -->
+    <h2>7. Итоговая таблица результатов</h2>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr><th>Величина</th><th>Значение</th><th>Размерность</th> </thead>
+            <tbody>
+                <tr><td>Координаты точки M</td><td>({{ "%.4f"|format(data.point[0]) }}, {{ "%.4f"|format(data.point[1]) }}, {{ "%.4f"|format(data.point[2]) }})</td><td>м</td> </tr>
+                <tr><td>Относительная скорость V<sub>отн</sub></td><td>{{ "%.4f"|format(data.V_rel_mod) }}</td><td>м/с</td> </tr>
+                <tr><td>Переносная скорость (вращательная) V<sub>вр</sub></td><td>{{ "%.4f"|format(data.V_rot_mod) }}</td><td>м/с</td> </tr>
+                <tr><td>Переносная скорость (поступательная) V<sub>пост</sub></td><td>{{ "%.4f"|format(data.V_trans_post_mod) }}</td><td>м/с</td> </tr>
+                <tr><td>Абсолютная скорость V<sub>абс</sub></td><td>{{ "%.4f"|format(data.V_abs_mod) }}</td><td>м/с</td> </tr>
+                <tr><td>Относительное ускорение a<sub>отн</sub></td><td>{{ "%.4f"|format(data.a_rel_mod) }}</td><td>м/с²</td> </tr>
+                <tr><td>Центростремительное ускорение a<sub>ц</sub></td><td>{{ "%.4f"|format(data.a_centr_mod) }}</td><td>м/с²</td> </tr>
+                <tr><td>Вращательное ускорение a<sub>вр</sub></td><td>{{ "%.4f"|format(data.a_rot_mod) }}</td><td>м/с²</td> </tr>
+                <tr><td>Поступательное ускорение a<sub>пост</sub></td><td>{{ "%.4f"|format(data.a_trans_post_mod) }}</td><td>м/с²</td> </tr>
+                <tr><td>Ускорение Кориолиса a<sub>кор</sub></td><td>{{ "%.4f"|format(data.a_cor_mod) }}</td><td>м/с²</td> </tr>
+                <tr><td>Абсолютное ускорение a<sub>абс</sub></td><td>{{ "%.4f"|format(data.a_abs_mod) }}</td><td>м/с²</td> </tr>
+                <tr><td>Радиус кривизны ρ</td><td>{{ "%.4f"|format(data.rho) }}</td><td>м</td> </tr>
+            </tbody>
+        </table>
+    </div>
 
     <div class="footer">
         Отчёт сгенерирован автоматически. Все расчёты выполнены для момента времени t = {{ data.t }}.
