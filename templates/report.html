@@ -2,11 +2,52 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Отчёт: Сложное движение точки</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
     <style>
-        /* Дополнительные стили, если style.css не покрывает всё */
+        /* Дополнительные стили для адаптивности поверх style.css */
+        body {
+            margin: 0;
+            padding: 10px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 { font-size: 1.8rem; }
+        h2 { font-size: 1.5rem; }
+        h3 { font-size: 1.2rem; }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 16px;
+            background-color: #0066cc;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: background 0.2s;
+            text-align: center;
+            min-width: 100px;
+        }
+        .btn:hover { background-color: #004c99; }
+        .btn-green { background-color: #28a745; }
+        .btn-green:hover { background-color: #1e7e34; }
         .formula {
             background: #f0f0f0;
             padding: 10px;
@@ -14,28 +55,27 @@
             overflow-x: auto;
             margin: 10px 0;
         }
-        .graph {
-            text-align: center;
-            margin: 20px 0;
-        }
-        .graph img {
-            max-width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
         table {
-            border-collapse: collapse;
             width: 100%;
-            margin: 20px 0;
+            border-collapse: collapse;
+            overflow-x: auto;
+            display: block;
         }
         th, td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
         }
-        th {
-            background-color: #0066cc;
-            color: white;
+        th { background-color: #0066cc; color: white; }
+        .graph {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .graph img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
         .footer {
             font-size: 0.9em;
@@ -45,13 +85,26 @@
             border-top: 1px solid #eee;
             padding-top: 10px;
         }
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            h1 { font-size: 1.5rem; }
+            h2 { font-size: 1.3rem; }
+            .btn { padding: 8px 12px; min-width: 80px; font-size: 0.9rem; }
+            th, td { padding: 6px; font-size: 0.85rem; }
+            .formula { font-size: 0.9rem; }
+        }
+        @media (max-width: 480px) {
+            .btn-group { justify-content: center; }
+            .btn { flex: 1; text-align: center; }
+            th, td { font-size: 0.75rem; }
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <div style="margin-bottom: 20px; text-align: right;">
-        <a href="/export/pdf" class="btn" style="display: inline-block; padding: 8px 16px; margin: 0 5px; background-color: #0066cc; color: white; text-decoration: none; border-radius: 4px;">Скачать PDF</a>
-        <a href="/export/word" class="btn" style="display: inline-block; padding: 8px 16px; margin: 0 5px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px;">Скачать Word</a>
+    <div class="btn-group">
+        <a href="/export/pdf" class="btn">Скачать PDF</a>
+        <a href="/export/word" class="btn btn-green">Скачать Word</a>
     </div>
     <h1>Отчёт по сложному движению точки</h1>
     <p><strong>Бригада 2</strong>, момент времени \( t = {{ data.t }} \)</p>
@@ -211,25 +264,27 @@
     </div>
 
     <h2>6. Итоговая таблица результатов</h2>
-    <table>
-        <thead>
-            <tr><th>Величина</th><th>Значение</th><th>Размерность</th></tr>
-        </thead>
-        <tbody>
-            <tr><td>Координаты точки M</td><td>({{ "%.4f"|format(data.point[0]) }}, {{ "%.4f"|format(data.point[1]) }}, {{ "%.4f"|format(data.point[2]) }})</td><td>м</td></tr>
-            <tr><td>Относительная скорость \(V_{\text{отн}}\)</td><td>{{ "%.4f"|format(data.V_rel_mod) }}</td><td>м/с</td></tr>
-            <tr><td>Переносная скорость (вращательная) \(V_{\text{вр}}\)</td><td>{{ "%.4f"|format(data.V_rot_mod) }}</td><td>м/с</td></tr>
-            <tr><td>Переносная скорость (поступательная) \(V_{\text{пост}}\)</td><td>{{ "%.4f"|format(data.V_trans_post_mod) }}</td><td>м/с</td></tr>
-            <tr><td>Абсолютная скорость \(V_{\text{абс}}\)</td><td>{{ "%.4f"|format(data.V_abs_mod) }}</td><td>м/с</td></tr>
-            <tr><td>Относительное ускорение \(a_{\text{отн}}\)</td><td>{{ "%.4f"|format(data.a_rel_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Центростремительное ускорение \(a_{\text{ц}}\)</td><td>{{ "%.4f"|format(data.a_centr_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Вращательное ускорение \(a_{\text{вр}}\)</td><td>{{ "%.4f"|format(data.a_rot_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Поступательное ускорение \(a_{\text{пост}}\)</td><td>{{ "%.4f"|format(data.a_trans_post_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Ускорение Кориолиса \(a_{\text{кор}}\)</td><td>{{ "%.4f"|format(data.a_cor_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Абсолютное ускорение \(a_{\text{абс}}\)</td><td>{{ "%.4f"|format(data.a_abs_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Радиус кривизны \(\rho\)</td><td>{{ "%.4f"|format(data.rho) }}</td><td>м</td></tr>
-        </tbody>
-    </table>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr><th>Величина</th><th>Значение</th><th>Размерность</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Координаты точки M</td><td>({{ "%.4f"|format(data.point[0]) }}, {{ "%.4f"|format(data.point[1]) }}, {{ "%.4f"|format(data.point[2]) }})</td><td>м</td></tr>
+                <tr><td>Относительная скорость \(V_{\text{отн}}\)</td><td>{{ "%.4f"|format(data.V_rel_mod) }}</td><td>м/с</td></tr>
+                <tr><td>Переносная скорость (вращательная) \(V_{\text{вр}}\)</td><td>{{ "%.4f"|format(data.V_rot_mod) }}</td><td>м/с</td></tr>
+                <tr><td>Переносная скорость (поступательная) \(V_{\text{пост}}\)</td><td>{{ "%.4f"|format(data.V_trans_post_mod) }}</td><td>м/с</td></tr>
+                <tr><td>Абсолютная скорость \(V_{\text{абс}}\)</td><td>{{ "%.4f"|format(data.V_abs_mod) }}</td><td>м/с</td></tr>
+                <tr><td>Относительное ускорение \(a_{\text{отн}}\)</td><td>{{ "%.4f"|format(data.a_rel_mod) }}</td><td>м/с²</td></tr>
+                <tr><td>Центростремительное ускорение \(a_{\text{ц}}\)</td><td>{{ "%.4f"|format(data.a_centr_mod) }}</td><td>м/с²</td></tr>
+                <tr><td>Вращательное ускорение \(a_{\text{вр}}\)</td><td>{{ "%.4f"|format(data.a_rot_mod) }}</td><td>м/с²</td></tr>
+                <tr><td>Поступательное ускорение \(a_{\text{пост}}\)</td><td>{{ "%.4f"|format(data.a_trans_post_mod) }}</td><td>м/с²</td></tr>
+                <tr><td>Ускорение Кориолиса \(a_{\text{кор}}\)</td><td>{{ "%.4f"|format(data.a_cor_mod) }}</td><td>м/с²</td></tr>
+                <tr><td>Абсолютное ускорение \(a_{\text{абс}}\)</td><td>{{ "%.4f"|format(data.a_abs_mod) }}</td><td>м/с²</td></tr>
+                <tr><td>Радиус кривизны \(\rho\)</td><td>{{ "%.4f"|format(data.rho) }}</td><td>м</td></tr>
+            </tbody>
+        </table>
+    </div>
 
     <div class="footer">
         Отчёт сгенерирован автоматически. Все расчёты выполнены для момента времени \( t = {{ data.t }} \).
