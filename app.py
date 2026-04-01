@@ -1,4 +1,4 @@
-from flask import Flask, render_template, send_file
+from flask import Flask, render_template, send_file, url_for
 import os
 import io
 import base64
@@ -29,12 +29,18 @@ def latex_to_png(latex_str):
 @app.route('/')
 def index():
     data, formulas = compute_complex_motion(t=1)
-    generate_all_plots(data)  # PNG для экспорта
+    generate_all_plots(data)  # PNG для экспорта и fallback
     traj_json = generate_interactive_trajectory(data)
     vel_json = generate_interactive_velocities(data)
     acc_json = generate_interactive_accelerations(data)
+    static_paths = {
+        'trajectory': url_for('static', filename='trajectory.png'),
+        'velocities': url_for('static', filename='velocities.png'),
+        'accelerations': url_for('static', filename='accelerations.png'),
+    }
     return render_template('report.html', data=data, formulas=formulas,
-                           traj_json=traj_json, vel_json=vel_json, acc_json=acc_json)
+                           traj_json=traj_json, vel_json=vel_json, acc_json=acc_json,
+                           static_paths=static_paths)
 
 def prepare_export_data():
     """Возвращает data, formulas и formula_images для экспорта."""
@@ -129,5 +135,4 @@ def export_word():
     )
 
 if __name__ == '__main__':
-    # Для тестовой версии используем порт 5001
     app.run(host='0.0.0.0', port=5001, debug=False)
