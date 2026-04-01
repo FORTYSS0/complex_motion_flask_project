@@ -1,13 +1,10 @@
 import numpy as np
 import sympy as sp
 
-# Символьные переменные
 t_sym = sp.Symbol('t', real=True)
 a_sym, b_sym = sp.symbols('a b', real=True)
 
-# ----------------------------------------------------------------------
-# Относительное движение (подвижная система)
-# ----------------------------------------------------------------------
+# Относительное движение
 a_val = 8
 b_val = -2
 
@@ -22,9 +19,7 @@ vy_expr = sp.diff(y_expr, t_sym).simplify()
 ax_expr = sp.diff(vx_expr, t_sym).simplify()
 ay_expr = sp.diff(vy_expr, t_sym).simplify()
 
-# ----------------------------------------------------------------------
 # Переносное движение
-# ----------------------------------------------------------------------
 z_expr = 2 * t_sym**2 + 4
 vz_expr = sp.diff(z_expr, t_sym)
 az_expr = sp.diff(vz_expr, t_sym)
@@ -33,15 +28,12 @@ phi_expr = 2 * sp.sin(sp.pi * t_sym)
 omega_expr = sp.diff(phi_expr, t_sym).simplify()
 alpha_expr = sp.diff(omega_expr, t_sym).simplify()
 
-# ----------------------------------------------------------------------
-# Расчёт в момент времени t=1
-# ----------------------------------------------------------------------
+# Расчёт в момент t=1
 t0 = 1
 
 x0 = float(x_expr.subs(t_sym, t0))
 y0 = float(y_expr.subs(t_sym, t0))
 z0 = 0.0
-point_rel = (x0, y0, z0)
 
 vx0 = float(vx_expr.subs(t_sym, t0))
 vy0 = float(vy_expr.subs(t_sym, t0))
