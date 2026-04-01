@@ -20,7 +20,6 @@ def plot_vectors(title, point, vectors, colors, labels, filename, numeric_values
     """
     Сохраняет 3D-график с векторами из точки.
     Все векторы и оси гарантированно помещаются в кадре.
-    Подписи векторов смещаются перпендикулярно, чтобы не накладываться.
     """
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(111, projection='3d')
@@ -32,7 +31,7 @@ def plot_vectors(title, point, vectors, colors, labels, filename, numeric_values
     # Точка M
     ax.scatter(point[0], point[1], point[2], color='red', s=50, label='Point M')
 
-    # Векторы и подписи
+    # Векторы
     for idx, (vec, color, label) in enumerate(zip(vectors, colors, labels)):
         ax.quiver(point[0], point[1], point[2],
                   vec[0], vec[1], vec[2],
@@ -40,16 +39,9 @@ def plot_vectors(title, point, vectors, colors, labels, filename, numeric_values
         # Подпись с числовым значением, если передано
         if numeric_values and idx < len(numeric_values):
             end = np.array(point) + vec
-            # Нормализуем направление вектора
-            norm_vec = vec / (np.linalg.norm(vec) + 1e-8)
-            # Создаём перпендикулярный вектор в плоскости XY (для простоты)
-            # Для 3D лучше использовать вектор, ортогональный к оси Z (чтобы текст не накладывался на линии)
-            perp = np.array([-norm_vec[1], norm_vec[0], 0])
-            # Если длина перпендикуляра мала (вектор почти вертикален), берём другое направление
-            if np.linalg.norm(perp) < 0.1:
-                perp = np.array([1, 0, 0])
-            perp = perp / np.linalg.norm(perp) * 0.2  # Смещение
-            text_pos = end + perp
+            # Небольшое смещение вдоль вектора
+            offset = vec / (np.linalg.norm(vec) + 1e-8) * 0.1
+            text_pos = end + offset
             ax.text(text_pos[0], text_pos[1], text_pos[2],
                     f'{label} = {numeric_values[idx]:.2f}',
                     color=color, fontsize=8, ha='center', va='center')
@@ -60,30 +52,24 @@ def plot_vectors(title, point, vectors, colors, labels, filename, numeric_values
         all_points.append(np.array(point) + vec)
     all_points.append(np.array([0,0,0]))
 
-    # Добавляем также позиции подписей (с запасом)
-    # Для простоты добавим увеличенные концы векторов (на 20% дальше) для учёта текста
-    # Но это может сильно расширить кадр, поэтому сделаем разумный запас
-    # Просто увеличим лимиты на 20% после расчёта.
-
+    # Предварительный расчёт лимитов, чтобы определить длину осей
     all_points_arr = np.array(all_points)
     min_vals = np.min(all_points_arr, axis=0)
     max_vals = np.max(all_points_arr, axis=0)
     max_range = np.max(max_vals - min_vals)
 
-    # Длина осей – 20% от размаха (чтобы не занимали много места)
-    axis_length = max_range * 0.2
+    # Длина осей – 25% от размаха
+    axis_length = max_range * 0.25
 
     # Добавляем концы осей в список точек
     axis_ends = [[axis_length,0,0], [0,axis_length,0], [0,0,axis_length]]
     all_points_arr = np.vstack([all_points_arr, axis_ends])
     min_vals = np.min(all_points_arr, axis=0)
     max_vals = np.max(all_points_arr, axis=0)
-    # Увеличиваем лимиты на 20% для учёта текста
-    span = max_vals - min_vals
-    margin = 0.2 * span
-    ax.set_xlim([min_vals[0]-margin[0], max_vals[0]+margin[0]])
-    ax.set_ylim([min_vals[1]-margin[1], max_vals[1]+margin[1]])
-    ax.set_zlim([min_vals[2]-margin[2], max_vals[2]+margin[2]])
+    margin = 0.2
+    ax.set_xlim([min_vals[0]-margin, max_vals[0]+margin])
+    ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
+    ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
 
     # Рисуем оси после установки лимитов
     draw_axes(ax, origin=(0,0,0), length=axis_length, color='black')
@@ -119,36 +105,30 @@ def generate_all_plots(data):
     min_vals = np.min(all_points, axis=0)
     max_vals = np.max(all_points, axis=0)
     max_range = np.max(max_vals - min_vals)
-    axis_length = max_range * 0.2
+    axis_length = max_range * 0.25
 
-    # Добавляем концы осей и вектор V_abs
-    V_abs = data['V_abs']
-    end_V_abs = np.array(data['point']) + V_abs
-    axis_ends = [[axis_length,0,0], [0,axis_length,0], [0,0,axis_length], end_V_abs]
+    # Добавляем концы осей
+    axis_ends = [[axis_length,0,0], [0,axis_length,0], [0,0,axis_length]]
     all_points = np.vstack([all_points, axis_ends])
     min_vals = np.min(all_points, axis=0)
     max_vals = np.max(all_points, axis=0)
-    span = max_vals - min_vals
-    margin = 0.2 * span
-    ax.set_xlim([min_vals[0]-margin[0], max_vals[0]+margin[0]])
-    ax.set_ylim([min_vals[1]-margin[1], max_vals[1]+margin[1]])
-    ax.set_zlim([min_vals[2]-margin[2], max_vals[2]+margin[2]])
+    margin = 0.2
+    ax.set_xlim([min_vals[0]-margin, max_vals[0]+margin])
+    ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
+    ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
 
     draw_axes(ax, origin=(0,0,0), length=axis_length, color='black')
     ax.grid(True, alpha=0.3)
 
-    # Вектор абсолютной скорости
+    # Добавляем вектор абсолютной скорости в точке M
+    V_abs = data['V_abs']
     ax.quiver(data['point'][0], data['point'][1], data['point'][2],
               V_abs[0], V_abs[1], V_abs[2],
-              color='purple', label='V_abs', arrow_length_ratio=0.03)
-
-    # Подпись для V_abs с перпендикулярным смещением
-    norm_vec = V_abs / (np.linalg.norm(V_abs) + 1e-8)
-    perp = np.array([-norm_vec[1], norm_vec[0], 0])
-    if np.linalg.norm(perp) < 0.1:
-        perp = np.array([1, 0, 0])
-    perp = perp / np.linalg.norm(perp) * 0.2
-    text_pos = end_V_abs + perp
+              color='purple', label='V_abs', arrow_length_ratio=0.02)   # уменьшено с 0.03
+    # Подпись с числовым значением
+    end = np.array(data['point']) + V_abs
+    offset = V_abs / (np.linalg.norm(V_abs) + 1e-8) * 0.1
+    text_pos = end + offset
     ax.text(text_pos[0], text_pos[1], text_pos[2],
             f'V_abs = {data["V_abs_mod"]:.2f}',
             color='purple', fontsize=8, ha='center', va='center')
