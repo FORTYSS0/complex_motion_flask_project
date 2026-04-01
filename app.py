@@ -8,7 +8,10 @@ import pypandoc
 import matplotlib.pyplot as plt
 import numpy as np
 from calc import compute_complex_motion
-from plots import generate_all_plots, generate_interactive_trajectory, generate_interactive_velocities, generate_interactive_accelerations
+from plots import (generate_all_plots, generate_interactive_trajectory,
+                   generate_interactive_velocities, generate_interactive_accelerations,
+                   generate_interactive_trajectory_with_velocities,
+                   generate_interactive_trajectory_with_accelerations)
 
 app = Flask(__name__)
 os.makedirs('static', exist_ok=True)
@@ -27,10 +30,12 @@ def latex_to_png(latex_str):
 @app.route('/')
 def index():
     data, formulas = compute_complex_motion(t=1)
-    generate_all_plots(data)  # PNG для экспорта и fallback
+    generate_all_plots(data)  # PNG для экспорта
     traj_json = generate_interactive_trajectory(data)
     vel_json = generate_interactive_velocities(data)
     acc_json = generate_interactive_accelerations(data)
+    traj_with_vel_json = generate_interactive_trajectory_with_velocities(data)
+    traj_with_acc_json = generate_interactive_trajectory_with_accelerations(data)
     static_paths = {
         'trajectory': url_for('static', filename='trajectory.png'),
         'velocities': url_for('static', filename='velocities.png'),
@@ -38,6 +43,8 @@ def index():
     }
     return render_template('report.html', data=data, formulas=formulas,
                            traj_json=traj_json, vel_json=vel_json, acc_json=acc_json,
+                           traj_with_vel_json=traj_with_vel_json,
+                           traj_with_acc_json=traj_with_acc_json,
                            static_paths=static_paths)
 
 def prepare_export_data():
