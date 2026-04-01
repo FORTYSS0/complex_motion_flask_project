@@ -4,65 +4,17 @@
     <meta charset="UTF-8">
     <title>Отчёт: Сложное движение точки</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 20px;
-            background-color: #f9f9f9;
-            color: #333;
-        }
-        h1, h2, h3 {
-            color: #0066cc;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .formula {
-            background: #f0f0f0;
-            padding: 10px;
-            border-radius: 5px;
-            overflow-x: auto;
-            margin: 10px 0;
-            text-align: center;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 20px 0;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #0066cc;
-            color: white;
-        }
-        .graph {
-            text-align: center;
-            margin: 20px 0;
-        }
-        .graph img {
-            max-width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .footer {
-            font-size: 0.9em;
-            color: #777;
-            text-align: center;
-            margin-top: 30px;
-            border-top: 1px solid #eee;
-            padding-top: 10px;
-        }
-        .formula img {
-            vertical-align: middle;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f9f9f9; color: #333; }
+        h1, h2, h3 { color: #0066cc; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .formula { background: #f0f0f0; padding: 10px; border-radius: 5px; overflow-x: auto; margin: 10px 0; text-align: center; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #0066cc; color: white; }
+        .graph { text-align: center; margin: 20px 0; }
+        .graph img { max-width: 100%; border: 1px solid #ccc; border-radius: 5px; }
+        .footer { font-size: 0.9em; color: #777; text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
+        .formula img { vertical-align: middle; margin: 0 5px; }
     </style>
 </head>
 <body>
@@ -73,11 +25,8 @@
     <h2>1. Исходные данные</h2>
     <div class="formula">
         <img src="data:image/png;base64,{{ formula_images.x }}" alt="x(t)">
-        <br>
         <img src="data:image/png;base64,{{ formula_images.y }}" alt="y(t)">
-        <br>
         <img src="data:image/png;base64,{{ formula_images.zp }}" alt="z'(t)">
-        <br>
         <img src="data:image/png;base64,{{ formula_images.phi }}" alt="φ'(t)">
     </div>
 
@@ -87,23 +36,17 @@
         <img src="data:image/png;base64,{{ formula_images.dxdt }}" alt="ẋ">
         <img src="data:image/png;base64,{{ formula_images.dydt }}" alt="ẏ">
         <br>
-        При \( t = {{ data.t }} \):
-        \[
-        \dot x = {{ "%.4f"|format(data.V_rel[0]) }},\quad
-        \dot y = {{ "%.4f"|format(data.V_rel[1]) }},\quad
-        V_{\text{отн}} = \sqrt{\dot x^2 + \dot y^2} = {{ "%.4f"|format(data.V_rel_mod) }}
-        \]
+        При \( t = {{ data.t }} \):<br>
+        ẋ = {{ "%.4f"|format(data.V_rel[0]) }},  ẏ = {{ "%.4f"|format(data.V_rel[1]) }},<br>
+        V<sub>отн</sub> = √(ẋ² + ẏ²) = {{ "%.4f"|format(data.V_rel_mod) }} м/с
     </div>
     <p>Ускорение в относительном движении:</p>
     <div class="formula">
         <img src="data:image/png;base64,{{ formula_images.d2xdt2 }}" alt="ẍ">
         <img src="data:image/png;base64,{{ formula_images.d2ydt2 }}" alt="ÿ">
         <br>
-        При \( t = {{ data.t }} \):
-        \[
-        \ddot x = {{ "%.4f"|format(data.a_rel[0]) }},\quad
-        \ddot y = {{ "%.4f"|format(data.a_rel[1]) }}
-        \]
+        При \( t = {{ data.t }} \):<br>
+        ẍ = {{ "%.4f"|format(data.a_rel[0]) }},  ÿ = {{ "%.4f"|format(data.a_rel[1]) }}
     </div>
 
     <h2>3. Переносное движение (движение системы отсчёта)</h2>
@@ -113,10 +56,8 @@
         <img src="data:image/png;base64,{{ formula_images.dzpdt }}" alt="ż'">
         <img src="data:image/png;base64,{{ formula_images.d2zpdt2 }}" alt="z̈'">
         <br>
-        При \( t = {{ data.t }} \):
-        \[
-        \dot z' = {{ "%.4f"|format(data.dzpdt) }},\quad \ddot z' = {{ "%.4f"|format(data.d2zpdt2) }}
-        \]
+        При \( t = {{ data.t }} \):<br>
+        ż' = {{ "%.4f"|format(data.dzpdt) }},  z̈' = {{ "%.4f"|format(data.d2zpdt2) }}
     </div>
     <p>Вращательное движение:</p>
     <div class="formula">
@@ -124,84 +65,44 @@
         <img src="data:image/png;base64,{{ formula_images.dphi_dt }}" alt="φ̇'">
         <img src="data:image/png;base64,{{ formula_images.d2phi_dt2 }}" alt="φ̈'">
         <br>
-        При \( t = {{ data.t }} \):
-        \[
-        \varphi' = {{ "%.4f"|format(data.phi) }},\quad
-        \omega = \dot\varphi' = {{ "%.4f"|format(data.omega) }},\quad
-        \alpha = \ddot\varphi' = {{ "%.4f"|format(data.alpha) }}
-        \]
+        При \( t = {{ data.t }} \):<br>
+        φ' = {{ "%.4f"|format(data.phi) }},  ω = φ̇' = {{ "%.4f"|format(data.omega) }},  α = φ̈' = {{ "%.4f"|format(data.alpha) }}
     </div>
 
     <h2>4. Кинематические характеристики сложного движения</h2>
     <h3>Абсолютная скорость</h3>
     <div class="formula">
-        \[
-        \mathbf{V}_{\text{абс}} = \mathbf{V}_{\text{отн}} + \mathbf{V}_{\text{пер,пост}} + \mathbf{V}_{\text{пер,вр}}
-        \]
-        \[
-        \mathbf{V}_{\text{пер,вр}} = \boldsymbol{\omega} \times \mathbf{r}_{\text{отн}}
-        \]
-        Вычисленные компоненты:
-        \[
-        \mathbf{V}_{\text{отн}} = ({{ "%.4f"|format(data.V_rel[0]) }},\ {{ "%.4f"|format(data.V_rel[1]) }},\ 0)
-        \]
-        \[
-        \mathbf{V}_{\text{пер,вр}} = ({{ "%.4f"|format(data.V_rot[0]) }},\ {{ "%.4f"|format(data.V_rot[1]) }},\ {{ "%.4f"|format(data.V_rot[2]) }})
-        \]
-        \[
-        \mathbf{V}_{\text{пер,пост}} = (0,0,{{ "%.4f"|format(data.V_trans_post[2]) }})
-        \]
-        \[
-        \mathbf{V}_{\text{абс}} = ({{ "%.4f"|format(data.V_abs[0]) }},\ {{ "%.4f"|format(data.V_abs[1]) }},\ {{ "%.4f"|format(data.V_abs[2]) }})
-        \]
-        Модуль: \( V_{\text{абс}} = {{ "%.4f"|format(data.V_abs_mod) }} \) м/с.
+        <img src="data:image/png;base64,{{ formula_images.V_abs_eq }}" alt="V_abs"><br>
+        <img src="data:image/png;base64,{{ formula_images.V_rot_eq }}" alt="V_rot"><br>
+        Вычисленные компоненты:<br>
+        V<sub>отн</sub> = ({{ "%.4f"|format(data.V_rel[0]) }}, {{ "%.4f"|format(data.V_rel[1]) }}, 0)<br>
+        V<sub>вр</sub> = ({{ "%.4f"|format(data.V_rot[0]) }}, {{ "%.4f"|format(data.V_rot[1]) }}, {{ "%.4f"|format(data.V_rot[2]) }})<br>
+        V<sub>пост</sub> = (0, 0, {{ "%.4f"|format(data.V_trans_post[2]) }})<br>
+        V<sub>абс</sub> = ({{ "%.4f"|format(data.V_abs[0]) }}, {{ "%.4f"|format(data.V_abs[1]) }}, {{ "%.4f"|format(data.V_abs[2]) }})<br>
+        Модуль: V<sub>абс</sub> = {{ "%.4f"|format(data.V_abs_mod) }} м/с.
     </div>
 
     <h3>Абсолютное ускорение</h3>
     <div class="formula">
-        \[
-        \mathbf{a}_{\text{абс}} = \mathbf{a}_{\text{отн}} + \mathbf{a}_{\text{пер}} + \mathbf{a}_{\text{кор}}
-        \]
-        \[
-        \mathbf{a}_{\text{пер}} = \mathbf{a}_{\text{пер,пост}} + \mathbf{a}_{\text{пер,ц}} + \mathbf{a}_{\text{пер,вр}}
-        \]
-        \[
-        \mathbf{a}_{\text{пер,ц}} = -\omega^2 \mathbf{r}_{\text{отн}},\quad
-        \mathbf{a}_{\text{пер,вр}} = \boldsymbol{\alpha} \times \mathbf{r}_{\text{отn}}
-        \]
-        \[
-        \mathbf{a}_{\text{кор}} = 2\,\boldsymbol{\omega} \times \mathbf{V}_{\text{отн}}
-        \]
-        Компоненты:
-        \[
-        \mathbf{a}_{\text{отн}} = ({{ "%.4f"|format(data.a_rel[0]) }},\ {{ "%.4f"|format(data.a_rel[1]) }},\ 0)
-        \]
-        \[
-        \mathbf{a}_{\text{пер,ц}} = ({{ "%.4f"|format(data.a_centr[0]) }},\ {{ "%.4f"|format(data.a_centr[1]) }},\ {{ "%.4f"|format(data.a_centr[2]) }})
-        \]
-        \[
-        \mathbf{a}_{\text{пер,вр}} = ({{ "%.4f"|format(data.a_rot[0]) }},\ {{ "%.4f"|format(data.a_rot[1]) }},\ {{ "%.4f"|format(data.a_rot[2]) }})
-        \]
-        \[
-        \mathbf{a}_{\text{пер,пост}} = (0,0,{{ "%.4f"|format(data.a_trans_post[2]) }})
-        \]
-        \[
-        \mathbf{a}_{\text{кор}} = ({{ "%.4f"|format(data.a_cor[0]) }},\ {{ "%.4f"|format(data.a_cor[1]) }},\ {{ "%.4f"|format(data.a_cor[2]) }})
-        \]
-        \[
-        \mathbf{a}_{\text{абс}} = ({{ "%.4f"|format(data.a_abs[0]) }},\ {{ "%.4f"|format(data.a_abs[1]) }},\ {{ "%.4f"|format(data.a_abs[2]) }})
-        \]
-        Модуль: \( a_{\text{абс}} = {{ "%.4f"|format(data.a_abs_mod) }} \) м/с².
+        <img src="data:image/png;base64,{{ formula_images.a_abs_eq }}" alt="a_abs"><br>
+        <img src="data:image/png;base64,{{ formula_images.a_trans_eq }}" alt="a_trans"><br>
+        <img src="data:image/png;base64,{{ formula_images.a_centr_eq }}" alt="a_centr"><br>
+        <img src="data:image/png;base64,{{ formula_images.a_rot_eq }}" alt="a_rot"><br>
+        <img src="data:image/png;base64,{{ formula_images.a_cor_eq }}" alt="a_cor"><br>
+        Компоненты:<br>
+        a<sub>отн</sub> = ({{ "%.4f"|format(data.a_rel[0]) }}, {{ "%.4f"|format(data.a_rel[1]) }}, 0)<br>
+        a<sub>ц</sub> = ({{ "%.4f"|format(data.a_centr[0]) }}, {{ "%.4f"|format(data.a_centr[1]) }}, {{ "%.4f"|format(data.a_centr[2]) }})<br>
+        a<sub>вр</sub> = ({{ "%.4f"|format(data.a_rot[0]) }}, {{ "%.4f"|format(data.a_rot[1]) }}, {{ "%.4f"|format(data.a_rot[2]) }})<br>
+        a<sub>пост</sub> = (0, 0, {{ "%.4f"|format(data.a_trans_post[2]) }})<br>
+        a<sub>кор</sub> = ({{ "%.4f"|format(data.a_cor[0]) }}, {{ "%.4f"|format(data.a_cor[1]) }}, {{ "%.4f"|format(data.a_cor[2]) }})<br>
+        a<sub>абс</sub> = ({{ "%.4f"|format(data.a_abs[0]) }}, {{ "%.4f"|format(data.a_abs[1]) }}, {{ "%.4f"|format(data.a_abs[2]) }})<br>
+        Модуль: a<sub>абс</sub> = {{ "%.4f"|format(data.a_abs_mod) }} м/с².
     </div>
 
     <h3>Радиус кривизны абсолютной траектории</h3>
     <div class="formula">
-        \[
-        \rho = \frac{V_{\text{абс}}^3}{|\mathbf{V}_{\text{абс}} \times \mathbf{a}_{\text{абс}}|}
-        \]
-        \[
-        \rho \approx {{ "%.4f"|format(data.rho) }} \ \text{м}
-        \]
+        <img src="data:image/png;base64,{{ formula_images.rho_eq }}" alt="rho"><br>
+        ρ ≈ {{ "%.4f"|format(data.rho) }} м
     </div>
 
     <h2>5. Графическое представление</h2>
@@ -219,28 +120,28 @@
     </div>
 
     <h2>6. Итоговая таблица результатов</h2>
-     <table>
+    <table>
         <thead>
             <tr><th>Величина</th><th>Значение</th><th>Размерность</th></tr>
         </thead>
         <tbody>
             <tr><td>Координаты точки M</td><td>({{ "%.4f"|format(data.point[0]) }}, {{ "%.4f"|format(data.point[1]) }}, {{ "%.4f"|format(data.point[2]) }})</td><td>м</td></tr>
-            <tr><td>Относительная скорость \(V_{\text{отн}}\)</td><td>{{ "%.4f"|format(data.V_rel_mod) }}</td><td>м/с</td></tr>
-            <tr><td>Переносная скорость (вращательная) \(V_{\text{вр}}\)</td><td>{{ "%.4f"|format(data.V_rot_mod) }}</td><td>м/с</td></tr>
-            <tr><td>Переносная скорость (поступательная) \(V_{\text{пост}}\)</td><td>{{ "%.4f"|format(data.V_trans_post_mod) }}</td><td>м/с</td></tr>
-            <tr><td>Абсолютная скорость \(V_{\text{абс}}\)</td><td>{{ "%.4f"|format(data.V_abs_mod) }}</td><td>м/с</td></tr>
-            <tr><td>Относительное ускорение \(a_{\text{отн}}\)</td><td>{{ "%.4f"|format(data.a_rel_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Центростремительное ускорение \(a_{\text{ц}}\)</td><td>{{ "%.4f"|format(data.a_centr_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Вращательное ускорение \(a_{\text{вр}}\)</td><td>{{ "%.4f"|format(data.a_rot_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Поступательное ускорение \(a_{\text{пост}}\)</td><td>{{ "%.4f"|format(data.a_trans_post_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Ускорение Кориолиса \(a_{\text{кор}}\)</td><td>{{ "%.4f"|format(data.a_cor_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Абсолютное ускорение \(a_{\text{абс}}\)</td><td>{{ "%.4f"|format(data.a_abs_mod) }}</td><td>м/с²</td></tr>
-            <tr><td>Радиус кривизны \(\rho\)</td><td>{{ "%.4f"|format(data.rho) }}</td><td>м</td></tr>
+            <tr><td>Относительная скорость V<sub>отн</sub></td><td>{{ "%.4f"|format(data.V_rel_mod) }}</td><td>м/с</td></tr>
+            <tr><td>Переносная скорость (вращательная) V<sub>вр</sub></td><td>{{ "%.4f"|format(data.V_rot_mod) }}</td><td>м/с</td></tr>
+            <tr><td>Переносная скорость (поступательная) V<sub>пост</sub></td><td>{{ "%.4f"|format(data.V_trans_post_mod) }}</td><td>м/с</td></tr>
+            <tr><td>Абсолютная скорость V<sub>абс</sub></td><td>{{ "%.4f"|format(data.V_abs_mod) }}</td><td>м/с</td></tr>
+            <tr><td>Относительное ускорение a<sub>отн</sub></td><td>{{ "%.4f"|format(data.a_rel_mod) }}</td><td>м/с²</td></tr>
+            <tr><td>Центростремительное ускорение a<sub>ц</sub></td><td>{{ "%.4f"|format(data.a_centr_mod) }}</td><td>м/с²</td></tr>
+            <tr><td>Вращательное ускорение a<sub>вр</sub></td><td>{{ "%.4f"|format(data.a_rot_mod) }}</td><td>м/с²</td></tr>
+            <tr><td>Поступательное ускорение a<sub>пост</sub></td><td>{{ "%.4f"|format(data.a_trans_post_mod) }}</td><td>м/с²</td></tr>
+            <tr><td>Ускорение Кориолиса a<sub>кор</sub></td><td>{{ "%.4f"|format(data.a_cor_mod) }}</td><td>м/с²</td></tr>
+            <tr><td>Абсолютное ускорение a<sub>абс</sub></td><td>{{ "%.4f"|format(data.a_abs_mod) }}</td><td>м/с²</td></tr>
+            <tr><td>Радиус кривизны ρ</td><td>{{ "%.4f"|format(data.rho) }}</td><td>м</td></tr>
         </tbody>
     </table>
 
     <div class="footer">
-        Отчёт сгенерирован автоматически. Все расчёты выполнены для момента времени \( t = {{ data.t }} \).
+        Отчёт сгенерирован автоматически. Все расчёты выполнены для момента времени t = {{ data.t }}.
     </div>
 </div>
 </body>
