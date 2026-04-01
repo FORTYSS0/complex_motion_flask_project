@@ -214,7 +214,7 @@ def generate_all_plots(data):
 # ==================== Интерактивные графики (Plotly) ====================
 
 def generate_interactive_trajectory(data):
-    """Возвращает JSON для интерактивного графика траектории."""
+    """Возвращает JSON для интерактивного графика траектории со стрелками направления."""
     t_vals = np.linspace(0, 2.5, 200)
     x_t = 8 * np.cos(np.pi * t_vals**2 / 3)
     y_t = 16 * np.sin(np.pi * t_vals**2 / 3)
@@ -222,6 +222,7 @@ def generate_interactive_trajectory(data):
 
     fig = go.Figure()
 
+    # Траектория
     fig.add_trace(go.Scatter3d(
         x=x_t, y=y_t, z=z_t,
         mode='lines',
@@ -229,6 +230,31 @@ def generate_interactive_trajectory(data):
         name='Траектория'
     ))
 
+    # Стрелки направления движения (конусы)
+    n_arrows = 10
+    idx = np.linspace(0, len(t_vals)-1, n_arrows, dtype=int)
+    for i in idx:
+        if i < len(t_vals)-1:
+            dx = x_t[i+1] - x_t[i]
+            dy = y_t[i+1] - y_t[i]
+            dz = z_t[i+1] - z_t[i]
+            length = np.sqrt(dx**2 + dy**2 + dz**2)
+            if length > 1e-8:
+                scale = 0.15 * max(np.ptp(x_t), np.ptp(y_t), np.ptp(z_t))
+                u = dx / length * scale
+                v = dy / length * scale
+                w = dz / length * scale
+                fig.add_trace(go.Cone(
+                    x=[x_t[i]], y=[y_t[i]], z=[z_t[i]],
+                    u=[u], v=[v], w=[w],
+                    colorscale=[[0, 'green'], [1, 'green']],
+                    showscale=False,
+                    sizemode='scaled',
+                    sizeref=0.5,
+                    name='Направление движения'
+                ))
+
+    # Точка M
     fig.add_trace(go.Scatter3d(
         x=[data['point'][0]], y=[data['point'][1]], z=[data['point'][2]],
         mode='markers',
@@ -236,6 +262,7 @@ def generate_interactive_trajectory(data):
         name='M (t=1)'
     ))
 
+    # Определяем длину осей
     all_points = np.vstack([np.column_stack([x_t, y_t, z_t]), [data['point']], [0,0,0]])
     min_vals = np.min(all_points, axis=0)
     max_vals = np.max(all_points, axis=0)
@@ -274,6 +301,21 @@ def generate_interactive_trajectory(data):
                                mode='lines+text', line=dict(color='purple', width=3),
                                text=['', f'V_abs = {data["V_abs_mod"]:.2f}'], textposition='middle right', name='V_abs'))
 
+    # Стрелка в конце V_abs
+    end_x = data['point'][0] + V_scaled[0]
+    end_y = data['point'][1] + V_scaled[1]
+    end_z = data['point'][2] + V_scaled[2]
+    fig.add_trace(go.Cone(
+        x=[end_x], y=[end_y], z=[end_z],
+        u=[V_scaled[0]*0.15], v=[V_scaled[1]*0.15], w=[V_scaled[2]*0.15],
+        colorscale=[[0, 'purple'], [1, 'purple']],
+        showscale=False,
+        sizemode='scaled',
+        sizeref=0.5,
+        name='V_abs direction',
+        showlegend=False
+    ))
+
     # Дуга вращения
     theta = np.linspace(0, -np.pi/2, 50)
     radius = axis_len * 0.6
@@ -295,7 +337,7 @@ def generate_interactive_trajectory(data):
 
 
 def generate_interactive_velocities(data):
-    """Интерактивный график скоростей в новой системе координат (V_отн, a_cor, ω)."""
+    """Интерактивный график скоростей с конусами в конце каждого вектора."""
     point = data['point']
     V_rel = data['V_rel']
     V_rot = data['V_rot']
@@ -326,12 +368,32 @@ def generate_interactive_velocities(data):
     labels = ['V_rel', 'V_rot', 'V_trans_post', 'V_abs']
     numeric_vals = [np.linalg.norm(v) for v in [V_rel, V_rot, V_trans, V_abs]]
     for vec, col, lab, val in zip(vectors, colors, labels, numeric_vals):
+        # Линия вектора
         fig.add_trace(go.Scatter3d(x=[point_new[0], point_new[0]+vec[0]],
                                    y=[point_new[1], point_new[1]+vec[1]],
                                    z=[point_new[2], point_new[2]+vec[2]],
                                    mode='lines+text', line=dict(color=col, width=3),
                                    text=['', f'{lab} = {val:.2f}'], textposition='middle right', name=lab))
+        # Стрелка-конус в конце
+        end_x = point_new[0] + vec[0]
+        end_y = point_new[1] + vec[1]
+        end_z = point_new[2] + vec[2]
+        arrow_scale = 0.15
+        u = vec[0] * arrow_scale
+        v = vec[1] * arrow_scale
+        w = vec[2] * arrow_scale
+        fig.add_trace(go.Cone(
+            x=[end_x], y=[end_y], z=[end_z],
+            u=[u], v=[v], w=[w],
+            colorscale=[[0, col], [1, col]],
+            showscale=False,
+            sizemode='scaled',
+            sizeref=0.3,
+            name=f'{lab} direction',
+            showlegend=False
+        ))
 
+    # Оси новой системы (чёрные)
     all_pts = [point_new] + [point_new+v for v in vectors] + [np.zeros(3)]
     all_arr = np.array(all_pts)
     min_vals = np.min(all_arr, axis=0)
@@ -356,7 +418,7 @@ def generate_interactive_velocities(data):
 
 
 def generate_interactive_accelerations(data):
-    """Интерактивный график ускорений в новой системе координат (ω, a_cor, a_отн⊥)."""
+    """Интерактивный график ускорений с конусами в конце каждого вектора."""
     point = data['point']
     a_rel = data['a_rel']
     a_centr = data['a_centr']
@@ -391,12 +453,32 @@ def generate_interactive_accelerations(data):
     labels = ['a_rel', 'a_centr', 'a_rot', 'a_trans_post', 'a_cor', 'a_abs']
     numeric_vals = [np.linalg.norm(v) for v in [a_rel, a_centr, a_rot, a_trans, a_cor, a_abs]]
     for vec, col, lab, val in zip(vectors, colors, labels, numeric_vals):
+        # Линия вектора
         fig.add_trace(go.Scatter3d(x=[point_new[0], point_new[0]+vec[0]],
                                    y=[point_new[1], point_new[1]+vec[1]],
                                    z=[point_new[2], point_new[2]+vec[2]],
                                    mode='lines+text', line=dict(color=col, width=3),
                                    text=['', f'{lab} = {val:.2f}'], textposition='middle right', name=lab))
+        # Стрелка-конус в конце
+        end_x = point_new[0] + vec[0]
+        end_y = point_new[1] + vec[1]
+        end_z = point_new[2] + vec[2]
+        arrow_scale = 0.15
+        u = vec[0] * arrow_scale
+        v = vec[1] * arrow_scale
+        w = vec[2] * arrow_scale
+        fig.add_trace(go.Cone(
+            x=[end_x], y=[end_y], z=[end_z],
+            u=[u], v=[v], w=[w],
+            colorscale=[[0, col], [1, col]],
+            showscale=False,
+            sizemode='scaled',
+            sizeref=0.3,
+            name=f'{lab} direction',
+            showlegend=False
+        ))
 
+    # Оси новой системы (чёрные)
     all_pts = [point_new] + [point_new+v for v in vectors] + [np.zeros(3)]
     all_arr = np.array(all_pts)
     min_vals = np.min(all_arr, axis=0)
