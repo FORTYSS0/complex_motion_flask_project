@@ -8,7 +8,7 @@ import pypandoc
 import matplotlib.pyplot as plt
 import numpy as np
 from calc import compute_complex_motion
-from plots import generate_all_plots
+from plots import generate_all_plots, generate_interactive_trajectory, generate_interactive_velocities, generate_interactive_accelerations
 
 app = Flask(__name__)
 
@@ -29,15 +29,19 @@ def latex_to_png(latex_str):
 @app.route('/')
 def index():
     data, formulas = compute_complex_motion(t=1)
-    generate_all_plots(data)
-    return render_template('report.html', data=data, formulas=formulas)
+    # Генерируем интерактивные графики
+    traj_json = generate_interactive_trajectory(data)
+    vel_json = generate_interactive_velocities(data)
+    acc_json = generate_interactive_accelerations(data)
+    return render_template('report.html', data=data, formulas=formulas,
+                           traj_json=traj_json, vel_json=vel_json, acc_json=acc_json)
 
 def prepare_export_data():
     """Возвращает data, formulas и formula_images для экспорта."""
     data, formulas = compute_complex_motion(t=1)
+    # Генерируем PNG для экспорта
     generate_all_plots(data)
 
-    # Базовые формулы из calc.py
     formula_images = {}
     for key, latex in formulas.items():
         formula_images[key] = latex_to_png(latex)
