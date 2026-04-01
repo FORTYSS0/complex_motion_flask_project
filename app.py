@@ -5,7 +5,7 @@ import base64
 import tempfile
 import pdfkit
 import pypandoc
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as pltapp.py
 import numpy as np
 from calc import compute_complex_motion
 from plots import generate_all_plots, generate_interactive_trajectory, generate_interactive_velocities, generate_interactive_accelerations
