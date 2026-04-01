@@ -6,7 +6,7 @@
     <title>Отчёт: Сложное движение точки</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.1/plotly.min.js"></script>
     <style>
         body { margin: 0; padding: 10px; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f9f9f9; color: #333; line-height: 1.5; }
         .container { max-width: 1200px; margin: 0 auto; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
@@ -205,7 +205,7 @@
 
     <h2>6. Итоговая таблица результатов</h2>
     <div class="table-wrapper">
-        <table>
+         <table>
             <thead><tr><th>Величина</th><th>Значение</th><th>Размерность</th></tr></thead>
             <tbody>
                 <tr><td>Координаты точки M</td><td>({{ "%.4f"|format(data.point[0]) }}, {{ "%.4f"|format(data.point[1]) }}, {{ "%.4f"|format(data.point[2]) }})</td><td>м</td></tr>
@@ -241,9 +241,11 @@
             return;
         }
 
-        function renderPlot(divId, jsonData, fallbackImgUrl) {
+        function renderPlot(divId, jsonString, fallbackImgUrl) {
             try {
-                var data = JSON.parse(jsonData);
+                console.log('Rendering', divId, 'JSON length:', jsonString.length);
+                var data = JSON.parse(jsonString);
+                console.log('Parsed data for', divId, data);
                 Plotly.newPlot(divId, data.data, data.layout);
             } catch (e) {
                 console.error('Ошибка рендеринга графика', divId, e);
@@ -260,9 +262,14 @@
             }
         }
 
-        renderPlot('trajectory-plot', {{ traj_json | tojson }}, '{{ static_paths.trajectory }}');
-        renderPlot('velocities-plot', {{ vel_json | tojson }}, '{{ static_paths.velocities }}');
-        renderPlot('accelerations-plot', {{ acc_json | tojson }}, '{{ static_paths.accelerations }}');
+        var trajJson = {{ traj_json | tojson }};
+        var velJson = {{ vel_json | tojson }};
+        var accJson = {{ acc_json | tojson }};
+
+        console.log('trajJson type:', typeof trajJson, 'length:', trajJson.length);
+        renderPlot('trajectory-plot', trajJson, '{{ static_paths.trajectory }}');
+        renderPlot('velocities-plot', velJson, '{{ static_paths.velocities }}');
+        renderPlot('accelerations-plot', accJson, '{{ static_paths.accelerations }}');
     });
 </script>
 </body>
