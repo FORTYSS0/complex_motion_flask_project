@@ -5,6 +5,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D, proj3d
 from matplotlib.patches import FancyArrowPatch
+import plotly.graph_objects as go
 
 # ==================== Статичные PNG-графики для экспорта ====================
 
@@ -212,9 +213,6 @@ def generate_all_plots(data):
 
 # ==================== Интерактивные графики (Plotly) ====================
 
-import plotly.graph_objects as go
-import numpy as np
-
 def generate_interactive_trajectory(data):
     """Возвращает JSON для интерактивного графика траектории."""
     t_vals = np.linspace(0, 2.5, 200)
@@ -336,7 +334,7 @@ def generate_interactive_trajectory(data):
         line=dict(color='green', width=2),
         name='ω'
     ))
-    # Добавляем стрелку в конце дуги (просто линия)
+    # Стрелка в конце дуги (короткая линия)
     fig.add_trace(go.Scatter3d(
         x=[x_arc[-2], x_arc[-1]],
         y=[y_arc[-2], y_arc[-1]],
@@ -345,10 +343,10 @@ def generate_interactive_trajectory(data):
         line=dict(color='green', width=3),
         showlegend=False
     ))
-    # Текст ω (используем annotation в 2D, но в 3D он не поддерживается; добавим как текст в точке)
+    # Текст ω (используем Scatter3d с текстом)
     mid = len(theta)//2
     fig.add_trace(go.Scatter3d(
-        x=[x_arc[mid]], y=[y_arc[mid]], z=[z_arc[mid]+0.02],
+        x=[x_arc[mid]], y=[y_arc[mid]], z=[z_arc[mid]],
         mode='text',
         text=[f'ω = {data["omega"]:.2f}'],
         textfont=dict(color='green', size=10),
@@ -420,7 +418,6 @@ def generate_interactive_velocities(data):
         ))
 
     # Оси новой системы (чёрные)
-    # Найдём масштаб для осей
     all_pts = [point_new] + [point_new+v for v in vectors] + [np.zeros(3)]
     all_arr = np.array(all_pts)
     min_vals = np.min(all_arr, axis=0)
