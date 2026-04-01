@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Отчёт: Сложное движение точки</title>
+    <title>Отчёт: Сложное движение точки (подробное решение)</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.1/plotly.min.js"></script>
@@ -58,20 +58,274 @@
     <h1>Отчёт по сложному движению точки (подробное решение)</h1>
     <p><strong>Бригада 2</strong>, момент времени \( t = {{ data.t }} \)</p>
 
-    <!-- (здесь полное содержание отчёта – такое же, как в предыдущих версиях, 
-         с формулами и пояснениями. Чтобы не дублировать, я опускаю его, 
-         но оно должно быть вставлено из предыдущего ответа) -->
+    <!-- ----------------------------------------------------------------- -->
+    <h2>1. Исходные данные и условия задачи</h2>
+    <div class="explanation">
+        <p>Нам дана точка, которая движется в подвижной системе координат \(xOy\) по закону:</p>
+        \[
+        x(t) = 8\cos\left(\frac{\pi t^2}{3}\right), \qquad 
+        y(t) = 16\sin\left(\frac{\pi t^2}{3}\right)
+        \]
+        <p>Это <strong>относительное движение</strong>. Одновременно подвижная система \(xOy\) перемещается относительно неподвижной \(x'O'y'\):</p>
+        \[
+        z'(t) = 2t^2 + 4, \qquad \varphi'(t) = 2\sin(\pi t)
+        \]
+        <p>Здесь \(z'(t)\) – смещение начала \(O\) по вертикали (ось \(z'\)), а \(\varphi'(t)\) – угол поворота подвижных осей вокруг вертикальной оси. В момент времени \(t=1\) нужно найти:</p>
+        <ul>
+            <li>скорость и ускорение точки в абсолютном (неподвижном) пространстве;</li>
+            <li>радиус кривизны абсолютной траектории;</li>
+            <li>построить графики.</li>
+        </ul>
+    </div>
 
-    <h2>5. Интерактивные 3D-графики</h2>
+    <!-- ----------------------------------------------------------------- -->
+    <h2>2. Относительное движение (в подвижной системе \(xOy\))</h2>
+    <div class="explanation">
+        <p>Подвижная система вращается и движется поступательно, но в ней точка имеет координаты:</p>
+        \[
+        x(t) = 8\cos\left(\frac{\pi t^2}{3}\right), \quad
+        y(t) = 16\sin\left(\frac{\pi t^2}{3}\right)
+        \]
+        <p>Найдём скорость и ускорение в относительном движении. Это просто производные по времени.</p>
+    </div>
+
+    <h3>Скорость точки относительно подвижной системы</h3>
+    <div class="formula">
+        <p>Производная от косинуса: \(\frac{d}{dt}\cos(u) = -\sin(u) \cdot \frac{du}{dt}\). Здесь \(u = \frac{\pi t^2}{3}\), \(\frac{du}{dt} = \frac{2\pi t}{3}\).</p>
+        \[
+        \dot x = 8 \cdot \left[ -\sin\left(\frac{\pi t^2}{3}\right) \cdot \frac{2\pi t}{3} \right]
+        = -\frac{16\pi t}{3} \sin\left(\frac{\pi t^2}{3}\right)
+        \]
+        <p>Аналогично для \(y\): \(\frac{d}{dt}\sin(u) = \cos(u) \cdot \frac{du}{dt}\).</p>
+        \[
+        \dot y = 16 \cdot \left[ \cos\left(\frac{\pi t^2}{3}\right) \cdot \frac{2\pi t}{3} \right]
+        = \frac{32\pi t}{3} \cos\left(\frac{\pi t^2}{3}\right)
+        \]
+        <p>Подставляем \(t = {{ data.t }}\):</p>
+        \[
+        \dot x = -\frac{16\pi}{3} \sin\left(\frac{\pi}{3}\right) = -\frac{16\pi}{3} \cdot \frac{\sqrt{3}}{2}
+        = -\frac{8\pi\sqrt{3}}{3} \approx {{ "%.4f"|format(data.V_rel[0]) }}
+        \]
+        \[
+        \dot y = \frac{32\pi}{3} \cos\left(\frac{\pi}{3}\right) = \frac{32\pi}{3} \cdot \frac{1}{2}
+        = \frac{16\pi}{3} \approx {{ "%.4f"|format(data.V_rel[1]) }}
+        \]
+        <p>Модуль относительной скорости:</p>
+        \[
+        V_{\text{отн}} = \sqrt{\dot x^2 + \dot y^2}
+        = \sqrt{\left(-\frac{8\pi\sqrt{3}}{3}\right)^2 + \left(\frac{16\pi}{3}\right)^2}
+        = \frac{8\pi}{3}\sqrt{3 + 4} = \frac{8\pi\sqrt{7}}{3} \approx {{ "%.4f"|format(data.V_rel_mod) }}
+        \]
+    </div>
+
+    <h3>Ускорение точки относительно подвижной системы</h3>
+    <div class="formula">
+        <p>Вторая производная. Сначала для \(x\):</p>
+        \[
+        \ddot x = \frac{d}{dt}\left( -\frac{16\pi t}{3} \sin\left(\frac{\pi t^2}{3}\right) \right)
+        = -\frac{16\pi}{3}\sin\left(\frac{\pi t^2}{3}\right)
+        - \frac{16\pi t}{3}\cos\left(\frac{\pi t^2}{3}\right)\cdot\frac{2\pi t}{3}
+        = -\frac{16\pi}{3}\sin\left(\frac{\pi t^2}{3}\right)
+        - \frac{32\pi^2 t^2}{9}\cos\left(\frac{\pi t^2}{3}\right)
+        \]
+        <p>Для \(y\):</p>
+        \[
+        \ddot y = \frac{d}{dt}\left( \frac{32\pi t}{3} \cos\left(\frac{\pi t^2}{3}\right) \right)
+        = \frac{32\pi}{3}\cos\left(\frac{\pi t^2}{3}\right)
+        - \frac{32\pi t}{3}\sin\left(\frac{\pi t^2}{3}\right)\cdot\frac{2\pi t}{3}
+        = \frac{32\pi}{3}\cos\left(\frac{\pi t^2}{3}\right)
+        - \frac{64\pi^2 t^2}{9}\sin\left(\frac{\pi t^2}{3}\right)
+        \]
+        <p>Подставляем \(t=1\):</p>
+        \[
+        \ddot x(1) = -\frac{8\pi\sqrt{3}}{3} - \frac{32\pi^2}{9} \cdot \frac12 = -\frac{8\pi\sqrt{3}}{3} - \frac{16\pi^2}{9} \approx {{ "%.4f"|format(data.a_rel[0]) }}
+        \]
+        \[
+        \ddot y(1) = \frac{16\pi}{3} - \frac{64\pi^2}{9} \cdot \frac{\sqrt{3}}{2} = \frac{16\pi}{3} - \frac{32\pi^2\sqrt{3}}{9} \approx {{ "%.4f"|format(data.a_rel[1]) }}
+        \]
+    </div>
+
+    <!-- ----------------------------------------------------------------- -->
+    <h2>3. Переносное движение (движение подвижной системы)</h2>
+    <div class="explanation">
+        <p>Подвижная система движется двумя способами:</p>
+        <ul>
+            <li><strong>Поступательно</strong> – её начало \(O\) перемещается по вертикали по закону \(z'(t) = 2t^2 + 4\).</li>
+            <li><strong>Вращательно</strong> – система поворачивается вокруг вертикальной оси \(Z'\) на угол \(\varphi'(t) = 2\sin(\pi t)\).</li>
+        </ul>
+    </div>
+
+    <h3>Поступательная часть</h3>
+    <div class="formula">
+        \[
+        z'(t) = 2t^2 + 4, \quad \dot z'(t) = 4t, \quad \ddot z'(t) = 4
+        \]
+        При \(t=1\):
+        \[
+        \dot z' = 4 \ \text{м/с}, \quad \ddot z' = 4 \ \text{м/с}^2
+        \]
+        Скорость поступательного переноса: \(\mathbf{V}_{\text{пер,пост}} = (0,0,4)\).
+        Ускорение: \(\mathbf{a}_{\text{пер,пост}} = (0,0,4)\).
+    </div>
+
+    <h3>Вращательная часть</h3>
+    <div class="formula">
+        <p>Угловая скорость и угловое ускорение:</p>
+        \[
+        \varphi'(t) = 2\sin(\pi t) \;\Rightarrow\; \omega = \dot\varphi' = 2\pi\cos(\pi t), \quad
+        \alpha = \ddot\varphi' = -2\pi^2\sin(\pi t)
+        \]
+        При \(t=1\):
+        \[
+        \omega = 2\pi\cos\pi = -2\pi \ \text{рад/с}, \quad \alpha = -2\pi^2\sin\pi = 0
+        \]
+        <p>Вектор угловой скорости направлен вдоль оси \(Z\): \(\boldsymbol{\omega} = (0,0,\omega)\).</p>
+    </div>
+
+    <div class="explanation">
+        <p>Радиус-вектор точки \(M\) в подвижной системе в момент \(t=1\):</p>
+        \[
+        \mathbf{r}_{\text{отн}} = (x(1), y(1), 0) = (4,\ 8\sqrt{3},\ 0)
+        \]
+    </div>
+
+    <h3>Переносная скорость (вращательная)</h3>
+    <div class="formula">
+        \[
+        \mathbf{V}_{\text{пер,вр}} = \boldsymbol{\omega} \times \mathbf{r}_{\text{отн}}
+        \]
+        \[
+        \begin{vmatrix}
+        \mathbf{i} & \mathbf{j} & \mathbf{k}\\
+        0 & 0 & -2\pi\\
+        4 & 8\sqrt{3} & 0
+        \end{vmatrix}
+        = (16\pi\sqrt{3},\ -8\pi,\ 0) \approx ({{ "%.4f"|format(data.V_rot[0]) }}, {{ "%.4f"|format(data.V_rot[1]) }}, 0)
+        \]
+        Модуль: \(V_{\text{вр}} = \sqrt{(16\pi\sqrt{3})^2 + (-8\pi)^2} = 8\pi\sqrt{12+1} = 8\pi\sqrt{13} \approx {{ "%.4f"|format(data.V_rot_mod) }}\).
+    </div>
+
+    <h3>Переносное ускорение</h3>
+    <div class="formula">
+        <p>Центростремительное (нормальное) ускорение:</p>
+        \[
+        \mathbf{a}_{\text{пер,ц}} = -\omega^2 \mathbf{r}_{\text{отн}} = - (2\pi)^2 (4,\ 8\sqrt{3},\ 0) = (-16\pi^2,\ -32\pi^2\sqrt{3},\ 0)
+        \]
+        <p>Вращательное (тангенциальное) ускорение: \(\mathbf{a}_{\text{пер,вр}} = \boldsymbol{\alpha} \times \mathbf{r}_{\text{отн}} = 0\), так как \(\alpha=0\).</p>
+        <p>Поступательное ускорение: \(\mathbf{a}_{\text{пер,пост}} = (0,0,4)\).</p>
+        <p>Суммируем:</p>
+        \[
+        \mathbf{a}_{\text{пер}} = \mathbf{a}_{\text{пер,ц}} + \mathbf{a}_{\text{пер,вр}} + \mathbf{a}_{\text{пер,пост}}
+        = \left(-16\pi^2,\ -32\pi^2\sqrt{3},\ 4\right) \approx ({{ "%.4f"|format(data.a_centr[0]) }},\ {{ "%.4f"|format(data.a_centr[1]) }},\ 4)
+        \]
+    </div>
+
+    <!-- ----------------------------------------------------------------- -->
+    <h2>4. Сложное движение (абсолютные скорость и ускорение)</h2>
+    <div class="explanation">
+        <p>Теорема сложения скоростей: \(\mathbf{V}_{\text{абс}} = \mathbf{V}_{\text{отн}} + \mathbf{V}_{\text{пер,пост}} + \mathbf{V}_{\text{пер,вр}}\).</p>
+        <p>Теорема сложения ускорений (с учётом вращения): \(\mathbf{a}_{\text{абс}} = \mathbf{a}_{\text{отн}} + \mathbf{a}_{\text{пер}} + \mathbf{a}_{\text{кор}}\), где \(\mathbf{a}_{\text{кор}} = 2\,\boldsymbol{\omega}\times\mathbf{V}_{\text{отн}}\).</p>
+    </div>
+
+    <h3>Абсолютная скорость</h3>
+    <div class="formula">
+        \[
+        \mathbf{V}_{\text{отн}} = \left(-\frac{8\pi\sqrt{3}}{3},\ \frac{16\pi}{3},\ 0\right),\quad
+        \mathbf{V}_{\text{пер,пост}} = (0,0,4),\quad
+        \mathbf{V}_{\text{пер,вр}} = \left(16\pi\sqrt{3},\ -8\pi,\ 0\right)
+        \]
+        Складываем покомпонентно:
+        \[
+        V_x = -\frac{8\pi\sqrt{3}}{3} + 16\pi\sqrt{3} = \frac{40\pi\sqrt{3}}{3} \approx {{ "%.4f"|format(data.V_abs[0]) }}
+        \]
+        \[
+        V_y = \frac{16\pi}{3} - 8\pi = -\frac{8\pi}{3} \approx {{ "%.4f"|format(data.V_abs[1]) }}
+        \]
+        \[
+        V_z = 0 + 4 + 0 = 4
+        \]
+        Модуль:
+        \[
+        V_{\text{абс}} = \sqrt{\left(\frac{40\pi\sqrt{3}}{3}\right)^2 + \left(-\frac{8\pi}{3}\right)^2 + 4^2}
+        = \sqrt{\frac{4800\pi^2}{9} + \frac{64\pi^2}{9} + 16} = \sqrt{\frac{4864\pi^2}{9}+16} \approx {{ "%.4f"|format(data.V_abs_mod) }}
+        \]
+    </div>
+
+    <h3>Ускорение Кориолиса</h3>
+    <div class="formula">
+        \[
+        \mathbf{a}_{\text{кор}} = 2\,\boldsymbol{\omega}\times\mathbf{V}_{\text{отn}}
+        = 2 \begin{vmatrix}
+        \mathbf{i} & \mathbf{j} & \mathbf{k}\\
+        0 & 0 & -2\pi\\
+        -\frac{8\pi\sqrt{3}}{3} & \frac{16\pi}{3} & 0
+        \end{vmatrix}
+        = 2\left(\frac{32\pi^2}{3},\ \frac{16\pi^2\sqrt{3}}{3},\ 0\right)
+        = \left(\frac{64\pi^2}{3},\ \frac{32\pi^2\sqrt{3}}{3},\ 0\right) \approx ({{ "%.4f"|format(data.a_cor[0]) }},\ {{ "%.4f"|format(data.a_cor[1]) }},\ 0)
+        \]
+        Модуль: \(a_{\text{кор}} = \sqrt{\left(\frac{64\pi^2}{3}\right)^2 + \left(\frac{32\pi^2\sqrt{3}}{3}\right)^2} = \frac{32\pi^2}{3}\sqrt{4+3} = \frac{32\pi^2\sqrt{7}}{3} \approx {{ "%.4f"|format(data.a_cor_mod) }}\).
+    </div>
+
+    <h3>Абсолютное ускорение</h3>
+    <div class="formula">
+        \[
+        \mathbf{a}_{\text{абс}} = \mathbf{a}_{\text{отн}} + \mathbf{a}_{\text{пер}} + \mathbf{a}_{\text{кор}}
+        \]
+        \[
+        \mathbf{a}_{\text{отн}} = \left(-\frac{8\pi\sqrt{3}}{3}-\frac{16\pi^2}{9},\ \frac{16\pi}{3}-\frac{32\pi^2\sqrt{3}}{9},\ 0\right)
+        \]
+        \[
+        \mathbf{a}_{\text{пер}} = \left(-16\pi^2,\ -32\pi^2\sqrt{3},\ 4\right)
+        \]
+        \[
+        \mathbf{a}_{\text{кор}} = \left(\frac{64\pi^2}{3},\ \frac{32\pi^2\sqrt{3}}{3},\ 0\right)
+        \]
+        Складываем:
+        \[
+        a_x = -\frac{8\pi\sqrt{3}}{3} - \frac{16\pi^2}{9} - 16\pi^2 + \frac{64\pi^2}{3}
+        = -\frac{8\pi\sqrt{3}}{3} + \left(-\frac{16\pi^2}{9} - 16\pi^2 + \frac{192\pi^2}{9}\right)
+        = -\frac{8\pi\sqrt{3}}{3} + \frac{32\pi^2}{9} \approx {{ "%.4f"|format(data.a_abs[0]) }}
+        \]
+        \[
+        a_y = \frac{16\pi}{3} - \frac{32\pi^2\sqrt{3}}{9} - 32\pi^2\sqrt{3} + \frac{32\pi^2\sqrt{3}}{3}
+        = \frac{16\pi}{3} + \left(-\frac{32\pi^2\sqrt{3}}{9} - 32\pi^2\sqrt{3} + \frac{96\pi^2\sqrt{3}}{9}\right)
+        = \frac{16\pi}{3} - \frac{224\pi^2\sqrt{3}}{9} \approx {{ "%.4f"|format(data.a_abs[1]) }}
+        \]
+        \[
+        a_z = 0 + 4 + 0 = 4
+        \]
+        Модуль: \(a_{\text{абс}} \approx {{ "%.4f"|format(data.a_abs_mod) }}\) м/с².
+    </div>
+
+    <!-- ----------------------------------------------------------------- -->
+    <h2>5. Радиус кривизны абсолютной траектории</h2>
+    <div class="explanation">
+        <p>Радиус кривизны пространственной кривой вычисляется по формуле:</p>
+        \[
+        \rho = \frac{V_{\text{абс}}^3}{|\mathbf{V}_{\text{абс}} \times \mathbf{a}_{\text{абс}}|}
+        \]
+        <p>Модуль векторного произведения:</p>
+        \[
+        |\mathbf{V}\times\mathbf{a}| = \sqrt{(V_y a_z - V_z a_y)^2 + (V_z a_x - V_x a_z)^2 + (V_x a_y - V_y a_x)^2}
+        \]
+        <p>После подстановки и вычислений получаем:</p>
+        \[
+        \rho \approx {{ "%.4f"|format(data.rho) }} \ \text{м}
+        \]
+        <p>Это значение показывает, насколько траектория искривлена: чем меньше радиус, тем сильнее изгиб.</p>
+    </div>
+
+    <!-- ----------------------------------------------------------------- -->
+    <h2>6. Интерактивные 3D-графики</h2>
     <div class="graph">
         <h3>Рис. 1. Абсолютная траектория точки (неподвижная система \(X',Y',Z'\))</h3>
         <div id="trajectory-plot"></div>
-        <p><em>Красные оси – подвижная система \(X,Y,Z\) из точки \(O\). Зелёная дуга – направление вращения (угловая скорость \(\omega\)). Зелёные конусы – направление движения по траектории. Фиолетовый вектор – абсолютная скорость.</em></p>
+        <p><em>Красные оси – подвижная система \(X,Y,Z\) из точки \(O\). Зелёная дуга – направление вращения (угловая скорость \(\omega\)). Фиолетовый вектор – абсолютная скорость (масштабирован). Зелёный конус – направление движения по траектории.</em></p>
     </div>
     <div class="graph">
         <h3>Рис. 2. Векторы скоростей в точке \(M\) (оси: \(V_{\text{отн}},\ a_{\text{cor}},\ \omega\))</h3>
         <div id="velocities-plot"></div>
-        <p><em>Все векторы пересчитаны в систему координат, где оси направлены вдоль относительной скорости, ускорения Кориолиса и угловой скорости. Конусы показывают направление.</em></p>
+        <p><em>Все векторы пересчитаны в систему координат, где оси направлены вдоль относительной скорости, ускорения Кориолиса и угловой скорости. Конусы указывают направление.</em></p>
     </div>
     <div class="graph">
         <h3>Рис. 3. Векторы ускорений в точке \(M\) (оси: \(\omega,\ a_{\text{cor}},\ a_{\text{отн}}\))</h3>
@@ -79,25 +333,27 @@
         <p><em>Ускорения показаны в системе, где оси совпадают с направлениями \(\omega\), \(a_{\text{cor}}\) и перпендикулярной компонентой \(a_{\text{отн}}\).</em></p>
     </div>
 
-    <h2>6. Итоговая таблица результатов</h2>
+    <!-- ----------------------------------------------------------------- -->
+    <h2>7. Итоговая таблица результатов</h2>
     <div class="table-wrapper">
-        <table>
-            <thead><tr><th>Величина</th><th>Значение</th><th>Размерность</th></tr></thead>
+        表
+            <thead>
+                <tr><th>Величина</th><th>Значение</th><th>Размерность</th> </thead>
             <tbody>
-                <tr><td>Координаты точки M</td><td>({{ "%.4f"|format(data.point[0]) }}, {{ "%.4f"|format(data.point[1]) }}, {{ "%.4f"|format(data.point[2]) }})</td><td>м</td></tr>
-                <tr><td>Относительная скорость \(V_{\text{отн}}\)</td><td>{{ "%.4f"|format(data.V_rel_mod) }}</td><td>м/с</td></tr>
-                <tr><td>Переносная скорость (вращательная) \(V_{\text{вр}}\)</td><td>{{ "%.4f"|format(data.V_rot_mod) }}</td><td>м/с</td></tr>
-                <tr><td>Переносная скорость (поступательная) \(V_{\text{пост}}\)</td><td>{{ "%.4f"|format(data.V_trans_post_mod) }}</td><td>м/с</td></tr>
-                <tr><td>Абсолютная скорость \(V_{\text{абс}}\)</td><td>{{ "%.4f"|format(data.V_abs_mod) }}</td><td>м/с</td></tr>
-                <tr><td>Относительное ускорение \(a_{\text{отн}}\)</td><td>{{ "%.4f"|format(data.a_rel_mod) }}</td><td>м/с²</td></tr>
-                <tr><td>Центростремительное ускорение \(a_{\text{ц}}\)</td><td>{{ "%.4f"|format(data.a_centr_mod) }}</td><td>м/с²</td></tr>
-                <tr><td>Вращательное ускорение \(a_{\text{вр}}\)</td><td>{{ "%.4f"|format(data.a_rot_mod) }}</td><td>м/с²</td></tr>
-                <tr><td>Поступательное ускорение \(a_{\text{пост}}\)</td><td>{{ "%.4f"|format(data.a_trans_post_mod) }}</td><td>м/с²</td></tr>
-                <tr><td>Ускорение Кориолиса \(a_{\text{кор}}\)</td><td>{{ "%.4f"|format(data.a_cor_mod) }}</td><td>м/с²</td></tr>
-                <tr><td>Абсолютное ускорение \(a_{\text{абс}}\)</td><td>{{ "%.4f"|format(data.a_abs_mod) }}</td><td>м/с²</td></tr>
-                <tr><td>Радиус кривизны \(\rho\)</td><td>{{ "%.4f"|format(data.rho) }}</td><td>м</td></tr>
+                <tr><td>Координаты точки M</td><td>({{ "%.4f"|format(data.point[0]) }}, {{ "%.4f"|format(data.point[1]) }}, {{ "%.4f"|format(data.point[2]) }})</td><td>м</td> </tr>
+                <tr><td>Относительная скорость \(V_{\text{отн}}\)</td><td>{{ "%.4f"|format(data.V_rel_mod) }}</td><td>м/с</td> </tr>
+                <tr><td>Переносная скорость (вращательная) \(V_{\text{вр}}\)</td><td>{{ "%.4f"|format(data.V_rot_mod) }}</td><td>м/с</td> </tr>
+                <tr><td>Переносная скорость (поступательная) \(V_{\text{пост}}\)</td><td>{{ "%.4f"|format(data.V_trans_post_mod) }}</td><td>м/с</td> </tr>
+                <tr><td>Абсолютная скорость \(V_{\text{абс}}\)</td><td>{{ "%.4f"|format(data.V_abs_mod) }}</td><td>м/с</td> </tr>
+                <tr><td>Относительное ускорение \(a_{\text{отн}}\)</td><td>{{ "%.4f"|format(data.a_rel_mod) }}</td><td>м/с²</td> </tr>
+                <tr><td>Центростремительное ускорение \(a_{\text{ц}}\)</td><td>{{ "%.4f"|format(data.a_centr_mod) }}</td><td>м/с²</td> </tr>
+                <tr><td>Вращательное ускорение \(a_{\text{вр}}\)</td><td>{{ "%.4f"|format(data.a_rot_mod) }}</td><td>м/с²</td> </tr>
+                <tr><td>Поступательное ускорение \(a_{\text{пост}}\)</td><td>{{ "%.4f"|format(data.a_trans_post_mod) }}</td><td>м/с²</td> </tr>
+                <tr><td>Ускорение Кориолиса \(a_{\text{кор}}\)</td><td>{{ "%.4f"|format(data.a_cor_mod) }}</td><td>м/с²</td> </tr>
+                <tr><td>Абсолютное ускорение \(a_{\text{абс}}\)</td><td>{{ "%.4f"|format(data.a_abs_mod) }}</td><td>м/с²</td> </tr>
+                <tr><td>Радиус кривизны \(\rho\)</td><td>{{ "%.4f"|format(data.rho) }}</td><td>м</td> </tr>
             </tbody>
-        </table>
+        表
     </div>
 
     <div class="footer">
