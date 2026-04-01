@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Отчёт: Сложное движение точки (подробное решение)</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Отчёт: Сложное движение точки (интерактивные 3D-графики)</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
     <style>
         body { margin: 0; padding: 10px; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f9f9f9; color: #333; line-height: 1.5; }
@@ -22,7 +22,6 @@
         th { background-color: #0066cc; color: white; }
         .table-wrapper { overflow-x: auto; margin: 20px 0; }
         .graph { text-align: center; margin: 20px 0; }
-        .graph img { max-width: 100%; height: auto; border: 1px solid #ccc; border-radius: 5px; }
         .footer { font-size: 0.9em; color: #777; text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
         @media (max-width: 768px) {
             .container { padding: 10px; }
@@ -303,27 +302,27 @@
     </div>
 
     <!-- ----------------------------------------------------------------- -->
-    <h2>6. Графическое представление</h2>
+    <h2>6. Графическое представление (интерактивные 3D-графики)</h2>
     <div class="graph">
         <h3>Рис. 1. Абсолютная траектория точки (неподвижная система \(X',Y',Z'\))</h3>
-        <img src="{{ url_for('static', filename='trajectory.png') }}" alt="Траектория">
+        <div id="trajectory-plot" style="width:100%; height:600px;"></div>
         <p><em>Красные оси – подвижная система \(X,Y,Z\) из точки \(O\). Зелёная дуга – направление вращения (угловая скорость \(\omega\)). Фиолетовый вектор – абсолютная скорость (масштабирован для наглядности).</em></p>
     </div>
     <div class="graph">
         <h3>Рис. 2. Векторы скоростей в точке \(M\) (оси: \(V_{\text{отн}},\ a_{\text{cor}},\ \omega\))</h3>
-        <img src="{{ url_for('static', filename='velocities.png') }}" alt="Скорости">
+        <div id="velocities-plot" style="width:100%; height:600px;"></div>
         <p><em>Все векторы пересчитаны в систему координат, где оси направлены вдоль относительной скорости, ускорения Кориолиса и угловой скорости.</em></p>
     </div>
     <div class="graph">
         <h3>Рис. 3. Векторы ускорений в точке \(M\) (оси: \(\omega,\ a_{\text{cor}},\ a_{\text{отн}}\))</h3>
-        <img src="{{ url_for('static', filename='accelerations.png') }}" alt="Ускорения">
+        <div id="accelerations-plot" style="width:100%; height:600px;"></div>
         <p><em>Аналогично, ускорения показаны в системе, где оси совпадают с направлениями \(\omega\), \(a_{\text{cor}}\) и перпендикулярной компонентой \(a_{\text{отн}}\).</em></p>
     </div>
 
     <!-- ----------------------------------------------------------------- -->
     <h2>7. Итоговая таблица результатов</h2>
     <div class="table-wrapper">
-        <table>
+        表
             <thead>
                 <tr><th>Величина</th><th>Значение</th><th>Размерность</th></tr>
             </thead>
@@ -341,13 +340,22 @@
                 <tr><td>Абсолютное ускорение \(a_{\text{абс}}\)</td><td>{{ "%.4f"|format(data.a_abs_mod) }}</td><td>м/с²</td></tr>
                 <tr><td>Радиус кривизны \(\rho\)</td><td>{{ "%.4f"|format(data.rho) }}</td><td>м</td></tr>
             </tbody>
-        </table>
+        表
     </div>
 
     <div class="footer">
         Отчёт сгенерирован автоматически. Все расчёты выполнены для момента времени \( t = {{ data.t }} \).<br>
-        Подробные выкладки позволяют проследить каждый этап решения.
+        Графики интерактивны – их можно вращать, масштабировать и перемещать.
     </div>
 </div>
+
+<script>
+    var traj = {{ traj_json | safe }};
+    var vel = {{ vel_json | safe }};
+    var acc = {{ acc_json | safe }};
+    Plotly.newPlot('trajectory-plot', traj.data, traj.layout);
+    Plotly.newPlot('velocities-plot', vel.data, vel.layout);
+    Plotly.newPlot('accelerations-plot', acc.data, acc.layout);
+</script>
 </body>
 </html>
