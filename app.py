@@ -29,7 +29,7 @@ def latex_to_png(latex_str):
 @app.route('/')
 def index():
     data, formulas = compute_complex_motion(t=1)
-    # Генерируем статичные PNG для экспорта (можно вызывать только при экспорте, но оставим здесь)
+    # Генерируем статичные PNG для экспорта
     generate_all_plots(data)
     # Интерактивные графики
     traj_json = generate_interactive_trajectory(data)
