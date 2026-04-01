@@ -7,7 +7,6 @@ from mpl_toolkits.mplot3d import Axes3D, proj3d
 from matplotlib.patches import FancyArrowPatch
 
 class Arrow3D(FancyArrowPatch):
-    """Класс для рисования 3D-стрелок (для дуги вращения)."""
     def __init__(self, xs, ys, zs, *args, **kwargs):
         super().__init__((0,0), (0,0), *args, **kwargs)
         self._verts3d = xs, ys, zs
@@ -19,7 +18,6 @@ class Arrow3D(FancyArrowPatch):
         return np.min(zs)
 
 def draw_axes(ax, origin=(0,0,0), length=None, color='black', labels=['X', 'Y', 'Z']):
-    """Рисует оси координат заданной длины (length)."""
     for i, label in enumerate(labels):
         vec = [0,0,0]
         vec[i] = length
@@ -29,66 +27,10 @@ def draw_axes(ax, origin=(0,0,0), length=None, color='black', labels=['X', 'Y', 
         ax.text(origin[0]+vec[0], origin[1]+vec[1], origin[2]+vec[2], label,
                 color=color, fontsize=10, ha='center', va='center')
 
-def plot_vectors(title, point, vectors, colors, labels, filename, numeric_values=None):
-    """
-    Сохраняет 3D-график с векторами из точки.
-    Все векторы и оси гарантированно помещаются в кадре.
-    """
-    fig = plt.figure(figsize=(8, 6))
-    ax = fig.add_subplot(111, projection='3d')
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-    ax.set_title(title)
-
-    # Точка M
-    ax.scatter(point[0], point[1], point[2], color='red', s=50, label='Point M')
-
-    # Векторы
-    for idx, (vec, color, label) in enumerate(zip(vectors, colors, labels)):
-        ax.quiver(point[0], point[1], point[2],
-                  vec[0], vec[1], vec[2],
-                  color=color, label=label, arrow_length_ratio=0.03)
-        if numeric_values and idx < len(numeric_values):
-            end = np.array(point) + vec
-            offset = vec / (np.linalg.norm(vec) + 1e-8) * 0.1
-            text_pos = end + offset
-            ax.text(text_pos[0], text_pos[1], text_pos[2],
-                    f'{label} = {numeric_values[idx]:.2f}',
-                    color=color, fontsize=8, ha='center', va='center')
-
-    # Собираем все точки для расчёта лимитов
-    all_points = [np.array(point)]
-    for vec in vectors:
-        all_points.append(np.array(point) + vec)
-    all_points.append(np.array([0,0,0]))
-
-    all_points_arr = np.array(all_points)
-    min_vals = np.min(all_points_arr, axis=0)
-    max_vals = np.max(all_points_arr, axis=0)
-    max_range = np.max(max_vals - min_vals)
-    axis_length = max_range * 0.25
-
-    axis_ends = [[axis_length,0,0], [0,axis_length,0], [0,0,axis_length]]
-    all_points_arr = np.vstack([all_points_arr, axis_ends])
-    min_vals = np.min(all_points_arr, axis=0)
-    max_vals = np.max(all_points_arr, axis=0)
-    margin = 0.2
-    ax.set_xlim([min_vals[0]-margin, max_vals[0]+margin])
-    ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
-    ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
-
-    draw_axes(ax, origin=(0,0,0), length=axis_length, color='black')
-    ax.grid(True, alpha=0.3)
-    ax.legend(loc='upper left')
-
-    plt.tight_layout()
-    plt.savefig(os.path.join('static', filename), dpi=150)
-    plt.close()
-
 def generate_all_plots(data):
-    """Создаёт три графика для отчёта."""
-    # ---- 1. Траектория (неподвижная система) ----
+    # ------------------------------------------------------------
+    # 1. Траектория (неподвижная система)
+    # ------------------------------------------------------------
     t_vals = np.linspace(0, 2.5, 200)
     x_t = 8 * np.cos(np.pi * t_vals**2 / 3)
     y_t = 16 * np.sin(np.pi * t_vals**2 / 3)
@@ -104,19 +46,16 @@ def generate_all_plots(data):
     ax.set_zlabel("Z'")
     ax.set_title('Способ задания движения (абсолютная траектория)')
 
-    # Точка O – начало подвижной системы
     O = np.array([0.0, 0.0, data['zp']])
 
-    # Сбор всех точек для масштабирования
+    # Сбор точек для масштабирования
     all_points = np.vstack([np.column_stack([x_t, y_t, z_t]),
-                            [data['point']],
-                            [0,0,0], O])
+                            [data['point']], [0,0,0], O])
     min_vals = np.min(all_points, axis=0)
     max_vals = np.max(all_points, axis=0)
     max_range = np.max(max_vals - min_vals)
     axis_length = max_range * 0.25
 
-    # Концы чёрных и красных осей
     axis_ends = [[axis_length,0,0], [0,axis_length,0], [0,0,axis_length]]
     red_ends = [O + np.array([axis_length,0,0]),
                 O + np.array([0,axis_length,0]),
@@ -129,14 +68,9 @@ def generate_all_plots(data):
     ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
     ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
 
-    # Неподвижные оси (чёрные)
     draw_axes(ax, origin=(0,0,0), length=axis_length, color='black',
               labels=["X'", "Y'", "Z'"])
-    # Подвижные оси (красные) из точки O
-    draw_axes(ax, origin=O, length=axis_length, color='red',
-              labels=['X', 'Y', 'Z'])
-
-    # Точка O
+    draw_axes(ax, origin=O, length=axis_length, color='red', labels=['X', 'Y', 'Z'])
     ax.scatter(O[0], O[1], O[2], color='blue', s=40, label='O (начало подвижной)')
     ax.text(O[0], O[1], O[2], ' O', color='blue', fontsize=10)
 
@@ -155,7 +89,7 @@ def generate_all_plots(data):
             f'V_abs = {data["V_abs_mod"]:.2f}',
             color='purple', fontsize=8, ha='center', va='center')
 
-    # Направление вращения (дуга со стрелкой)
+    # Дуга вращения
     theta = np.linspace(0, -np.pi/2, 50)
     radius = axis_length * 0.6
     x_arc = O[0] + radius * np.cos(theta)
@@ -177,7 +111,10 @@ def generate_all_plots(data):
     plt.savefig(os.path.join('static', 'trajectory.png'), dpi=150)
     plt.close()
 
-    # ---- 2. Скорости (подвижная система) ----
+    # ------------------------------------------------------------
+    # 2. Скорости (подвижная система, но без осей X,Y,Z,
+    #    базисные векторы ω, a_кор, V_отн)
+    # ------------------------------------------------------------
     point = data['point']
     vectors = [data['V_rel'], data['V_rot'], data['V_trans_post'], data['V_abs']]
     colors = ['blue', 'green', 'orange', 'purple']
@@ -192,9 +129,10 @@ def generate_all_plots(data):
     ax.set_zlabel('Z')
     ax.set_title('Векторы скоростей в точке M')
 
+    # Точка M
     ax.scatter(point[0], point[1], point[2], color='red', s=50, label='Point M')
 
-    # Векторы скоростей
+    # Все векторы скоростей
     for idx, (vec, color, label) in enumerate(zip(vectors, colors, labels)):
         ax.quiver(point[0], point[1], point[2],
                   vec[0], vec[1], vec[2],
@@ -207,32 +145,56 @@ def generate_all_plots(data):
                     f'{label} = {numeric_vals[idx]:.2f}',
                     color=color, fontsize=8, ha='center', va='center')
 
-    # Добавляем вектор угловой скорости ω из точки O
-    O = np.array([0.0, 0.0, data['zp']])
+    # Базисные векторы (ω, a_кор, V_отн) из точки M
+    # ω – направлен вверх (ось Z)
     omega_vec = np.array([0.0, 0.0, data['omega']])
-    # Собираем все точки для определения масштаба
-    all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + [O, O + omega_vec] + [np.array([0,0,0])]
-    all_arr = np.array(all_points)
-    max_range = np.max(np.max(all_arr, axis=0) - np.min(all_arr, axis=0))
-    omega_length = max_range * 0.2
-    omega_unit = omega_vec / (np.linalg.norm(omega_vec) + 1e-8)
-    omega_scaled = omega_unit * omega_length
-    ax.quiver(O[0], O[1], O[2],
-              omega_scaled[0], omega_scaled[1], omega_scaled[2],
-              color='cyan', label='ω', arrow_length_ratio=0.05)
-    end_omega = O + omega_scaled
-    ax.text(end_omega[0], end_omega[1], end_omega[2],
-            f'ω = {data["omega"]:.2f}', color='cyan', fontsize=8)
+    # a_кор – направлен вправо (ось X)
+    a_cor_vec = data['a_cor']
+    # V_отн – направлен вперёд (ось Y)
+    V_rel_vec = data['V_rel']
 
-    # Расчёт лимитов с учётом ω
-    all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + [O, O + omega_scaled] + [np.array([0,0,0])]
+    # Вычисляем масштаб для наглядности (длина базисных векторов ~ 0.3 от размаха)
+    all_vectors = [omega_vec, a_cor_vec, V_rel_vec] + vectors
+    all_points_basis = [np.array(point)] + [np.array(point) + v for v in all_vectors] + [np.array([0,0,0])]
+    all_arr = np.array(all_points_basis)
+    max_range = np.max(np.max(all_arr, axis=0) - np.min(all_arr, axis=0))
+    basis_length = max_range * 0.25
+
+    # Нормируем и масштабируем каждый базисный вектор
+    def scaled_basis(vec, target_length):
+        if np.linalg.norm(vec) < 1e-8:
+            return np.zeros(3)
+        return vec / np.linalg.norm(vec) * target_length
+
+    omega_basis = scaled_basis(omega_vec, basis_length)
+    a_cor_basis = scaled_basis(a_cor_vec, basis_length)
+    V_rel_basis = scaled_basis(V_rel_vec, basis_length)
+
+    # Рисуем базисные векторы
+    ax.quiver(point[0], point[1], point[2],
+              omega_basis[0], omega_basis[1], omega_basis[2],
+              color='magenta', label='ω (basis)', arrow_length_ratio=0.05)
+    end_omega = np.array(point) + omega_basis
+    ax.text(end_omega[0], end_omega[1], end_omega[2],
+            f'ω = {data["omega"]:.2f}', color='magenta', fontsize=8)
+
+    ax.quiver(point[0], point[1], point[2],
+              a_cor_basis[0], a_cor_basis[1], a_cor_basis[2],
+              color='cyan', label='a_кор (basis)', arrow_length_ratio=0.05)
+    end_acor = np.array(point) + a_cor_basis
+    ax.text(end_acor[0], end_acor[1], end_acor[2],
+            f'a_кор = {data["a_cor_mod"]:.2f}', color='cyan', fontsize=8)
+
+    ax.quiver(point[0], point[1], point[2],
+              V_rel_basis[0], V_rel_basis[1], V_rel_basis[2],
+              color='lime', label='V_отн (basis)', arrow_length_ratio=0.05)
+    end_vrel = np.array(point) + V_rel_basis
+    ax.text(end_vrel[0], end_vrel[1], end_vrel[2],
+            f'V_отн = {data["V_rel_mod"]:.2f}', color='lime', fontsize=8)
+
+    # Устанавливаем лимиты с учётом всех объектов (без осей X,Y,Z)
+    all_points = [np.array(point)] + [np.array(point) + v for v in all_vectors] + [np.array([0,0,0])]
     all_arr = np.array(all_points)
-    min_vals = np.min(all_arr, axis=0)
-    max_vals = np.max(all_arr, axis=0)
-    max_range = np.max(max_vals - min_vals)
-    axis_length = max_range * 0.25
-    axis_ends = [[axis_length,0,0], [0,axis_length,0], [0,0,axis_length]]
-    all_arr = np.vstack([all_arr, axis_ends])
     min_vals = np.min(all_arr, axis=0)
     max_vals = np.max(all_arr, axis=0)
     margin = 0.2
@@ -240,14 +202,16 @@ def generate_all_plots(data):
     ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
     ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
 
-    draw_axes(ax, origin=(0,0,0), length=axis_length, color='black')
+    # Убираем оси (grid оставляем для наглядности)
     ax.grid(True, alpha=0.3)
     ax.legend(loc='upper left')
     plt.tight_layout()
     plt.savefig(os.path.join('static', 'velocities.png'), dpi=150)
     plt.close()
 
-    # ---- 3. Ускорения (подвижная система) ----
+    # ------------------------------------------------------------
+    # 3. Ускорения (подвижная система, с осями X,Y,Z)
+    # ------------------------------------------------------------
     vectors = [data['a_rel'], data['a_centr'], data['a_rot'],
                data['a_trans_post'], data['a_cor'], data['a_abs']]
     colors = ['blue', 'green', 'orange', 'brown', 'cyan', 'purple']
@@ -276,10 +240,10 @@ def generate_all_plots(data):
                     f'{label} = {numeric_vals[idx]:.2f}',
                     color=color, fontsize=8, ha='center', va='center')
 
-    # Добавляем ω из точки O
+    # Добавляем вектор ω из точки O для полноты (можно оставить)
     O = np.array([0.0, 0.0, data['zp']])
-    omega_vec = np.array([0.0, 0.0, data['omega']])
-    all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + [O, O + omega_vec] + [np.array([0,0,0])]
+    # Определяем масштаб для ω на основе размаха данных
+    all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + [O, O + omega_vec, np.array([0,0,0])]
     all_arr = np.array(all_points)
     max_range = np.max(np.max(all_arr, axis=0) - np.min(all_arr, axis=0))
     omega_length = max_range * 0.2
@@ -292,7 +256,7 @@ def generate_all_plots(data):
     ax.text(end_omega[0], end_omega[1], end_omega[2],
             f'ω = {data["omega"]:.2f}', color='magenta', fontsize=8)
 
-    # Расчёт лимитов
+    # Расчёт лимитов (с учётом всех объектов)
     all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + [O, O + omega_scaled] + [np.array([0,0,0])]
     all_arr = np.array(all_points)
     min_vals = np.min(all_arr, axis=0)
