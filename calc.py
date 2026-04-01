@@ -3,12 +3,10 @@ import sympy as sp
 
 def compute_relative_motion(t=1):
     """Возвращает положение, скорость, ускорение точки в подвижной системе."""
-    # Относительное движение (из условия)
     x = 8 * np.cos(np.pi * t**2 / 3)
     y = 16 * np.sin(np.pi * t**2 / 3)
     z = 0
 
-    # Символьное дифференцирование
     ts = sp.Symbol('t')
     x_sym = 8 * sp.cos(sp.pi * ts**2 / 3)
     y_sym = 16 * sp.sin(sp.pi * ts**2 / 3)
@@ -26,7 +24,6 @@ def compute_relative_motion(t=1):
     a_rel = np.array([d2xdt2, d2ydt2, 0.0])
     point_rel = (x, y, z)
 
-    # Формулы для LaTeX
     formulas = {
         'x': sp.latex(x_sym),
         'y': sp.latex(y_sym),
@@ -49,7 +46,6 @@ def compute_portable_motion(t=1):
     omega = dphi_dt
     alpha = d2phi_dt2
 
-    # Символьные выражения для формул
     ts = sp.Symbol('t')
     zp_sym = 2*ts**2 + 4
     phi_sym = 2 * sp.sin(sp.pi * ts)
@@ -71,36 +67,28 @@ def compute_complex_motion(t=1):
     x, y, z_rel = point_rel
     r_rel = np.array([x, y, 0.0])
 
-    # Переносная скорость
     V_trans_post = np.array([0.0, 0.0, dzpdt])
     V_rot = np.cross([0, 0, omega], r_rel)
     V_abs = V_rel + V_trans_post + V_rot
 
-    # Переносное ускорение
     a_centr = np.cross([0, 0, omega], np.cross([0, 0, omega], r_rel))
     a_rot = np.cross([0, 0, alpha], r_rel)
     a_trans_post = np.array([0.0, 0.0, d2zpdt2])
     a_trans = a_centr + a_rot + a_trans_post
-
-    # Кориолисово ускорение
     a_cor = 2 * np.cross([0, 0, omega], V_rel)
-
-    # Абсолютное ускорение
     a_abs = a_rel + a_trans + a_cor
 
-    # Радиус кривизны
     V_abs_norm = np.linalg.norm(V_abs)
     cross = np.cross(V_abs, a_abs)
     cross_norm = np.linalg.norm(cross)
     rho = V_abs_norm**3 / cross_norm if cross_norm != 0 else float('inf')
 
-    # Положение точки в неподвижной системе
     point_abs = (x, y, zp)
 
-    # Собираем все данные в словарь
     data = {
         't': t,
         'point': point_abs,
+        'zp': zp,                 # добавлено!
         'V_rel': V_rel,
         'V_rot': V_rot,
         'V_trans_post': V_trans_post,
@@ -119,7 +107,6 @@ def compute_complex_motion(t=1):
         'phi': phi,
         'dphi_dt': omega,
         'd2phi_dt2': alpha,
-        # Модули
         'V_rel_mod': np.linalg.norm(V_rel),
         'V_rot_mod': np.linalg.norm(V_rot),
         'V_trans_post_mod': np.linalg.norm(V_trans_post),
@@ -131,6 +118,5 @@ def compute_complex_motion(t=1):
         'a_cor_mod': np.linalg.norm(a_cor),
         'a_abs_mod': np.linalg.norm(a_abs),
     }
-    # Объединяем формулы
     formulas = {**rel_formulas, **port_formulas}
     return data, formulas
