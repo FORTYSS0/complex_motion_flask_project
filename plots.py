@@ -156,18 +156,22 @@ def generate_all_plots(data):
             color='purple', fontsize=8, ha='center', va='center')
 
     # Направление вращения (дуга со стрелкой)
+    # Угловая скорость ω = -2π (по часовой стрелке)
     theta = np.linspace(0, -np.pi/2, 50)   # четверть окружности по часовой стрелке
     radius = axis_length * 0.6
     x_arc = O[0] + radius * np.cos(theta)
     y_arc = O[1] + radius * np.sin(theta)
-    z_arc = O[2] + axis_length * 0.05
-    ax.plot(x_arc, y_arc, z_arc, color='green', linewidth=2)
+    z_arc = O[2] + axis_length * 0.05   # высота дуги (скаляр)
+    # Создаём массив z_arc_arr той же длины, что x_arc
+    z_arc_arr = np.full_like(x_arc, z_arc)
+    ax.plot(x_arc, y_arc, z_arc_arr, color='green', linewidth=2)
+    # Добавляем стрелку в конце дуги
     arrow = Arrow3D([x_arc[-2], x_arc[-1]], [y_arc[-2], y_arc[-1]],
-                    [z_arc[-2], z_arc[-1]],
+                    [z_arc_arr[-2], z_arc_arr[-1]],
                     mutation_scale=20, lw=2, arrowstyle='->', color='green')
     ax.add_artist(arrow)
     mid = len(theta)//2
-    ax.text(x_arc[mid], y_arc[mid], z_arc[mid]+0.02, f'ω = {data["omega"]:.2f}',
+    ax.text(x_arc[mid], y_arc[mid], z_arc_arr[mid]+0.02, f'ω = {data["omega"]:.2f}',
             color='green', fontsize=9)
 
     ax.grid(True, alpha=0.3)
