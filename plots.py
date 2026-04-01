@@ -214,8 +214,7 @@ def generate_all_plots(data):
 # ==================== Интерактивные графики (Plotly) ====================
 
 def generate_interactive_trajectory(data):
-    """Возвращает JSON для интерактивного графика траектории с одной стрелкой направления в конце,
-       увеличенной стрелкой ω (в начале дуги, развёрнутой в противоположную сторону) и горизонтальной проекцией траектории (жирная линия)."""
+    """Возвращает JSON для интерактивного графика траектории с адаптивной легендой."""
     t_vals = np.linspace(0, 2.5, 200)
     x_t = 8 * np.cos(np.pi * t_vals**2 / 3)
     y_t = 16 * np.sin(np.pi * t_vals**2 / 3)
@@ -223,7 +222,6 @@ def generate_interactive_trajectory(data):
 
     fig = go.Figure()
 
-    # Траектория
     fig.add_trace(go.Scatter3d(
         x=x_t, y=y_t, z=z_t,
         mode='lines',
@@ -231,7 +229,7 @@ def generate_interactive_trajectory(data):
         name='Траектория'
     ))
 
-    # Горизонтальная проекция траектории (жирная линия)
+    # Горизонтальная проекция траектории
     z_const = data['point'][2]
     fig.add_trace(go.Scatter3d(
         x=x_t, y=y_t, z=np.full_like(z_t, z_const),
@@ -381,14 +379,25 @@ def generate_interactive_trajectory(data):
     fig.add_trace(go.Scatter3d(x=[x_arc[mid]], y=[y_arc[mid]], z=[z_arc + 0.02], mode='text',
                                text=[f'ω = {abs(data["omega"]):.2f}'], textfont=dict(color='green', size=10), showlegend=False))
 
-    fig.update_layout(title='Способ задания движения (абсолютная траектория)',
-                      scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='auto'),
-                      legend=dict(x=0.8, y=0.9))
+    # --- Настройка макета с горизонтальной легендой внизу и уменьшенными полями ---
+    fig.update_layout(
+        title='Способ задания движения (абсолютная траектория)',
+        scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='auto'),
+        legend=dict(
+            orientation='h',
+            yanchor='top',
+            y=-0.1,
+            xanchor='center',
+            x=0.5,
+            font=dict(size=10)
+        ),
+        margin=dict(l=0, r=0, t=30, b=50)
+    )
     return fig.to_json()
 
 
 def generate_interactive_velocities(data):
-    """Интерактивный график скоростей с конусами на концах осей и векторов."""
+    """Интерактивный график скоростей в новой системе координат с адаптивной легендой."""
     point = data['point']
     V_rel = data['V_rel']
     V_rot = data['V_rot']
@@ -480,14 +489,25 @@ def generate_interactive_velocities(data):
     fig.add_trace(go.Scatter3d(x=[point_new[0]], y=[point_new[1]], z=[point_new[2]+axis_len*0.9],
                                mode='text', text=['ω'], textfont=dict(color='black', size=10), showlegend=False))
 
-    fig.update_layout(title='Векторы скоростей в точке M (оси: V_отн, a_cor, ω)',
-                      scene=dict(xaxis_title="V_отн", yaxis_title="a_cor", zaxis_title="ω", aspectmode='auto'),
-                      legend=dict(x=0.8, y=0.9))
+    # --- Настройка макета с горизонтальной легендой внизу и уменьшенными полями ---
+    fig.update_layout(
+        title='Векторы скоростей в точке M (оси: V_отн, a_cor, ω)',
+        scene=dict(xaxis_title="V_отн", yaxis_title="a_cor", zaxis_title="ω", aspectmode='auto'),
+        legend=dict(
+            orientation='h',
+            yanchor='top',
+            y=-0.1,
+            xanchor='center',
+            x=0.5,
+            font=dict(size=10)
+        ),
+        margin=dict(l=0, r=0, t=30, b=50)
+    )
     return fig.to_json()
 
 
 def generate_interactive_accelerations(data):
-    """Интерактивный график ускорений с конусами на концах осей и векторов."""
+    """Интерактивный график ускорений с адаптивной легендой."""
     point = data['point']
     a_rel = data['a_rel']
     a_centr = data['a_centr']
@@ -583,20 +603,25 @@ def generate_interactive_accelerations(data):
     fig.add_trace(go.Scatter3d(x=[point_new[0]], y=[point_new[1]], z=[point_new[2]+axis_len*0.9],
                                mode='text', text=['ω'], textfont=dict(color='black', size=10), showlegend=False))
 
-    fig.update_layout(title='Векторы ускорений в точке M (оси: ω, a_cor, a_отн⊥)',
-                      scene=dict(xaxis_title="a_отн⊥", yaxis_title="a_cor", zaxis_title="ω", aspectmode='auto'),
-                      legend=dict(x=0.8, y=0.9))
+    # --- Настройка макета с горизонтальной легендой внизу и уменьшенными полями ---
+    fig.update_layout(
+        title='Векторы ускорений в точке M (оси: ω, a_cor, a_отн⊥)',
+        scene=dict(xaxis_title="a_отн⊥", yaxis_title="a_cor", zaxis_title="ω", aspectmode='auto'),
+        legend=dict(
+            orientation='h',
+            yanchor='top',
+            y=-0.1,
+            xanchor='center',
+            x=0.5,
+            font=dict(size=10)
+        ),
+        margin=dict(l=0, r=0, t=30, b=50)
+    )
     return fig.to_json()
 
 
-# ==================== Комбинированные графики (рисунки 2a и 3a) ====================
-
 def generate_interactive_trajectory_with_velocities(data):
-    """
-    Рисунок 1 (траектория) + векторы скоростей (V_rel, V_rot, V_trans_post, V_abs)
-    без фиолетового вектора V_abs с рисунка 1. Все векторы масштабированы до одинаковой длины,
-    указывающей только направление. Векторы увеличены в 2 раза (длина и толщина).
-    """
+    """Комбинированный график: траектория + векторы скоростей с адаптивной легендой."""
     t_vals = np.linspace(0, 2.5, 200)
     x_t = 8 * np.cos(np.pi * t_vals**2 / 3)
     y_t = 16 * np.sin(np.pi * t_vals**2 / 3)
@@ -629,14 +654,14 @@ def generate_interactive_trajectory_with_velocities(data):
         name='M (t=1)'
     ))
 
-    # Определяем длину осей (как на первом графике)
+    # Определяем длину осей
     all_points = np.vstack([np.column_stack([x_t, y_t, z_t]), [data['point']], [0,0,0]])
     min_vals = np.min(all_points, axis=0)
     max_vals = np.max(all_points, axis=0)
     max_range = np.max(max_vals - min_vals)
     axis_len = max_range * 0.3
 
-    # Неподвижные оси (чёрные) с конусами (как на первом графике)
+    # Неподвижные оси (чёрные) с конусами (аналогично первому графику)
     # Ось X'
     fig.add_trace(go.Scatter3d(x=[0, axis_len], y=[0,0], z=[0,0], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
@@ -681,7 +706,7 @@ def generate_interactive_trajectory_with_velocities(data):
     fig.add_trace(go.Scatter3d(x=[O[0]], y=[O[1]], z=[O[2]], mode='markers',
                                marker=dict(color='blue', size=6), name='O (начало подвижной)'))
 
-    # --- Дуга вращения (ω) (как на первом графике) ---
+    # --- Дуга вращения (ω) ---
     theta = np.linspace(0, -np.pi/2, 50)
     radius = axis_len * 0.6
     x_arc = O[0] + radius * np.cos(theta)
@@ -711,7 +736,6 @@ def generate_interactive_trajectory_with_velocities(data):
     vectors = [data['V_rel'], data['V_rot'], data['V_trans_post'], data['V_abs']]
     colors = ['blue', 'green', 'orange', 'purple']
     labels = ['V_rel', 'V_rot', 'V_trans_post', 'V_abs']
-    # Увеличиваем длину в 2 раза (было 0.3, стало 0.6)
     scale_len = axis_len * 0.6
 
     for vec, col, lab in zip(vectors, colors, labels):
@@ -721,7 +745,7 @@ def generate_interactive_trajectory_with_velocities(data):
             scaled_vec = unit * scale_len
         else:
             scaled_vec = np.zeros(3)
-        # Линия вектора – увеличиваем толщину (width=6)
+        # Линия вектора – увеличиваем толщину
         fig.add_trace(go.Scatter3d(x=[data['point'][0], data['point'][0]+scaled_vec[0]],
                                    y=[data['point'][1], data['point'][1]+scaled_vec[1]],
                                    z=[data['point'][2], data['point'][2]+scaled_vec[2]],
@@ -739,19 +763,25 @@ def generate_interactive_trajectory_with_velocities(data):
                               colorscale=[[0,col],[1,col]], showscale=False, sizemode='scaled', sizeref=0.3,
                               name=f'{lab} direction', showlegend=False))
 
-    # --- Настройка сцены ---
-    fig.update_layout(title='Траектория и векторы скоростей (исходная система, векторы масштабированы)',
-                      scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='auto'),
-                      legend=dict(x=0.8, y=0.9))
+    # --- Настройка макета с горизонтальной легендой внизу и уменьшенными полями ---
+    fig.update_layout(
+        title='Траектория и векторы скоростей (исходная система, векторы масштабированы)',
+        scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='auto'),
+        legend=dict(
+            orientation='h',
+            yanchor='top',
+            y=-0.1,
+            xanchor='center',
+            x=0.5,
+            font=dict(size=10)
+        ),
+        margin=dict(l=0, r=0, t=30, b=50)
+    )
     return fig.to_json()
 
 
 def generate_interactive_trajectory_with_accelerations(data):
-    """
-    Рисунок 1 (траектория) + векторы ускорений (a_rel, a_centr, a_rot, a_trans_post, a_cor, a_abs)
-    без фиолетового вектора V_abs с рисунка 1. Все векторы масштабированы до одинаковой длины,
-    указывающей только направление. Векторы увеличены в 2 раза (длина и толщина).
-    """
+    """Комбинированный график: траектория + векторы ускорений с адаптивной легендой."""
     t_vals = np.linspace(0, 2.5, 200)
     x_t = 8 * np.cos(np.pi * t_vals**2 / 3)
     y_t = 16 * np.sin(np.pi * t_vals**2 / 3)
@@ -784,14 +814,14 @@ def generate_interactive_trajectory_with_accelerations(data):
         name='M (t=1)'
     ))
 
-    # Определяем длину осей (как на первом графике)
+    # Определяем длину осей
     all_points = np.vstack([np.column_stack([x_t, y_t, z_t]), [data['point']], [0,0,0]])
     min_vals = np.min(all_points, axis=0)
     max_vals = np.max(all_points, axis=0)
     max_range = np.max(max_vals - min_vals)
     axis_len = max_range * 0.3
 
-    # Неподвижные оси (чёрные) с конусами (как на первом графике)
+    # Неподвижные оси (чёрные) с конусами
     # Ось X'
     fig.add_trace(go.Scatter3d(x=[0, axis_len], y=[0,0], z=[0,0], mode='lines',
                                line=dict(color='black', width=2), showlegend=False))
@@ -836,7 +866,7 @@ def generate_interactive_trajectory_with_accelerations(data):
     fig.add_trace(go.Scatter3d(x=[O[0]], y=[O[1]], z=[O[2]], mode='markers',
                                marker=dict(color='blue', size=6), name='O (начало подвижной)'))
 
-    # --- Дуга вращения (ω) (как на первом графике) ---
+    # --- Дуга вращения (ω) ---
     theta = np.linspace(0, -np.pi/2, 50)
     radius = axis_len * 0.6
     x_arc = O[0] + radius * np.cos(theta)
@@ -876,7 +906,7 @@ def generate_interactive_trajectory_with_accelerations(data):
             scaled_vec = unit * scale_len
         else:
             scaled_vec = np.zeros(3)
-        # Линия вектора – увеличиваем толщину (width=6)
+        # Линия вектора – увеличиваем толщину
         fig.add_trace(go.Scatter3d(x=[data['point'][0], data['point'][0]+scaled_vec[0]],
                                    y=[data['point'][1], data['point'][1]+scaled_vec[1]],
                                    z=[data['point'][2], data['point'][2]+scaled_vec[2]],
@@ -894,8 +924,18 @@ def generate_interactive_trajectory_with_accelerations(data):
                               colorscale=[[0,col],[1,col]], showscale=False, sizemode='scaled', sizeref=0.3,
                               name=f'{lab} direction', showlegend=False))
 
-    # --- Настройка сцены ---
-    fig.update_layout(title='Траектория и векторы ускорений (исходная система, векторы масштабированы)',
-                      scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='auto'),
-                      legend=dict(x=0.8, y=0.9))
+    # --- Настройка макета с горизонтальной легендой внизу и уменьшенными полями ---
+    fig.update_layout(
+        title='Траектория и векторы ускорений (исходная система, векторы масштабированы)',
+        scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='auto'),
+        legend=dict(
+            orientation='h',
+            yanchor='top',
+            y=-0.1,
+            xanchor='center',
+            x=0.5,
+            font=dict(size=10)
+        ),
+        margin=dict(l=0, r=0, t=30, b=50)
+    )
     return fig.to_json()
