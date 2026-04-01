@@ -5,22 +5,20 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-def draw_axes(ax, origin=(0,0,0), length=None, colors=['red', 'green', 'blue'], labels=['X', 'Y', 'Z']):
+def draw_axes(ax, origin=(0,0,0), length=None, color='black', labels=['X', 'Y', 'Z']):
     """Рисует оси координат из точки origin с автоматическим подбором длины."""
-    # Получаем текущие лимиты осей, чтобы определить длину
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
     zlim = ax.get_zlim()
     max_range = max(xlim[1]-xlim[0], ylim[1]-ylim[0], zlim[1]-zlim[0])
     if length is None:
-        length = max_range * 0.2   # 20% от размаха
-    for i, (color, label) in enumerate(zip(colors, labels)):
+        length = max_range * 0.2
+    for i, label in enumerate(labels):
         vec = [0,0,0]
         vec[i] = length
         ax.quiver(origin[0], origin[1], origin[2],
                   vec[0], vec[1], vec[2],
                   color=color, label=label, arrow_length_ratio=0.1, linewidth=2)
-        # Подпись в конце оси
         ax.text(origin[0]+vec[0], origin[1]+vec[1], origin[2]+vec[2], label,
                 color=color, fontsize=12, ha='center', va='center')
 
@@ -72,6 +70,7 @@ def generate_all_plots(data):
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
+    ax.grid(True, alpha=0.3)
     ax.set_title('Способ задания движения (абсолютная траектория)')
     draw_axes(ax)   # добавляем оси
     ax.legend()
