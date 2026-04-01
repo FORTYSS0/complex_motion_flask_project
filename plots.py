@@ -589,13 +589,13 @@ def generate_interactive_accelerations(data):
     return fig.to_json()
 
 
-# ==================== Новые комбинированные графики ====================
+# ==================== Комбинированные графики (рисунки 2a и 3a) ====================
 
 def generate_interactive_trajectory_with_velocities(data):
     """
     Рисунок 1 (траектория) + векторы скоростей (V_rel, V_rot, V_trans_post, V_abs)
     без фиолетового вектора V_abs с рисунка 1. Все векторы масштабированы до одинаковой длины,
-    указывающей только направление.
+    указывающей только направление. Векторы увеличены в 2 раза (длина и толщина).
     """
     t_vals = np.linspace(0, 2.5, 200)
     x_t = 8 * np.cos(np.pi * t_vals**2 / 3)
@@ -707,12 +707,12 @@ def generate_interactive_trajectory_with_velocities(data):
     fig.add_trace(go.Scatter3d(x=[x_arc[mid]], y=[y_arc[mid]], z=[z_arc + 0.02], mode='text',
                                text=[f'ω = {abs(data["omega"]):.2f}'], textfont=dict(color='green', size=10), showlegend=False))
 
-    # --- Векторы скоростей (из data) – все масштабированы до одинаковой длины ---
+    # --- Векторы скоростей (из data) – все масштабированы до одинаковой длины, увеличены в 2 раза ---
     vectors = [data['V_rel'], data['V_rot'], data['V_trans_post'], data['V_abs']]
     colors = ['blue', 'green', 'orange', 'purple']
     labels = ['V_rel', 'V_rot', 'V_trans_post', 'V_abs']
-    # Вычисляем масштаб для всех векторов – они будут иметь длину 0.3 * axis_len
-    scale_len = axis_len * 0.3
+    # Увеличиваем длину в 2 раза (было 0.3, стало 0.6)
+    scale_len = axis_len * 0.6
 
     for vec, col, lab in zip(vectors, colors, labels):
         norm = np.linalg.norm(vec)
@@ -721,11 +721,11 @@ def generate_interactive_trajectory_with_velocities(data):
             scaled_vec = unit * scale_len
         else:
             scaled_vec = np.zeros(3)
-        # Линия вектора
+        # Линия вектора – увеличиваем толщину (width=6)
         fig.add_trace(go.Scatter3d(x=[data['point'][0], data['point'][0]+scaled_vec[0]],
                                    y=[data['point'][1], data['point'][1]+scaled_vec[1]],
                                    z=[data['point'][2], data['point'][2]+scaled_vec[2]],
-                                   mode='lines+text', line=dict(color=col, width=3),
+                                   mode='lines+text', line=dict(color=col, width=6),
                                    text=['', f'{lab}'], textposition='middle right', name=lab))
         # Стрелка-конус в конце
         end_x = data['point'][0] + scaled_vec[0]
@@ -740,7 +740,6 @@ def generate_interactive_trajectory_with_velocities(data):
                               name=f'{lab} direction', showlegend=False))
 
     # --- Настройка сцены ---
-    # Для авто-масштабирования просто оставляем scene без явных лимитов
     fig.update_layout(title='Траектория и векторы скоростей (исходная система, векторы масштабированы)',
                       scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='auto'),
                       legend=dict(x=0.8, y=0.9))
@@ -751,7 +750,7 @@ def generate_interactive_trajectory_with_accelerations(data):
     """
     Рисунок 1 (траектория) + векторы ускорений (a_rel, a_centr, a_rot, a_trans_post, a_cor, a_abs)
     без фиолетового вектора V_abs с рисунка 1. Все векторы масштабированы до одинаковой длины,
-    указывающей только направление.
+    указывающей только направление. Векторы увеличены в 2 раза (длина и толщина).
     """
     t_vals = np.linspace(0, 2.5, 200)
     x_t = 8 * np.cos(np.pi * t_vals**2 / 3)
@@ -863,12 +862,12 @@ def generate_interactive_trajectory_with_accelerations(data):
     fig.add_trace(go.Scatter3d(x=[x_arc[mid]], y=[y_arc[mid]], z=[z_arc + 0.02], mode='text',
                                text=[f'ω = {abs(data["omega"]):.2f}'], textfont=dict(color='green', size=10), showlegend=False))
 
-    # --- Векторы ускорений (из data) – все масштабированы до одинаковой длины ---
+    # --- Векторы ускорений (из data) – все масштабированы до одинаковой длины, увеличены в 2 раза ---
     vectors = [data['a_rel'], data['a_centr'], data['a_rot'],
                data['a_trans_post'], data['a_cor'], data['a_abs']]
     colors = ['blue', 'green', 'orange', 'brown', 'cyan', 'purple']
     labels = ['a_rel', 'a_centr', 'a_rot', 'a_trans_post', 'a_cor', 'a_abs']
-    scale_len = axis_len * 0.3
+    scale_len = axis_len * 0.6
 
     for vec, col, lab in zip(vectors, colors, labels):
         norm = np.linalg.norm(vec)
@@ -877,11 +876,11 @@ def generate_interactive_trajectory_with_accelerations(data):
             scaled_vec = unit * scale_len
         else:
             scaled_vec = np.zeros(3)
-        # Линия вектора
+        # Линия вектора – увеличиваем толщину (width=6)
         fig.add_trace(go.Scatter3d(x=[data['point'][0], data['point'][0]+scaled_vec[0]],
                                    y=[data['point'][1], data['point'][1]+scaled_vec[1]],
                                    z=[data['point'][2], data['point'][2]+scaled_vec[2]],
-                                   mode='lines+text', line=dict(color=col, width=3),
+                                   mode='lines+text', line=dict(color=col, width=6),
                                    text=['', f'{lab}'], textposition='middle right', name=lab))
         # Стрелка-конус в конце
         end_x = data['point'][0] + scaled_vec[0]
