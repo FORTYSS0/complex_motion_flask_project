@@ -109,7 +109,7 @@ def generate_all_plots(data):
     plt.close()
 
     # ------------------------------------------------------------
-    # 2. Скорости (оси: ω, V_отн, a_cor) с сеткой и шкалой
+    # 2. Скорости (новые оси: ω, V_отн, a_cor)
     # ------------------------------------------------------------
     point = data['point']
     vectors = [data['V_rel'], data['V_rot'], data['V_trans_post'], data['V_abs']]
@@ -121,19 +121,12 @@ def generate_all_plots(data):
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(111, projection='3d')
     ax.set_title('Векторы скоростей в точке M (оси: ω, V_отн, a_cor)')
-    # Подписи осей заменяем на новые
-    ax.set_xlabel('V_отн')
-    ax.set_ylabel('a_cor')
-    ax.set_zlabel('ω')
-    ax.set_xlim([-5, 5])
-    ax.set_ylim([-5, 5])
-    ax.set_zlim([-5, 5])
-    ax.grid(True, alpha=0.3)
+    ax.set_axis_off()   # убираем стандартные оси и сетку
 
     # Точка M
     ax.scatter(point[0], point[1], point[2], color='red', s=50, label='Point M')
 
-    # Реальные векторы скоростей
+    # Все векторы скоростей
     for idx, (vec, color, label) in enumerate(zip(vectors, colors, labels)):
         ax.quiver(point[0], point[1], point[2],
                   vec[0], vec[1], vec[2],
@@ -146,16 +139,16 @@ def generate_all_plots(data):
                     f'{label} = {numeric_vals[idx]:.2f}',
                     color=color, fontsize=8, ha='center', va='center')
 
-    # Базисные векторы (оси) из точки M
-    omega_vec = np.array([0.0, 0.0, data['omega']])
-    V_rel_vec = data['V_rel']
-    a_cor_vec = data['a_cor']
+    # Базисные векторы (оси)
+    omega_vec = np.array([0.0, 0.0, data['omega']])      # ось ω (вертикаль)
+    V_rel_vec = data['V_rel']                            # ось V_отн (вправо)
+    a_cor_vec = data['a_cor']                            # ось a_cor (вперёд)
 
-    # Определяем масштаб для осей (чтобы они были видны)
+    # Определяем масштаб для новых осей (чтобы они были видны)
     all_points_for_scale = [np.array(point)] + [np.array(point) + v for v in vectors] + [np.array([0,0,0])]
     all_arr = np.array(all_points_for_scale)
     max_range = np.max(np.max(all_arr, axis=0) - np.min(all_arr, axis=0))
-    axis_length = max_range * 0.25
+    axis_length = max_range * 0.3
 
     def normalized_vec(vec):
         n = np.linalg.norm(vec)
@@ -163,30 +156,34 @@ def generate_all_plots(data):
             return np.zeros(3)
         return vec / n
 
+    # Орты новых осей
     e_omega = normalized_vec(omega_vec)
     e_Vrel = normalized_vec(V_rel_vec)
     e_acor = normalized_vec(a_cor_vec)
 
-    # Рисуем оси из точки M (чёрные)
+    # Рисуем оси из точки M
+    # Ось ω (вертикаль)
     ax.quiver(point[0], point[1], point[2],
               e_omega[0] * axis_length, e_omega[1] * axis_length, e_omega[2] * axis_length,
               color='black', arrow_length_ratio=0.05, linewidth=2)
     end_omega = np.array(point) + e_omega * axis_length
     ax.text(end_omega[0], end_omega[1], end_omega[2], 'ω', color='black', fontsize=10, ha='center', va='center')
 
+    # Ось V_отн (вправо)
     ax.quiver(point[0], point[1], point[2],
               e_Vrel[0] * axis_length, e_Vrel[1] * axis_length, e_Vrel[2] * axis_length,
               color='black', arrow_length_ratio=0.05, linewidth=2)
     end_Vrel = np.array(point) + e_Vrel * axis_length
     ax.text(end_Vrel[0], end_Vrel[1], end_Vrel[2], 'V_отн', color='black', fontsize=10, ha='center', va='center')
 
+    # Ось a_cor (вперёд)
     ax.quiver(point[0], point[1], point[2],
               e_acor[0] * axis_length, e_acor[1] * axis_length, e_acor[2] * axis_length,
               color='black', arrow_length_ratio=0.05, linewidth=2)
     end_acor = np.array(point) + e_acor * axis_length
     ax.text(end_acor[0], end_acor[1], end_acor[2], 'a_cor', color='black', fontsize=10, ha='center', va='center')
 
-    # Лимиты с учётом всех элементов
+    # Лимиты с учётом всех объектов
     all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + \
                  [end_omega, end_Vrel, end_acor, np.array([0,0,0])]
     all_arr = np.array(all_points)
