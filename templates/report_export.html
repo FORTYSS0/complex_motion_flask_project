@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Отчёт: Сложное движение точки</title>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -28,6 +27,7 @@
             border-radius: 5px;
             overflow-x: auto;
             margin: 10px 0;
+            text-align: center;
         }
         table {
             border-collapse: collapse;
@@ -60,6 +60,9 @@
             border-top: 1px solid #eee;
             padding-top: 10px;
         }
+        .formula img {
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -69,28 +72,21 @@
 
     <h2>1. Исходные данные</h2>
     <div class="formula">
-        \[
-        \begin{cases}
-        x(t) = {{ formulas.x }} \\[4pt]
-        y(t) = {{ formulas.y }} \\[4pt]
-        t = {{ data.t }}
-        \end{cases}
-        \]
-        \[
-        \begin{cases}
-        z'(t) = {{ formulas.zp }} \\[4pt]
-        \varphi'(t) = {{ formulas.phi }}
-        \end{cases}
-        \]
+        <img src="data:image/png;base64,{{ formula_images.x }}" alt="x(t)">
+        <br>
+        <img src="data:image/png;base64,{{ formula_images.y }}" alt="y(t)">
+        <br>
+        <img src="data:image/png;base64,{{ formula_images.zp }}" alt="z'(t)">
+        <br>
+        <img src="data:image/png;base64,{{ formula_images.phi }}" alt="φ'(t)">
     </div>
 
     <h2>2. Относительное движение (в подвижной системе)</h2>
     <p>Скорость точки в относительном движении:</p>
     <div class="formula">
-        \[
-        \dot x = {{ formulas.dxdt }},\quad
-        \dot y = {{ formulas.dydt }}
-        \]
+        <img src="data:image/png;base64,{{ formula_images.dxdt }}" alt="ẋ">
+        <img src="data:image/png;base64,{{ formula_images.dydt }}" alt="ẏ">
+        <br>
         При \( t = {{ data.t }} \):
         \[
         \dot x = {{ "%.4f"|format(data.V_rel[0]) }},\quad
@@ -100,10 +96,9 @@
     </div>
     <p>Ускорение в относительном движении:</p>
     <div class="formula">
-        \[
-        \ddot x = {{ formulas.d2xdt2 }},\quad
-        \ddot y = {{ formulas.d2ydt2 }}
-        \]
+        <img src="data:image/png;base64,{{ formula_images.d2xdt2 }}" alt="ẍ">
+        <img src="data:image/png;base64,{{ formula_images.d2ydt2 }}" alt="ÿ">
+        <br>
         При \( t = {{ data.t }} \):
         \[
         \ddot x = {{ "%.4f"|format(data.a_rel[0]) }},\quad
@@ -114,9 +109,10 @@
     <h2>3. Переносное движение (движение системы отсчёта)</h2>
     <p>Поступательное движение начала \( O \):</p>
     <div class="formula">
-        \[
-        z'(t) = {{ formulas.zp }},\quad \dot z' = {{ formulas.dzpdt }},\quad \ddot z' = {{ formulas.d2zpdt2 }}
-        \]
+        <img src="data:image/png;base64,{{ formula_images.zp }}" alt="z'">
+        <img src="data:image/png;base64,{{ formula_images.dzpdt }}" alt="ż'">
+        <img src="data:image/png;base64,{{ formula_images.d2zpdt2 }}" alt="z̈'">
+        <br>
         При \( t = {{ data.t }} \):
         \[
         \dot z' = {{ "%.4f"|format(data.dzpdt) }},\quad \ddot z' = {{ "%.4f"|format(data.d2zpdt2) }}
@@ -124,9 +120,10 @@
     </div>
     <p>Вращательное движение:</p>
     <div class="formula">
-        \[
-        \varphi'(t) = {{ formulas.phi }},\quad \dot\varphi' = {{ formulas.dphi_dt }},\quad \ddot\varphi' = {{ formulas.d2phi_dt2 }}
-        \]
+        <img src="data:image/png;base64,{{ formula_images.phi }}" alt="φ'">
+        <img src="data:image/png;base64,{{ formula_images.dphi_dt }}" alt="φ̇'">
+        <img src="data:image/png;base64,{{ formula_images.d2phi_dt2 }}" alt="φ̈'">
+        <br>
         При \( t = {{ data.t }} \):
         \[
         \varphi' = {{ "%.4f"|format(data.phi) }},\quad
@@ -222,7 +219,7 @@
     </div>
 
     <h2>6. Итоговая таблица результатов</h2>
-    <table>
+     <table>
         <thead>
             <tr><th>Величина</th><th>Значение</th><th>Размерность</th></tr>
         </thead>
