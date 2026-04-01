@@ -29,7 +29,7 @@ def draw_axes(ax, origin=(0,0,0), length=None, color='black', labels=['X', 'Y', 
 
 def generate_all_plots(data):
     # ------------------------------------------------------------
-    # 1. Траектория (без изменений)
+    # 1. Траектория (неподвижная система)
     # ------------------------------------------------------------
     t_vals = np.linspace(0, 2.5, 200)
     x_t = 8 * np.cos(np.pi * t_vals**2 / 3)
@@ -109,22 +109,17 @@ def generate_all_plots(data):
     plt.close()
 
     # ------------------------------------------------------------
-    # 2. Скорости (новые оси: V_отн, a_cor, ω)
+    # 2. Скорости (преобразованные координаты: оси V_отн, a_cor, ω)
     # ------------------------------------------------------------
     point = data['point']
+
     V_rel = data['V_rel']
-    V_rot = data['V_rot']
-    V_trans_post = data['V_trans_post']
-    V_abs = data['V_abs']
+    a_cor = data['a_cor']
+    omega = np.array([0.0, 0.0, data['omega']])
 
-    # Базисные векторы для новой системы координат
+    # Нормированные базисные векторы для новой системы (ортогональные)
+    e_z = omega / np.linalg.norm(omega)
     e_x = V_rel / np.linalg.norm(V_rel)
-    e_y = data['a_cor'] / np.linalg.norm(data['a_cor'])
-    e_z = np.array([0.0, 0.0, 1.0])
-
-    # Приводим к ортонормированному базису (правому)
-    e_z = e_z / np.linalg.norm(e_z)
-    e_x = e_x / np.linalg.norm(e_x)
     e_y = np.cross(e_z, e_x)
     e_y = e_y / np.linalg.norm(e_y)
 
@@ -135,9 +130,9 @@ def generate_all_plots(data):
 
     point_new = transform(point)
     V_rel_new = transform(V_rel)
-    V_rot_new = transform(V_rot)
-    V_trans_post_new = transform(V_trans_post)
-    V_abs_new = transform(V_abs)
+    V_rot_new = transform(data['V_rot'])
+    V_trans_post_new = transform(data['V_trans_post'])
+    V_abs_new = transform(data['V_abs'])
 
     vectors_new = [V_rel_new, V_rot_new, V_trans_post_new, V_abs_new]
     colors = ['blue', 'green', 'orange', 'purple']
@@ -166,7 +161,7 @@ def generate_all_plots(data):
                     f'{label} = {numeric_vals[idx]:.2f}',
                     color=color, fontsize=8, ha='center', va='center')
 
-    # Определяем масштаб для отрисовки осей
+    # Определяем масштаб для базисных стрелок
     all_points = [point_new] + [point_new + v for v in vectors_new] + [np.zeros(3)]
     all_arr = np.array(all_points)
     min_vals = np.min(all_arr, axis=0)
@@ -174,7 +169,7 @@ def generate_all_plots(data):
     max_range = np.max(max_vals - min_vals)
     axis_length_new = max_range * 0.25
 
-    # Рисуем оси из точки M
+    # Чёрные стрелки (базисные векторы)
     ax.quiver(point_new[0], point_new[1], point_new[2],
               axis_length_new, 0, 0,
               color='black', arrow_length_ratio=0.05, linewidth=2)
@@ -211,100 +206,86 @@ def generate_all_plots(data):
     plt.close()
 
     # ------------------------------------------------------------
-    # 3. Ускорения (новые оси: ω, a_cor, a_отн)
+    # 3. Ускорения (стандартные оси X,Y,Z + базисные векторы ω, a_cor, a_отн)
     # ------------------------------------------------------------
-    # Векторы в исходной системе
-    a_rel = data['a_rel']
-    a_centr = data['a_centr']
-    a_rot = data['a_rot']
-    a_trans_post = data['a_trans_post']
-    a_cor = data['a_cor']
-    a_abs = data['a_abs']
-
-    # Базисные векторы для новой системы координат
-    e_z = np.array([0.0, 0.0, 1.0])                      # ось ω (вертикаль)
-    e_y = a_cor / np.linalg.norm(a_cor)                  # ось a_cor
-    e_x = a_rel / np.linalg.norm(a_rel)                  # ось a_отн
-
-    # Приводим к ортонормированному базису (правому)
-    e_z = e_z / np.linalg.norm(e_z)
-    e_x = e_x / np.linalg.norm(e_x)
-    e_y = np.cross(e_z, e_x)
-    e_y = e_y / np.linalg.norm(e_y)
-
-    R_acc = np.array([e_x, e_y, e_z])
-
-    def transform_acc(v):
-        return R_acc @ v
-
-    point_acc_new = transform_acc(point)
-    a_rel_new = transform_acc(a_rel)
-    a_centr_new = transform_acc(a_centr)
-    a_rot_new = transform_acc(a_rot)
-    a_trans_post_new = transform_acc(a_trans_post)
-    a_cor_new = transform_acc(a_cor)
-    a_abs_new = transform_acc(a_abs)
-
-    vectors_acc_new = [a_rel_new, a_centr_new, a_rot_new,
-                       a_trans_post_new, a_cor_new, a_abs_new]
-    colors_acc = ['blue', 'green', 'orange', 'brown', 'cyan', 'purple']
-    labels_acc = ['a_rel', 'a_centr', 'a_rot', 'a_trans_post', 'a_cor', 'a_abs']
-    numeric_vals_acc = [data['a_rel_mod'], data['a_centr_mod'], data['a_rot_mod'],
-                        data['a_trans_post_mod'], data['a_cor_mod'], data['a_abs_mod']]
+    point = data['point']
+    vectors = [data['a_rel'], data['a_centr'], data['a_rot'],
+               data['a_trans_post'], data['a_cor'], data['a_abs']]
+    colors = ['blue', 'green', 'orange', 'brown', 'cyan', 'purple']
+    labels = ['a_rel', 'a_centr', 'a_rot', 'a_trans_post', 'a_cor', 'a_abs']
+    numeric_vals = [data['a_rel_mod'], data['a_centr_mod'], data['a_rot_mod'],
+                    data['a_trans_post_mod'], data['a_cor_mod'], data['a_abs_mod']]
 
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(111, projection='3d')
-    ax.set_xlabel('a_отн')
-    ax.set_ylabel('a_cor')
-    ax.set_zlabel('ω')
-    ax.set_title('Векторы ускорений в точке M (оси: a_отн, a_cor, ω)')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('Векторы ускорений в точке M (базис: ω, a_cor, a_отн)')
 
-    ax.scatter(point_acc_new[0], point_acc_new[1], point_acc_new[2], color='red', s=50, label='Point M')
+    ax.scatter(point[0], point[1], point[2], color='red', s=50, label='Point M')
 
-    for idx, (vec, color, label) in enumerate(zip(vectors_acc_new, colors_acc, labels_acc)):
-        ax.quiver(point_acc_new[0], point_acc_new[1], point_acc_new[2],
+    for idx, (vec, color, label) in enumerate(zip(vectors, colors, labels)):
+        ax.quiver(point[0], point[1], point[2],
                   vec[0], vec[1], vec[2],
                   color=color, label=label, arrow_length_ratio=0.03)
-        if numeric_vals_acc and idx < len(numeric_vals_acc):
-            end = np.array(point_acc_new) + vec
+        if numeric_vals and idx < len(numeric_vals):
+            end = np.array(point) + vec
             offset = vec / (np.linalg.norm(vec) + 1e-8) * 0.1
             text_pos = end + offset
             ax.text(text_pos[0], text_pos[1], text_pos[2],
-                    f'{label} = {numeric_vals_acc[idx]:.2f}',
+                    f'{label} = {numeric_vals[idx]:.2f}',
                     color=color, fontsize=8, ha='center', va='center')
 
-    # Определяем масштаб для осей
-    all_points = [point_acc_new] + [point_acc_new + v for v in vectors_acc_new] + [np.zeros(3)]
+    # Базисные векторы (ω, a_cor, a_отн) из точки M
+    omega_vec = np.array([0.0, 0.0, data['omega']])
+    a_cor_vec = data['a_cor']
+    a_rel_vec = data['a_rel']
+
+    # Определяем масштаб для базисных стрелок
+    all_points_for_scale = [np.array(point)] + [np.array(point) + v for v in vectors] + [np.array([0,0,0])]
+    all_arr = np.array(all_points_for_scale)
+    max_range = np.max(np.max(all_arr, axis=0) - np.min(all_arr, axis=0))
+    basis_length = max_range * 0.3
+
+    def scaled_basis(vec, target_length):
+        if np.linalg.norm(vec) < 1e-8:
+            return np.zeros(3)
+        return vec / np.linalg.norm(vec) * target_length
+
+    # Чёрные стрелки (базисные векторы) – их направление совпадает с реальными векторами
+    omega_basis = scaled_basis(omega_vec, basis_length * 0.4)
+    a_cor_basis = scaled_basis(a_cor_vec, basis_length)
+    a_rel_basis = scaled_basis(a_rel_vec, basis_length)
+
+    ax.quiver(point[0], point[1], point[2],
+              omega_basis[0], omega_basis[1], omega_basis[2],
+              color='black', label='ω (basis)', arrow_length_ratio=0.05, linewidth=2)
+    end_omega = np.array(point) + omega_basis
+    ax.text(end_omega[0], end_omega[1], end_omega[2], 'ω', color='black', fontsize=10, ha='center', va='center')
+
+    ax.quiver(point[0], point[1], point[2],
+              a_cor_basis[0], a_cor_basis[1], a_cor_basis[2],
+              color='black', label='a_cor (basis)', arrow_length_ratio=0.05, linewidth=2)
+    end_acor = np.array(point) + a_cor_basis
+    ax.text(end_acor[0], end_acor[1], end_acor[2], 'a_cor', color='black', fontsize=10, ha='center', va='center')
+
+    ax.quiver(point[0], point[1], point[2],
+              a_rel_basis[0], a_rel_basis[1], a_rel_basis[2],
+              color='black', label='a_отн (basis)', arrow_length_ratio=0.05, linewidth=2)
+    end_arel = np.array(point) + a_rel_basis
+    ax.text(end_arel[0], end_arel[1], end_arel[2], 'a_отн', color='black', fontsize=10, ha='center', va='center')
+
+    # Расчёт лимитов с учётом всех объектов
+    all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + \
+                 [end_omega, end_acor, end_arel, np.array([0,0,0])]
     all_arr = np.array(all_points)
     min_vals = np.min(all_arr, axis=0)
     max_vals = np.max(all_arr, axis=0)
     max_range = np.max(max_vals - min_vals)
-    axis_length_new = max_range * 0.25
-
-    # Рисуем оси из точки M
-    ax.quiver(point_acc_new[0], point_acc_new[1], point_acc_new[2],
-              axis_length_new, 0, 0,
-              color='black', arrow_length_ratio=0.05, linewidth=2)
-    ax.text(point_acc_new[0] + axis_length_new, point_acc_new[1], point_acc_new[2],
-            'a_отн', color='black', fontsize=10, ha='center', va='center')
-    ax.quiver(point_acc_new[0], point_acc_new[1], point_acc_new[2],
-              0, axis_length_new, 0,
-              color='black', arrow_length_ratio=0.05, linewidth=2)
-    ax.text(point_acc_new[0], point_acc_new[1] + axis_length_new, point_acc_new[2],
-            'a_cor', color='black', fontsize=10, ha='center', va='center')
-    ax.quiver(point_acc_new[0], point_acc_new[1], point_acc_new[2],
-              0, 0, axis_length_new,
-              color='black', arrow_length_ratio=0.05, linewidth=2)
-    ax.text(point_acc_new[0], point_acc_new[1], point_acc_new[2] + axis_length_new,
-            'ω', color='black', fontsize=10, ha='center', va='center')
-
-    # Устанавливаем лимиты
-    all_points = [point_acc_new] + [point_acc_new + v for v in vectors_acc_new] + \
-                 [point_acc_new + np.array([axis_length_new,0,0]),
-                  point_acc_new + np.array([0,axis_length_new,0]),
-                  point_acc_new + np.array([0,0,axis_length_new]),
-                  np.zeros(3)]
-    all_arr = np.array(all_points)
+    axis_length = max_range * 0.25
+    axis_ends = [[axis_length,0,0], [0,axis_length,0], [0,0,axis_length]]
+    all_arr = np.vstack([all_arr, axis_ends])
     min_vals = np.min(all_arr, axis=0)
     max_vals = np.max(all_arr, axis=0)
     margin = 0.2
@@ -312,6 +293,7 @@ def generate_all_plots(data):
     ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
     ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
 
+    draw_axes(ax, origin=(0,0,0), length=axis_length, color='black')
     ax.grid(True, alpha=0.3)
     ax.legend(loc='upper left')
     plt.tight_layout()
