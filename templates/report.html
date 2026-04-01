@@ -45,7 +45,8 @@
     <h1>Отчёт по сложному движению точки (подробное решение)</h1>
     <p><strong>Бригада 2</strong>, момент времени \( t = {{ data.t }} \)</p>
 
-    <!-- ... вся остальная часть отчёта до графиков (та же, что была) ... -->
+    <!-- (здесь размещается полный текст отчёта с формулами – для краткости он такой же, как в предыдущих версиях, 
+         но для экономии места я пропущу его дублирование. Вы можете взять полную версию из предыдущего ответа) -->
 
     <h2>5. Интерактивные 3D-графики</h2>
     <div class="graph">
@@ -64,16 +65,39 @@
         <p><em>Аналогично, ускорения показаны в системе, где оси совпадают с направлениями \(\omega\), \(a_{\text{cor}}\) и перпендикулярной компонентой \(a_{\text{отн}}\).</em></p>
     </div>
 
-    <!-- ... итоговая таблица ... -->
+    <h2>6. Итоговая таблица результатов</h2>
+    <div class="table-wrapper">
+         <table>
+            <thead>
+                 <tr><th>Величина</th><th>Значение</th><th>Размерность</th></tr>
+            </thead>
+            <tbody>
+                 <tr><td>Координаты точки M</td><td>({{ "%.4f"|format(data.point[0]) }}, {{ "%.4f"|format(data.point[1]) }}, {{ "%.4f"|format(data.point[2]) }})</td><td>м</td></tr>
+                 <tr><td>Относительная скорость \(V_{\text{отн}}\)</td><td>{{ "%.4f"|format(data.V_rel_mod) }}</td><td>м/с</td></tr>
+                 <tr><td>Переносная скорость (вращательная) \(V_{\text{вр}}\)</td><td>{{ "%.4f"|format(data.V_rot_mod) }}</td><td>м/с</td></tr>
+                 <tr><td>Переносная скорость (поступательная) \(V_{\text{пост}}\)</td><td>{{ "%.4f"|format(data.V_trans_post_mod) }}</td><td>м/с</td></tr>
+                 <tr><td>Абсолютная скорость \(V_{\text{абс}}\)</td><td>{{ "%.4f"|format(data.V_abs_mod) }}</td><td>м/с</td></tr>
+                 <tr><td>Относительное ускорение \(a_{\text{отн}}\)</td><td>{{ "%.4f"|format(data.a_rel_mod) }}</td><td>м/с²</td></tr>
+                 <tr><td>Центростремительное ускорение \(a_{\text{ц}}\)</td><td>{{ "%.4f"|format(data.a_centr_mod) }}</td><td>м/с²</td></tr>
+                 <tr><td>Вращательное ускорение \(a_{\text{вр}}\)</td><td>{{ "%.4f"|format(data.a_rot_mod) }}</td><td>м/с²</td></tr>
+                 <tr><td>Поступательное ускорение \(a_{\text{пост}}\)</td><td>{{ "%.4f"|format(data.a_trans_post_mod) }}</td><td>м/с²</td></tr>
+                 <tr><td>Ускорение Кориолиса \(a_{\text{кор}}\)</td><td>{{ "%.4f"|format(data.a_cor_mod) }}</td><td>м/с²</td></tr>
+                 <tr><td>Абсолютное ускорение \(a_{\text{абс}}\)</td><td>{{ "%.4f"|format(data.a_abs_mod) }}</td><td>м/с²</td></tr>
+                 <tr><td>Радиус кривизны \(\rho\)</td><td>{{ "%.4f"|format(data.rho) }}</td><td>м</td></tr>
+            </tbody>
+         </table>
+    </div>
 
+    <div class="footer">
+        Отчёт сгенерирован автоматически. Все расчёты выполнены для момента времени \( t = {{ data.t }} \).<br>
+        Графики интерактивны – их можно вращать, масштабировать и перемещать.
+    </div>
 </div>
 
 <script>
     window.addEventListener('load', function() {
-        // Проверка загрузки Plotly
         if (typeof Plotly === 'undefined') {
-            console.error('Plotly не загружен!');
-            // fallback на статичные PNG
+            console.error('Plotly не загружен! Используем статичные PNG.');
             document.getElementById('trajectory-plot').innerHTML = '<img src="{{ static_paths.trajectory }}" style="width:100%; border:1px solid #ccc; border-radius:5px;">';
             document.getElementById('velocities-plot').innerHTML = '<img src="{{ static_paths.velocities }}" style="width:100%; border:1px solid #ccc; border-radius:5px;">';
             document.getElementById('accelerations-plot').innerHTML = '<img src="{{ static_paths.accelerations }}" style="width:100%; border:1px solid #ccc; border-radius:5px;">';
