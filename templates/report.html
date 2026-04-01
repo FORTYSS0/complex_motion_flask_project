@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Сложное движение точки — пункт 4 (универсальная методика + 3 примера)</title>
+  <style>
+    :root {
+      --text: #111;
+      --muted: #555;
+      --bg: #fff;
+      --card: #f6f7f8;
+      --border: #e2e6ea;
+      --codebg: #0b1020;
+      --codetext: #e6edf3;
+      --accent: #0b5cad;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, "Noto Sans", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.55;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      padding: 24px 18px;
+      background: linear-gradient(180deg, #f7fbff 0%, #ffffff 85%);
+      border-bottom: 1px solid var(--border);
+    }
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    h1 { margin: 0 0 8px 0; font-size: 24px; }
+    h2 { margin-top: 28px; font-size: 20px; }
+    h3 { margin-top: 18px; font-size: 16px; }
+    p { margin: 10px 0; }
+    .meta { color: var(--muted); font-size: 13px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin: 12px 0;
+    }
+    .toc a { color: var(--accent); text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .img { margin: 12px 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: #fff; }
+    .img img { display: block; width: 100%; height: auto; }
+    figure { margin: 0; }
+    figcaption { padding: 10px 12px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); background: #fcfcfd; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; }
+    th, td { border: 1px solid var(--border); padding: 8px; vertical-align: top; }
+    th { background: #f2f6fb; }
+    pre { background: var(--codebg); color: var(--codetext); padding: 12px; border-radius: 12px; overflow-x: auto; font-size: 12px; }
+    .note { border-left: 4px solid var(--accent); padding: 10px 12px; background: #f3f8ff; border-radius: 10px; color: #123; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+    .mermaid { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 10px; overflow-x: auto; }
+    .small { font-size: 13px; color: var(--muted); }
+    .badge { display: inline-block; padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px; font-size: 12px; color: var(--muted); background: #fff; margin-right: 6px; }
+    .refs li { margin-bottom: 6px; }
+  </style>
+
+  <!-- MathJax (CDN). При отсутствии интернета LaTeX останется текстом. -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+  <!-- Mermaid (CDN) -->
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ startOnLoad: true, theme: "default" });
+  </script>
+</head>
+
+<body>
+<header>
+  <div style="max-width: 980px; margin: 0 auto;">
+    <h1>Пункт 4 «Сложное движение точки»: универсальная методика и 3 примера</h1>
+    <div class="meta">Дата: {{ today }}. Графики генерируются динамически на сервере (Matplotlib).</div>
+    <div class="meta">Офлайн‑версия (самодостаточный HTML): <a href="/download/static">скачать report_static.html</a></div>
+  </div>
+</header>
+
+<main>
+
+<section id="exec">
+  <h2>Executive summary</h2>
+  <div class="card">
+    <p><span class="badge">Контекст</span> Условие конкретного варианта пункта 4 не задано. Поэтому ниже: (A) универсальная методика, (B) три примера. </p>
+    <p><span class="badge">Ключевые формулы</span> Теорема сложения скоростей и ускорений (теорема Кориолиса):
+      $$\vec v_a=\vec v_e+\vec v_r,\qquad \vec a_a=\vec a_e+\vec a_r+\vec a_k,\qquad \vec a_k=2(\vec\omega\times\vec v_r).$$
+      Эти формулы и правило Жуковского приведены, например, в шпаргалке ЮУрГУ и в статье «Сила Кориолиса».
+    </p>
+    <p class="note"><b>Как использовать под свой вариант:</b> замените законы \(\vec r_{O'}(t)\), \(\vec\omega(t)\), \(\vec r'(t)\) и повторите те же шаги. </p>
+  </div>
+
+  <div class="card toc">
+    <p><b>Оглавление</b></p>
+    <ul>
+      <li><a href="#assumptions">Допущения и обозначения</a></li>
+      <li><a href="#method">Универсальная методика</a></li>
+      <li><a href="#tables">Таблица формул</a></li>
+      <li><a href="#ex1">Пример 1</a></li>
+      <li><a href="#ex2">Пример 2</a></li>
+      <li><a href="#ex3">Пример 3</a></li>
+      <li><a href="#summary">Итоговая таблица</a></li>
+      <li><a href="#refs">Источники</a></li>
+    </ul>
+  </div>
+</section>
+
+<section id="assumptions">
+  <h2>Допущения и обозначения</h2>
+  <div class="card">
+    <p>Две системы координат: неподвижная (инерциальная) \(Oxyz\) и подвижная \(O'x'y'z'\).</p>
+    <ul>
+      <li>Абсолютное положение: \(\vec r_a=\overrightarrow{OM}\).</li>
+      <li>Положение начала ПСК: \(\vec r_{O'}=\overrightarrow{OO'}\).</li>
+      <li>Относительный радиус‑вектор: \(\vec r=\overrightarrow{O'M}\).</li>
+      <li>Матрица поворота: \(R(t)\): \(\vec r_a=\vec r_{O'}+R(t)\vec r'(t)\).</li>
+      <li>Угловая скорость и ускорение: \(\vec\omega(t)\), \(\vec\varepsilon(t)=\dot{\vec\omega}(t)\).</li>
+    </ul>
+    <p>Единицы: м, с, м/с, м/с², рад/с, рад/с², \(\kappa\) в 1/м, \(\rho\) в м.</p>
+  </div>
+</section>
+
+<section id="method">
+  <h2>Универсальная методика</h2>
+
+  <div class="card">
+    <h3>Положение</h3>
+    $$\boxed{\ \vec r_a(t)=\vec r_{O'}(t)+R(t)\,\vec r'(t)\ }$$
+    <p class="small">Матрица поворота \(R(t)\) — ортогональная матрица, описывающая ориентацию ПСК (см. «Матрица поворота»).</p>
+  </div>
+
+  <div class="card">
+    <h3>Сложение скоростей</h3>
+    $$\boxed{\ \vec v_a=\vec v_e+\vec v_r\ }$$
+    $$\boxed{\ \vec v_a=\vec v_{O'}+\vec\omega\times\vec r+\vec v_r\ }$$
+    <p>\(\vec v_r\) — относительная скорость (производная в ПСК), \(\vec v_e\) — переносная, \(\vec v_{O'}=\dot{\vec r}_{O'}\).</p>
+  </div>
+
+  <div class="card">
+    <h3>Теорема Кориолиса (сложение ускорений)</h3>
+    $$\boxed{\ \vec a_a=\vec a_e+\vec a_r+\vec a_k\ }$$
+    $$\boxed{\ \vec a_k=2(\vec\omega\times\vec v_r)\ }$$
+    $$\boxed{\ \vec a_a=\vec a_{O'}+(\vec\varepsilon\times\vec r)+\vec\omega\times(\vec\omega\times\vec r)+2(\vec\omega\times\vec v_r)+\vec a_r\ }$$
+    <p>Члены: поступательное \(\vec a_{O'}\), эйлеров \(\vec\varepsilon\times\vec r\), центростремительный \(\vec\omega\times(\vec\omega\times\vec r)\), кориолисов \(2\vec\omega\times\vec v_r\), относительный \(\vec a_r\).</p>
+  </div>
+
+  <div class="card">
+    <h3>Касательно‑нормальные компоненты, кривизна, радиус кривизны</h3>
+    $$a_\tau=\frac{\vec v\cdot\vec a}{|\vec v|},\qquad a_n=\frac{|\vec v\times\vec a|}{|\vec v|},$$
+    $$\kappa=\frac{|\vec v\times\vec a|}{|\vec v|^3}=\frac{a_n}{v^2},\qquad \rho=\frac{1}{\kappa}.$$
+  </div>
+
+  <h3>Алгоритм (mermaid)</h3>
+  <div class="mermaid">
+flowchart TD
+A[Дано: r_O'(t), ω(t), ε(t)] --> B[Дано: r'(t) в ПСК]
+B --> C[Положение: r_a=r_O'+R r']
+C --> D[Скорость: v_a=v_O' + ω×r + v_r]
+D --> E[Ускорение: a_a=a_O' + ε×r + ω×(ω×r) + 2ω×v_r + a_r]
+E --> F[Кривизна/радиус: κ=|v×a|/|v|^3, ρ=1/κ]
+  </div>
+</section>
+
+<section id="tables">
+  <h2>Таблица формул</h2>
+  <div class="card">
+    <table>
+      <thead>
+        <tr><th>Система</th><th>Положение</th><th>Скорость</th><th>Ускорение</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Декартова</td>
+          <td>\(\vec r=x\vec i+y\vec j+z\vec k\)</td>
+          <td>\(\vec v=\dot x\vec i+\dot y\vec j+\dot z\vec k\)</td>
+          <td>\(\vec a=\ddot x\vec i+\ddot y\vec j+\ddot z\vec k\)</td>
+        </tr>
+        <tr>
+          <td>Полярная (2D)</td>
+          <td>\(\vec r=r\vec e_r\)</td>
+          <td>\(\vec v=\dot r\vec e_r+r\dot\varphi\vec e_\varphi\)</td>
+          <td>\(\vec a=(\ddot r-r\dot\varphi^2)\vec e_r+(r\ddot\varphi+2\dot r\dot\varphi)\vec e_\varphi\)</td>
+        </tr>
+        <tr>
+          <td>Цилиндрическая</td>
+          <td>\(\vec r=\rho\vec e_\rho+z\vec e_z\)</td>
+          <td>\(\vec v=\dot\rho\vec e_\rho+\rho\dot\varphi\vec e_\varphi+\dot z\vec e_z\)</td>
+          <td>\(\vec a=(\ddot\rho-\rho\dot\varphi^2)\vec e_\rho+(\rho\ddot\varphi+2\dot\rho\dot\varphi)\vec e_\varphi+\ddot z\vec e_z\)</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="small">Строки для цилиндрических координат совпадают со стандартными выражениями для \(\dot{\vec r}\), \(\ddot{\vec r}\).</p>
+  </div>
+</section>
+
+<section id="ex1">
+  <h2>Пример 1: плоское криволинейное (спираль Архимеда)</h2>
+  <div class="card">
+    <p>Дано: \(r=ut,\ \varphi=\omega t\).</p>
+    <p>Траектория: \(x=ut\cos(\omega t),\ y=ut\sin(\omega t)\). Исключая \(t\): \(r=(u/\omega)\varphi\) — архимедова спираль.</p>
+  </div>
+
+  <div class="grid2">
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex1_traj') }}" alt="ex1_traj"><figcaption>Траектория.</figcaption></figure>
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex1_coords') }}" alt="ex1_coords"><figcaption>x(t), y(t).</figcaption></figure>
+  </div>
+  <div class="grid2">
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex1_va') }}" alt="ex1_va"><figcaption>|v| и |a|.</figcaption></figure>
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex1_tn') }}" alt="ex1_tn"><figcaption>aτ и an.</figcaption></figure>
+  </div>
+  <div class="grid2">
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex1_rho') }}" alt="ex1_rho"><figcaption>ρ(t).</figcaption></figure>
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex1_vvec') }}" alt="ex1_vvec"><figcaption>Разложение скорости (t0).</figcaption></figure>
+  </div>
+  <figure class="img"><img src="{{ url_for('plot_png', name='ex1_avec') }}" alt="ex1_avec"><figcaption>Разложение ускорения (t0).</figcaption></figure>
+
+  <div class="card">
+    <h3>Контрольные точки (3 значащие цифры)</h3>
+    <table>
+      <thead><tr><th>Величина</th><th>Значение</th><th>Ед.</th></tr></thead>
+      <tbody>
+        {% for row in tables.ex1 %}
+          <tr><td>{{ row.name }}</td><td>{{ row.value }}</td><td>{{ row.unit }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mermaid">
+timeline
+    title Пример 1: временная линия
+    0 : r(0)=0 ; φ(0)=0
+    2 : r=ut ; φ=ωt
+    6 : рост r и φ линейный
+  </div>
+</section>
+
+<section id="ex2">
+  <h2>Пример 2: пространственное (перенос + вращение + относительное движение)</h2>
+  <div class="card">
+    <p>Дано: перенос \(\vec r_{O'}=(Vt)\vec i\), вращение вокруг \(Oz\) с \(\Omega\), относительное: \(x'=R\cos\alpha t\), \(y'=R\sin\alpha t\), \(z'=ht\).</p>
+    <p>Абсолютные координаты: \(x=Vt+R\cos((\alpha+\Omega)t)\), \(y=R\sin((\alpha+\Omega)t)\), \(z=ht\).</p>
+  </div>
+
+  <div class="grid2">
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex2_traj3d') }}" alt="ex2_traj3d"><figcaption>3D‑траектория.</figcaption></figure>
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex2_coords') }}" alt="ex2_coords"><figcaption>x(t), y(t), z(t).</figcaption></figure>
+  </div>
+  <div class="grid2">
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex2_va') }}" alt="ex2_va"><figcaption>|v| и |a|.</figcaption></figure>
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex2_tn') }}" alt="ex2_tn"><figcaption>aτ и an.</figcaption></figure>
+  </div>
+  <figure class="img"><img src="{{ url_for('plot_png', name='ex2_rho') }}" alt="ex2_rho"><figcaption>ρ(t).</figcaption></figure>
+
+  <div class="card">
+    <h3>Контрольные точки (3 значащие цифры)</h3>
+    <table>
+      <thead><tr><th>Величина</th><th>Значение</th><th>Ед.</th></tr></thead>
+      <tbody>
+        {% for row in tables.ex2 %}
+          <tr><td>{{ row.name }}</td><td>{{ row.value }}</td><td>{{ row.unit }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="ex3">
+  <h2>Пример 3: полярные координаты во вращающейся системе</h2>
+  <div class="card">
+    <p>Дано: \(r(t)=1+0.2\sin 2t\), \(\varphi'(t)=0.5t\), \(\Omega(t)=\Omega_0+\beta t\).</p>
+    <p>\(\Phi(t)=\int_0^t\Omega(\tau)\,d\tau=\Omega_0 t+\beta t^2/2\), \(\varphi(t)=\varphi'(t)+\Phi(t)\). Переход: \(x=r\cos\varphi\), \(y=r\sin\varphi\).</p>
+    <p>Разложение ускорений: \(\vec a_a=\vec a_r+\vec a_e+\vec a_k\), где \(\vec a_k=2(\vec\omega\times\vec v_r)\).</p>
+  </div>
+
+  <div class="grid2">
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex3_traj') }}" alt="ex3_traj"><figcaption>Траектория.</figcaption></figure>
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex3_inputs') }}" alt="ex3_inputs"><figcaption>r(t), φ'(t), Ω(t).</figcaption></figure>
+  </div>
+  <div class="grid2">
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex3_vdecomp') }}" alt="ex3_vdecomp"><figcaption>Разложение скоростей.</figcaption></figure>
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex3_ardecomp') }}" alt="ex3_ardecomp"><figcaption>Разложение a_r.</figcaption></figure>
+  </div>
+  <div class="grid2">
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex3_apdecomp') }}" alt="ex3_apdecomp"><figcaption>Разложение a_φ.</figcaption></figure>
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex3_va') }}" alt="ex3_va"><figcaption>|v| и |a|.</figcaption></figure>
+  </div>
+  <div class="grid2">
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex3_tn') }}" alt="ex3_tn"><figcaption>aτ и an.</figcaption></figure>
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex3_rho') }}" alt="ex3_rho"><figcaption>ρ(t).</figcaption></figure>
+  </div>
+  <div class="grid2">
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex3_vvec') }}" alt="ex3_vvec"><figcaption>Разложение скорости (t0).</figcaption></figure>
+    <figure class="img"><img src="{{ url_for('plot_png', name='ex3_avec') }}" alt="ex3_avec"><figcaption>Разложение ускорения (a_rel + a_e + a_k) (t0).</figcaption></figure>
+  </div>
+
+  <div class="card">
+    <h3>Контрольные точки (3 значащие цифры)</h3>
+    <table>
+      <thead><tr><th>Величина</th><th>Значение</th><th>Ед.</th></tr></thead>
+      <tbody>
+        {% for row in tables.ex3 %}
+          <tr><td>{{ row.name }}</td><td>{{ row.value }}</td><td>{{ row.unit }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mermaid">
+flowchart LR
+A[φ'(t)] --> C[φ(t)=φ'(t)+Φ(t)]
+B[Ω(t)] --> D[Φ(t)=∫Ω dt]
+D --> C
+C --> E[x=r cos φ]
+C --> F[y=r sin φ]
+  </div>
+</section>
+
+<section id="summary">
+  <h2>Итоговая таблица</h2>
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Кейс</th><th>Момент</th><th>x, м</th><th>y, м</th><th>z, м</th>
+          <th>|v|, м/с</th><th>|a|, м/с²</th><th>aτ, м/с²</th><th>an, м/с²</th><th>κ, 1/м</th><th>ρ, м</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in tables.summary %}
+          <tr>
+            <td>{{ row.case }}</td><td>{{ row.moment }}</td><td>{{ row.x }}</td><td>{{ row.y }}</td><td>{{ row.z }}</td>
+            <td>{{ row.v }}</td><td>{{ row.a }}</td><td>{{ row.a_tau }}</td><td>{{ row.a_n }}</td><td>{{ row.kappa }}</td><td>{{ row.rho }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="refs">
+  <h2>Источники</h2>
+  <div class="card">
+    <ol class="refs">
+      <li>ЮУрГУ (sites.susu.ru): «ТЕОРЕТИЧЕСКАЯ МЕХАНИКА» — шпаргалка (формулы сложения скоростей/ускорений, \(\vec a_k=2[\vec\omega\times\vec v_r]\), правило Жуковского): <a href="https://sites.susu.ru/tehmeh/wp-content/uploads/sites/96/2021/05/%D1%88%D0%BF%D0%B0%D1%80%D0%B3%D0%B0%D0%BB%D0%BA%D0%B0-%D0%BF%D0%BE-%D1%82%D0%B5%D0%BE%D1%80-%D0%BC%D0%B5%D1%85.pdf" target="_blank" rel="noreferrer">PDF</a></li>
+      <li>ЮУрГУ (sites.susu.ru): «КИНЕМАТИКА. Курс лекций» — раздел про сложное движение точки и связь производных в двух пространствах: <a href="https://sites.susu.ru/tehmeh/wp-content/uploads/sites/96/2021/05/%D0%9A%D0%98%D0%9D%D0%95%D0%9C%D0%90%D0%A2%D0%98%D0%9A%D0%90-%D0%9A%D1%83%D1%80%D1%81-%D0%BB%D0%B5%D0%BA%D1%86%D0%B8%D0%B9-2016.pdf" target="_blank" rel="noreferrer">PDF</a></li>
+      <li>Википедия: «Сила Кориолиса» — формулы теоремы Кориолиса и правило Жуковского: <a href="https://ru.wikipedia.org/wiki/%D0%A1%D0%B8%D0%BB%D0%B0_%D0%9A%D0%BE%D1%80%D0%B8%D0%BE%D0%BB%D0%B8%D1%81%D0%B0" target="_blank" rel="noreferrer">страница</a></li>
+      <li>Википедия: «Цилиндрическая система координат» — \(\dot{\vec r}\), \(\ddot{\vec r}\) в цилиндрических координатах: <a href="https://ru.wikipedia.org/wiki/%D0%A6%D0%B8%D0%BB%D0%B8%D0%BD%D0%B4%D1%80%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B0%D1%8F_%D1%81%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0_%D0%BA%D0%BE%D0%BE%D1%80%D0%B4%D0%B8%D0%BD%D0%B0%D1%82" target="_blank" rel="noreferrer">страница</a></li>
+      <li>Википедия: «Кривизна» — \(\kappa=\|\gamma'\times\gamma''\|/\|\gamma'\|^3\), \(\rho=1/\kappa\): <a href="https://ru.wikipedia.org/wiki/%D0%9A%D1%80%D0%B8%D0%B2%D0%B8%D0%B7%D0%BD%D0%B0" target="_blank" rel="noreferrer">страница</a></li>
+      <li>Википедия: «Матрица поворота» — интерпретация \(R(t)\): <a href="https://ru.wikipedia.org/wiki/%D0%9C%D0%B0%D1%82%D1%80%D0%B8%D1%86%D0%B0_%D0%BF%D0%BE%D0%B2%D0%BE%D1%80%D0%BE%D1%82%D0%B0" target="_blank" rel="noreferrer">страница</a></li>
+      <li>Википедия: «Спираль» — форма архимедовой спирали \(r(\theta)=a+b\theta\): <a href="https://ru.wikipedia.org/wiki/%D0%A1%D0%BF%D0%B8%D1%80%D0%B0%D0%BB%D1%8C" target="_blank" rel="noreferrer">страница</a></li>
+    </ol>
+    <p class="small">Если CDN недоступны, формулы/диаграммы могут не отрендериться, но исходный LaTeX/Mermaid останется в HTML.</p>
+  </div>
+</section>
+
+</main>
+</body>
+</html>
