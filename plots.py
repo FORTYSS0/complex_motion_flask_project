@@ -48,7 +48,6 @@ def generate_all_plots(data):
 
     O = np.array([0.0, 0.0, data['zp']])
 
-    # Сбор точек для масштабирования
     all_points = np.vstack([np.column_stack([x_t, y_t, z_t]),
                             [data['point']], [0,0,0], O])
     min_vals = np.min(all_points, axis=0)
@@ -112,7 +111,7 @@ def generate_all_plots(data):
     plt.close()
 
     # ------------------------------------------------------------
-    # 2. Скорости (подвижная система, но без осей X,Y,Z,
+    # 2. Скорости (подвижная система, без осей X,Y,Z,
     #    базисные векторы ω, a_кор, V_отн)
     # ------------------------------------------------------------
     point = data['point']
@@ -146,27 +145,24 @@ def generate_all_plots(data):
                     color=color, fontsize=8, ha='center', va='center')
 
     # Базисные векторы (ω, a_кор, V_отн) из точки M
-    # ω – направлен вверх (ось Z)
     omega_vec = np.array([0.0, 0.0, data['omega']])
-    # a_кор – направлен вправо (ось X)
     a_cor_vec = data['a_cor']
-    # V_отн – направлен вперёд (ось Y)
     V_rel_vec = data['V_rel']
 
-    # Вычисляем масштаб для наглядности (длина базисных векторов ~ 0.3 от размаха)
-    all_vectors = [omega_vec, a_cor_vec, V_rel_vec] + vectors
-    all_points_basis = [np.array(point)] + [np.array(point) + v for v in all_vectors] + [np.array([0,0,0])]
-    all_arr = np.array(all_points_basis)
+    # Вычисляем базовую длину для масштабирования базисных векторов
+    # на основе размаха реальных векторов скоростей (без учёта исходных огромных значений)
+    all_points_for_scale = [np.array(point)] + [np.array(point) + v for v in vectors] + [np.array([0,0,0])]
+    all_arr = np.array(all_points_for_scale)
     max_range = np.max(np.max(all_arr, axis=0) - np.min(all_arr, axis=0))
     basis_length = max_range * 0.25
 
-    # Нормируем и масштабируем каждый базисный вектор
     def scaled_basis(vec, target_length):
         if np.linalg.norm(vec) < 1e-8:
             return np.zeros(3)
         return vec / np.linalg.norm(vec) * target_length
 
-    omega_basis = scaled_basis(omega_vec, basis_length)
+    # ω делаем заметно короче, чтобы он не выходил за пределы
+    omega_basis = scaled_basis(omega_vec, basis_length * 0.3)
     a_cor_basis = scaled_basis(a_cor_vec, basis_length)
     V_rel_basis = scaled_basis(V_rel_vec, basis_length)
 
@@ -192,8 +188,17 @@ def generate_all_plots(data):
     ax.text(end_vrel[0], end_vrel[1], end_vrel[2],
             f'V_отн = {data["V_rel_mod"]:.2f}', color='lime', fontsize=8)
 
-    # Устанавливаем лимиты с учётом всех объектов (без осей X,Y,Z)
-    all_points = [np.array(point)] + [np.array(point) + v for v in all_vectors] + [np.array([0,0,0])]
+    # Устанавливаем лимиты с учётом всех нарисованных объектов:
+    # - концы реальных векторов скоростей (vectors)
+    # - концы масштабированных базисных векторов
+    # - точка M и начало координат
+    all_points = [np.array(point)]
+    for v in vectors:
+        all_points.append(np.array(point) + v)
+    all_points.append(np.array(point) + omega_basis)
+    all_points.append(np.array(point) + a_cor_basis)
+    all_points.append(np.array(point) + V_rel_basis)
+    all_points.append(np.array([0,0,0]))
     all_arr = np.array(all_points)
     min_vals = np.min(all_arr, axis=0)
     max_vals = np.max(all_arr, axis=0)
@@ -202,7 +207,6 @@ def generate_all_plots(data):
     ax.set_ylim([min_vals[1]-margin, max_vals[1]+margin])
     ax.set_zlim([min_vals[2]-margin, max_vals[2]+margin])
 
-    # Убираем оси (grid оставляем для наглядности)
     ax.grid(True, alpha=0.3)
     ax.legend(loc='upper left')
     plt.tight_layout()
@@ -240,11 +244,12 @@ def generate_all_plots(data):
                     f'{label} = {numeric_vals[idx]:.2f}',
                     color=color, fontsize=8, ha='center', va='center')
 
-    # Добавляем вектор ω из точки O для полноты (можно оставить)
+    # Добавляем вектор ω из точки O
     O = np.array([0.0, 0.0, data['zp']])
-    # Определяем масштаб для ω на основе размаха данных
-    all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + [O, O + omega_vec, np.array([0,0,0])]
-    all_arr = np.array(all_points)
+    omega_vec = np.array([0.0, 0.0, data['omega']])
+    # Масштаб для ω на третьем рисунке (можно оставить прежним)
+    all_points_for_scale = [np.array(point)] + [np.array(point) + v for v in vectors] + [O, O + omega_vec, np.array([0,0,0])]
+    all_arr = np.array(all_points_for_scale)
     max_range = np.max(np.max(all_arr, axis=0) - np.min(all_arr, axis=0))
     omega_length = max_range * 0.2
     omega_unit = omega_vec / (np.linalg.norm(omega_vec) + 1e-8)
@@ -256,7 +261,7 @@ def generate_all_plots(data):
     ax.text(end_omega[0], end_omega[1], end_omega[2],
             f'ω = {data["omega"]:.2f}', color='magenta', fontsize=8)
 
-    # Расчёт лимитов (с учётом всех объектов)
+    # Расчёт лимитов (включая все векторы ускорений, ω и оси)
     all_points = [np.array(point)] + [np.array(point) + v for v in vectors] + [O, O + omega_scaled] + [np.array([0,0,0])]
     all_arr = np.array(all_points)
     min_vals = np.min(all_arr, axis=0)
