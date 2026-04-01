@@ -5,7 +5,7 @@ import base64
 import tempfile
 import pdfkit
 import pypandoc
-import matplotlib.pyplot as pltapp.py
+import matplotlib.pyplot as plt
 import numpy as np
 from calc import compute_complex_motion
 from plots import generate_all_plots, generate_interactive_trajectory, generate_interactive_velocities, generate_interactive_accelerations
@@ -56,6 +56,7 @@ def prepare_export_data():
     }
     for key, latex in extra_formulas.items():
         formula_images[key] = latex_to_png(latex)
+
     static_abs_path = os.path.abspath('static')
     img_files = {
         'trajectory': os.path.join(static_abs_path, 'trajectory.png'),
