@@ -37,8 +37,10 @@
             #trajectory-with-velocities-plot, #trajectory-with-accelerations-plot { height: 60vh; }
         }
         @media (max-width: 768px) {
-            .container { padding: 10px; }
-            h1 { font-size: 1.5rem; }
+            body { padding: 0; }
+            .container { padding: 0; border-radius: 0; }
+            .graph { margin: 0; }
+            .btn-group { padding: 10px; justify-content: center; }
             .btn { padding: 8px 12px; min-width: 80px; }
             th, td { padding: 6px; font-size: 0.9rem; }
             #trajectory-plot, #velocities-plot, #accelerations-plot,
@@ -371,7 +373,7 @@
         </table>
     </div>
 
-   <div class="footer">
+  <div class="footer">
         Отчёт сгенерирован автоматически. Все расчёты выполнены для момента времени \( t = {{ data.t }} \).<br>
         Графики интерактивны – их можно вращать, масштабировать и перемещать. Конусы указывают направление.
     </div>
