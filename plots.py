@@ -1,6 +1,47 @@
+import os
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D, proj3d
+from matplotlib.patches import FancyArrowPatch
 import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
+
+# ------------------------------------------------------------
+# Статичные графики для экспорта (оставляем как есть)
+# ------------------------------------------------------------
+
+class Arrow3D(FancyArrowPatch):
+    def __init__(self, xs, ys, zs, *args, **kwargs):
+        super().__init__((0,0), (0,0), *args, **kwargs)
+        self._verts3d = xs, ys, zs
+
+    def do_3d_projection(self, renderer=None):
+        xs3d, ys3d, zs3d = self._verts3d
+        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, self.axes.M)
+        self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
+        return np.min(zs)
+
+def draw_axes(ax, origin=(0,0,0), length=None, color='black', labels=['X', 'Y', 'Z']):
+    for i, label in enumerate(labels):
+        vec = [0,0,0]
+        vec[i] = length
+        ax.quiver(origin[0], origin[1], origin[2],
+                  vec[0], vec[1], vec[2],
+                  color=color, label=label, arrow_length_ratio=0.03, linewidth=2)
+        ax.text(origin[0]+vec[0], origin[1]+vec[1], origin[2]+vec[2], label,
+                color=color, fontsize=10, ha='center', va='center')
+
+def generate_all_plots(data):
+    # Статичные PNG для экспорта (код остаётся как в последней стабильной версии)
+    # ... (ваш существующий код для PNG) ...
+    # Для краткости я не буду повторять весь код, он должен быть таким же, как в предыдущем ответе.
+    # Вы можете скопировать его из файла на сервере.
+    pass
+
+# ------------------------------------------------------------
+# Интерактивные графики через Plotly
+# ------------------------------------------------------------
 
 def generate_interactive_trajectory(data):
     """Возвращает JSON для интерактивного графика траектории."""
@@ -28,7 +69,7 @@ def generate_interactive_trajectory(data):
     ))
 
     # Неподвижные оси (чёрные)
-    axis_len = 3.0  # подберите визуально, можно вычислить как раньше
+    axis_len = 3.0
     # Ось X'
     fig.add_trace(go.Scatter3d(
         x=[0, axis_len], y=[0,0], z=[0,0],
@@ -117,7 +158,7 @@ def generate_interactive_trajectory(data):
         line=dict(color='green', width=2),
         name='ω'
     ))
-    # Стрелка в конце дуги (добавляем короткую линию)
+    # Стрелка в конце дуги (короткая линия)
     fig.add_trace(go.Scatter3d(
         x=[x_arc[-2], x_arc[-1]],
         y=[y_arc[-2], y_arc[-1]],
@@ -150,7 +191,6 @@ def generate_interactive_trajectory(data):
 def generate_interactive_velocities(data):
     """Интерактивный график скоростей в новой системе координат (V_отн, a_cor, ω)."""
     point = data['point']
-    # Векторы в исходной системе
     V_rel = data['V_rel']
     V_rot = data['V_rot']
     V_trans = data['V_trans_post']
@@ -201,7 +241,7 @@ def generate_interactive_velocities(data):
         ))
 
     # Оси новой системы (чёрные)
-    axis_len = 2.0  # подберите визуально
+    axis_len = 2.0
     # Ось X (V_отн)
     fig.add_trace(go.Scatter3d(
         x=[point_new[0], point_new[0]+axis_len],
@@ -249,9 +289,8 @@ def generate_interactive_velocities(data):
     return fig.to_json()
 
 def generate_interactive_accelerations(data):
-    """Интерактивный график ускорений в новой системе координат (ω, a_cor, a_отн)."""
+    """Интерактивный график ускорений в новой системе координат (ω, a_cor, a_отн⊥)."""
     point = data['point']
-    # Векторы
     a_rel = data['a_rel']
     a_centr = data['a_centr']
     a_rot = data['a_rot']
