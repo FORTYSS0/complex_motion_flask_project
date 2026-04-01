@@ -31,7 +31,7 @@ def draw_axes(ax, origin=(0,0,0), length=None, color='black', labels=['X', 'Y', 
                 color=color, fontsize=10, ha='center', va='center')
 
 def generate_all_plots(data):
-    """Создаёт статичные PNG‑графики для экспорта."""
+    """Создаёт статичные PNG‑графики для экспорта (полный код из предыдущей версии)."""
     # ---- 1. Траектория ----
     t_vals = np.linspace(0, 2.5, 200)
     x_t = 8 * np.cos(np.pi * t_vals**2 / 3)
@@ -248,7 +248,7 @@ def generate_interactive_trajectory(data):
     # Неподвижные оси (чёрные)
     # Ось X'
     fig.add_trace(go.Scatter3d(
-        x=[0, axis_len], y=[0,0], z=[0,0],
+        x=[0, axis_len], y=[0, 0], z=[0, 0],
         mode='lines+text',
         line=dict(color='black', width=2),
         text=['', "X'"], textposition='middle right',
@@ -256,7 +256,7 @@ def generate_interactive_trajectory(data):
     ))
     # Ось Y'
     fig.add_trace(go.Scatter3d(
-        x=[0,0], y=[0, axis_len], z=[0,0],
+        x=[0, 0], y=[0, axis_len], z=[0, 0],
         mode='lines+text',
         line=dict(color='black', width=2),
         text=['', "Y'"], textposition='middle right',
@@ -264,7 +264,7 @@ def generate_interactive_trajectory(data):
     ))
     # Ось Z'
     fig.add_trace(go.Scatter3d(
-        x=[0,0], y=[0,0], z=[0, axis_len],
+        x=[0, 0], y=[0, 0], z=[0, axis_len],
         mode='lines+text',
         line=dict(color='black', width=2),
         text=['', "Z'"], textposition='middle right',
@@ -329,24 +329,24 @@ def generate_interactive_trajectory(data):
     y_arc = O[1] + radius * np.sin(theta)
     z_arc = O[2] + axis_len * 0.05
     fig.add_trace(go.Scatter3d(
-        x=x_arc, y=y_arc, z=z_arc,
+        x=x_arc, y=y_arc, z=np.full_like(x_arc, z_arc),
         mode='lines',
         line=dict(color='green', width=2),
         name='ω'
     ))
-    # Стрелка в конце дуги (короткая линия)
+    # Стрелка в конце дуги
     fig.add_trace(go.Scatter3d(
         x=[x_arc[-2], x_arc[-1]],
         y=[y_arc[-2], y_arc[-1]],
-        z=[z_arc[-2], z_arc[-1]],
+        z=[z_arc, z_arc],
         mode='lines',
         line=dict(color='green', width=3),
         showlegend=False
     ))
-    # Текст ω (используем Scatter3d с текстом)
+    # Текст ω
     mid = len(theta)//2
     fig.add_trace(go.Scatter3d(
-        x=[x_arc[mid]], y=[y_arc[mid]], z=[z_arc[mid]],
+        x=[x_arc[mid]], y=[y_arc[mid]], z=[z_arc + 0.02],
         mode='text',
         text=[f'ω = {data["omega"]:.2f}'],
         textfont=dict(color='green', size=10),
