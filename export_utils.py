@@ -4,7 +4,6 @@ import pdfkit
 import pypandoc
 from flask import render_template
 from calc import compute_complex_motion
-from plots import generate_all_plots
 from app_helpers import latex_to_png
 
 
@@ -22,7 +21,6 @@ else:
 def prepare_export_data():
     """Возвращает данные, формулы, изображения формул и пути к PNG для экспорта."""
     data, formulas = compute_complex_motion(t=1)
-    generate_all_plots(data)  # создаёт все PNG
     
     # Преобразование формул в PNG
     formula_images = {key: latex_to_png(latex) for key, latex in formulas.items()}

@@ -4,7 +4,7 @@ import io
 import base64
 import matplotlib.pyplot as plt
 from calc import compute_complex_motion
-from plots import generate_all_plots, generate_interactive_trajectory, \
+from plots import generate_interactive_trajectory, \
                   generate_interactive_velocities, generate_interactive_accelerations, \
                   generate_interactive_trajectory_with_velocities, \
                   generate_interactive_trajectory_with_accelerations
@@ -32,7 +32,6 @@ def latex_to_png(latex_str):
 @app.route('/')
 def index():
     data, formulas = compute_complex_motion(t=1)
-    generate_all_plots(data)  # PNG для экспорта
     
     traj_json = generate_interactive_trajectory(data)
     vel_json = generate_interactive_velocities(data)
