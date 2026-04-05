@@ -32,7 +32,6 @@
         }
         .footer { font-size: 0.9em; color: #777; text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
 
-        /* Адаптация для мобильных устройств */
         @media (max-width: 992px) {
             #trajectory-plot, #velocities-plot, #accelerations-plot,
             #trajectory-with-velocities-plot, #trajectory-with-accelerations-plot { height: 60vh; }
@@ -274,7 +273,7 @@
     <h3>Ускорение Кориолиса</h3>
     <div class="formula">
         \[
-        \mathbf{a}_{\text{кор}} = 2\,\boldsymbol{\omega}\times\mathbf{V}_{\text{отn}}
+        \mathbf{a}_{\text{кор}} = 2\,\boldsymbol{\omega}\times\mathbf{V}_{\text{отн}}
         = 2 \begin{vmatrix}
         \mathbf{i} & \mathbf{j} & \mathbf{k}\\
         0 & 0 & -2\pi\\
@@ -368,7 +367,7 @@
     <div class="table-wrapper">
         <table>
             <thead>
-                <tr><th>Величина</th><th>Значение</th><th>Размерность</th></tr>
+                <tr><th>Величина</th><th>Значение</th><th>Размерность</th> </tr>
             </thead>
             <tbody>
                 <tr><td>Координаты точки M</td><td>({{ "%.4f"|format(data.point[0]) }}, {{ "%.4f"|format(data.point[1]) }}, {{ "%.4f"|format(data.point[2]) }})</td><td>м</td></tr>
@@ -396,31 +395,17 @@
 <script>
     window.addEventListener('load', function() {
         if (typeof Plotly === 'undefined') {
-            console.error('Plotly не загружен! Используем статичные PNG.');
-            document.getElementById('trajectory-plot').innerHTML = '<img src="{{ static_paths.trajectory }}" style="width:100%; border:1px solid #ccc; border-radius:5px;">';
-            document.getElementById('velocities-plot').innerHTML = '<img src="{{ static_paths.velocities }}" style="width:100%; border:1px solid #ccc; border-radius:5px;">';
-            document.getElementById('accelerations-plot').innerHTML = '<img src="{{ static_paths.accelerations }}" style="width:100%; border:1px solid #ccc; border-radius:5px;">';
-            document.getElementById('trajectory-with-velocities-plot').innerHTML = '<img src="{{ static_paths.trajectory }}" style="width:100%; border:1px solid #ccc; border-radius:5px;">';
-            document.getElementById('trajectory-with-accelerations-plot').innerHTML = '<img src="{{ static_paths.trajectory }}" style="width:100%; border:1px solid #ccc; border-radius:5px;">';
+            console.error('Plotly не загружен!');
             return;
         }
 
-        function renderPlot(divId, jsonString, fallbackImgUrl) {
+        function renderPlot(divId, jsonString) {
             try {
                 var data = JSON.parse(jsonString);
                 Plotly.newPlot(divId, data.data, data.layout, {responsive: true, displayModeBar: true});
             } catch (e) {
                 console.error('Ошибка рендеринга графика', divId, e);
-                var container = document.getElementById(divId);
-                if (container) {
-                    var img = document.createElement('img');
-                    img.src = fallbackImgUrl;
-                    img.style.width = '100%';
-                    img.style.border = '1px solid #ccc';
-                    img.style.borderRadius = '5px';
-                    container.innerHTML = '';
-                    container.appendChild(img);
-                }
+                document.getElementById(divId).innerHTML = '<p style="color:red;">Ошибка загрузки графика</p>';
             }
         }
 
@@ -430,11 +415,11 @@
         var trajWithVelJson = {{ traj_with_vel_json | tojson }};
         var trajWithAccJson = {{ traj_with_acc_json | tojson }};
 
-        renderPlot('trajectory-plot', trajJson, '{{ static_paths.trajectory }}');
-        renderPlot('velocities-plot', velJson, '{{ static_paths.velocities }}');
-        renderPlot('accelerations-plot', accJson, '{{ static_paths.accelerations }}');
-        renderPlot('trajectory-with-velocities-plot', trajWithVelJson, '{{ static_paths.trajectory }}');
-        renderPlot('trajectory-with-accelerations-plot', trajWithAccJson, '{{ static_paths.trajectory }}');
+        renderPlot('trajectory-plot', trajJson);
+        renderPlot('velocities-plot', velJson);
+        renderPlot('accelerations-plot', accJson);
+        renderPlot('trajectory-with-velocities-plot', trajWithVelJson);
+        renderPlot('trajectory-with-accelerations-plot', trajWithAccJson);
     });
 </script>
 </body>

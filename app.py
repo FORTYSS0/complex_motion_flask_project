@@ -2,6 +2,8 @@ from flask import Flask, render_template, send_file, url_for
 import os
 import io
 import base64
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from calc import compute_complex_motion
 from plots import generate_interactive_trajectory, \
@@ -33,17 +35,12 @@ def latex_to_png(latex_str):
 def index():
     data, formulas = compute_complex_motion(t=1)
     
+    # Генерируем JSON для интерактивных графиков
     traj_json = generate_interactive_trajectory(data)
     vel_json = generate_interactive_velocities(data)
     acc_json = generate_interactive_accelerations(data)
     traj_with_vel_json = generate_interactive_trajectory_with_velocities(data)
     traj_with_acc_json = generate_interactive_trajectory_with_accelerations(data)
-    
-    static_paths = {
-        'trajectory': url_for('static', filename='trajectory.png'),
-        'velocities': url_for('static', filename='velocities.png'),
-        'accelerations': url_for('static', filename='accelerations.png'),
-    }
     
     return render_template('report.html', 
                          data=data, 
@@ -52,8 +49,7 @@ def index():
                          vel_json=vel_json, 
                          acc_json=acc_json,
                          traj_with_vel_json=traj_with_vel_json,
-                         traj_with_acc_json=traj_with_acc_json,
-                         static_paths=static_paths)
+                         traj_with_acc_json=traj_with_acc_json)
 
 
 @app.route('/export/pdf')
@@ -92,6 +88,7 @@ def export_word_16_9():
     return send_file(io.BytesIO(docx_data), as_attachment=True,
                      download_name='report_16_9.docx', 
                      mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=False)

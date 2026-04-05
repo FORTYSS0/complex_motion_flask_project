@@ -1,39 +1,51 @@
-import os
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D, proj3d
-from matplotlib.patches import FancyArrowPatch
 import plotly.graph_objects as go
 
-# ==================== Вспомогательные классы и функции
 
-class Arrow3D(FancyArrowPatch):
-    """3D стрелка для matplotlib."""
-    def __init__(self, xs, ys, zs, *args, **kwargs):
-        super().__init__((0,0), (0,0), *args, **kwargs)
-        self._verts3d = xs, ys, zs
-
-    def do_3d_projection(self, renderer=None):
-        xs3d, ys3d, zs3d = self._verts3d
-        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, self.axes.M)
-        self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
-        return np.min(zs)
-
-
-def draw_axes(ax, origin=(0,0,0), length=None, color='black', labels=['X', 'Y', 'Z']):
-    """Рисует оси координат в 3D."""
-    if length is None:
-        length = 5
-    for i, label in enumerate(labels):
-        vec = [0,0,0]
-        vec[i] = length
-        ax.quiver(origin[0], origin[1], origin[2],
-                  vec[0], vec[1], vec[2],
-                  color=color, label=label, arrow_length_ratio=0.03, linewidth=2)
-        ax.text(origin[0]+vec[0], origin[1]+vec[1], origin[2]+vec[2], label,
-                color=color, fontsize=10, ha='center', va='center')
+def draw_axes(fig, origin=(0,0,0), length=20, labels=['X', 'Y', 'Z'], colors = ['black', 'black', 'black']):
+    """Добавляет оси координат на Plotly график."""
+    for i, (label, color) in enumerate(zip(labels, colors)):
+        end = list(origin)
+        end[i] += length
+        
+        # Линия оси
+        fig.add_trace(go.Scatter3d(
+            x=[origin[0], end[0]],
+            y=[origin[1], end[1]],
+            z=[origin[2], end[2]],
+            mode='lines',
+            line=dict(color=color, width=3),
+            name=label,
+            showlegend=False
+        ))
+        
+        # Стрелка
+        cone_size = length * 0.1
+        direction = [1 if i==0 else 0, 1 if i==1 else 0, 1 if i==2 else 0]
+        fig.add_trace(go.Cone(
+            x=[end[0] - direction[0] * cone_size],
+            y=[end[1] - direction[1] * cone_size],
+            z=[end[2] - direction[2] * cone_size],
+            u=[direction[0]], 
+            v=[direction[1]], 
+            w=[direction[2]],
+            colorscale=[[0, color], [1, color]],
+            showscale=False,
+            sizemode="scaled",
+            sizeref=cone_size,
+            showlegend=False
+        ))
+        
+        # Подпись
+        fig.add_trace(go.Scatter3d(
+            x=[end[0] + (0.5 if i==0 else 0)],
+            y=[end[1] + (0.5 if i==1 else 0)],
+            z=[end[2] + (0.5 if i==2 else 0)],
+            mode='text',
+            text=[label],
+            textfont=dict(size=14, color=color),
+            showlegend=False
+        ))
 
 
 def get_trajectory_points(t_max=2.5, num_points=200):
@@ -89,12 +101,28 @@ def generate_interactive_trajectory(data):
     x_t, y_t, z_t, _ = get_trajectory_points()
     
     fig = go.Figure()
-    fig.add_trace(go.Scatter3d(x=x_t, y=y_t, z=z_t, mode='lines', 
-                               line=dict(color='blue', width=4), name='Траектория'))
+    draw_axes(fig, length=20)
+    draw_axes(fig, length=1, labels=['i', 'j', 'k'], colors = ['red', 'green', 'blue'])
     
-    # Точка M
-    fig.add_trace(go.Scatter3d(x=[data['point'][0]], y=[data['point'][1]], z=[data['point'][2]],
-                               mode='markers', marker=dict(color='red', size=8), name='M (t=1)'))
+    # Добавляем траекторию
+    fig.add_trace(go.Scatter3d(
+        x=x_t.tolist(), 
+        y=y_t.tolist(), 
+        z=z_t.tolist(), 
+        mode='lines', 
+        line=dict(color='blue', width=4), 
+        name='Траектория'
+    ))
+    
+    # Добавляем точку M
+    fig.add_trace(go.Scatter3d(
+        x=[float(data['point'][0])], 
+        y=[float(data['point'][1])], 
+        z=[float(data['point'][2])],
+        mode='markers', 
+        marker=dict(color='red', size=8), 
+        name='M (t=1)'
+    ))
     
     fig.update_layout(
         title='Способ задания движения (абсолютная траектория)',
@@ -104,14 +132,23 @@ def generate_interactive_trajectory(data):
     )
     return fig.to_json()
 
-
 def generate_interactive_velocities(data):
     """Интерактивный график скоростей со стрелками."""
     point = data['point']
     
     fig = go.Figure()
-    fig.add_trace(go.Scatter3d(x=[point[0]], y=[point[1]], z=[point[2]],
-                               mode='markers', marker=dict(color='red', size=8), name='Point M'))
+    draw_axes(fig, length=20)
+    draw_axes(fig, length=1, labels=['i', 'j', 'k'], colors = ['red', 'green', 'blue'])
+    
+    fig.add_trace(go.Scatter3d(
+        x=[point[0]], 
+        y=[point[1]], 
+        z=[point[2]],
+        mode='markers', 
+        marker=dict(color='red', size=8), 
+        name='Point M'
+        )
+    )
     
     # Добавляем векторы со стрелками
     add_vector_with_arrow(fig, point, data['V_rel'], 'blue', 'V_rel')
@@ -133,8 +170,18 @@ def generate_interactive_accelerations(data):
     point = data['point']
     
     fig = go.Figure()
-    fig.add_trace(go.Scatter3d(x=[point[0]], y=[point[1]], z=[point[2]],
-                               mode='markers', marker=dict(color='red', size=8), name='Point M'))
+    draw_axes(fig, length=90)
+    draw_axes(fig, length=1, labels=['i', 'j', 'k'], colors = ['red', 'green', 'blue'])
+    
+    fig.add_trace(go.Scatter3d(
+        x=[point[0]],
+        y=[point[1]], 
+        z=[point[2]],
+        mode='markers', 
+        marker=dict(color='red', size=8), 
+        name='Point M'
+        )
+    )
     
     # Добавляем векторы со стрелками
     add_vector_with_arrow(fig, point, data['a_rel'], 'blue', 'a_rel')
@@ -159,8 +206,19 @@ def generate_interactive_trajectory_with_velocities(data):
     point = data['point']
     
     fig = go.Figure()
-    fig.add_trace(go.Scatter3d(x=x_t, y=y_t, z=z_t, mode='lines', 
-                               line=dict(color='blue', width=4), name='Траектория'))
+    draw_axes(fig, length=20)
+    draw_axes(fig, length=1, labels=['i', 'j', 'k'], colors = ['red', 'green', 'blue'])
+    
+    # Добавляем траекторию
+    fig.add_trace(go.Scatter3d(
+        x=x_t.tolist(), 
+        y=y_t.tolist(), 
+        z=z_t.tolist(), 
+        mode='lines', 
+        line=dict(color='black', width=4), 
+        name='Траектория'
+    ))
+    
     fig.add_trace(go.Scatter3d(x=[point[0]], y=[point[1]], z=[point[2]],
                                mode='markers', marker=dict(color='red', size=8), name='M (t=1)'))
     
@@ -185,10 +243,28 @@ def generate_interactive_trajectory_with_accelerations(data):
     point = data['point']
     
     fig = go.Figure()
-    fig.add_trace(go.Scatter3d(x=x_t, y=y_t, z=z_t, mode='lines', 
-                               line=dict(color='blue', width=4), name='Траектория'))
-    fig.add_trace(go.Scatter3d(x=[point[0]], y=[point[1]], z=[point[2]],
-                               mode='markers', marker=dict(color='red', size=8), name='M (t=1)'))
+    draw_axes(fig, length=90)
+    draw_axes(fig, length=1, labels=['i', 'j', 'k'], colors = ['red', 'green', 'blue'])
+    
+    # Добавляем траекторию
+    fig.add_trace(go.Scatter3d(
+        x=x_t.tolist(), 
+        y=y_t.tolist(), 
+        z=z_t.tolist(), 
+        mode='lines', 
+        line=dict(color='gray', width=4), 
+        name='Траектория'
+    ))
+    
+    fig.add_trace(go.Scatter3d(
+        x=[point[0]], 
+        y=[point[1]], 
+        z=[point[2]],
+        mode='markers', 
+        marker=dict(color='red', size=8), 
+        name='M (t=1)'
+        )
+    )
     
     # Добавляем векторы ускорений со стрелками
     add_vector_with_arrow(fig, point, data['a_rel'], 'blue', 'a_rel')
