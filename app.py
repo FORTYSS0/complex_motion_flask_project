@@ -19,7 +19,7 @@ os.makedirs('static', exist_ok=True)
 # ----------------------------------------------------------------------
 # Настройка пути к wkhtmltopdf (для PDF экспорта)
 # ----------------------------------------------------------------------
-WKHTMLTOPDF_PATH = '/usr/bin/wkhtmltopdf'
+WKHTMLTOPDF_PATH = 'C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe'
 if os.path.exists(WKHTMLTOPDF_PATH):
     PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
 else:
