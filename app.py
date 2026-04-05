@@ -5,33 +5,44 @@ import base64
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from calc import compute_complex_motion
-from plots import generate_interactive_trajectory, \
-                  generate_interactive_velocities, generate_interactive_accelerations, \
-                  generate_interactive_trajectory_with_velocities, \
-                  generate_interactive_trajectory_with_accelerations
-from export_utils import generate_export_pdf, generate_export_word
+from dsk.calc import dsk_compute_complex_motion
+from dsk.plots import dsk_trajectory, \
+    dsk_velocities, \
+    dsk_accelerations
+
+from sdt.calc import sdt_compute_complex_motion
+from sdt.plots import sdt_trajectory, \
+                sdt_velocities, \
+                sdt_accelerations, \
+                sdt_trajectory_with_velocities, \
+                sdt_trajectory_with_accelerations
+
+# from export_utils import generate_export_pdf, generate_export_word
 
 app = Flask(__name__)
 os.makedirs('static', exist_ok=True)
 
 
-# Вспомогательные функции
-def latex_to_png(latex_str):
-    """Преобразует LaTeX-строку в base64-изображение PNG."""
-    fig, ax = plt.subplots(figsize=(0.8, 0.4))
-    fig.patch.set_visible(False)
-    ax.axis('off')
-    ax.text(0.5, 0.5, f'${latex_str}$', fontsize=12, ha='center', va='center')
-    img = io.BytesIO()
-    plt.savefig(img, format='png', bbox_inches='tight', pad_inches=0.05, transparent=True)
-    plt.close()
-    img.seek(0)
-    return base64.b64encode(img.read()).decode()
-
-
 # Маршруты
 @app.route('/')
+def index1():
+    data, formulas = dsk_compute_complex_motion(t=1)
+    
+    # Генерируем JSON для интерактивных графиков
+    traj_json = dsk_trajectory(data)
+    vel_json = dsk_velocities(data)
+    acc_json = dsk_accelerations(data)
+    
+    return render_template('report_1_dsk.html', 
+                         data=data, 
+                         formulas=formulas,
+                         traj_json=traj_json, 
+                         vel_json=vel_json, 
+                         acc_json=acc_json
+    )
+
+
+"""@app.route('/psk')
 def index():
     data, formulas = compute_complex_motion(t=1)
     
@@ -42,17 +53,61 @@ def index():
     traj_with_vel_json = generate_interactive_trajectory_with_velocities(data)
     traj_with_acc_json = generate_interactive_trajectory_with_accelerations(data)
     
-    return render_template('report.html', 
+    return render_template('report_2_psk.html', 
                          data=data, 
                          formulas=formulas,
                          traj_json=traj_json, 
                          vel_json=vel_json, 
                          acc_json=acc_json,
                          traj_with_vel_json=traj_with_vel_json,
-                         traj_with_acc_json=traj_with_acc_json)
+                         traj_with_acc_json=traj_with_acc_json
+    )"""
+
+"""@app.route('/eszd')
+def index():
+    data, formulas = compute_complex_motion(t=1)
+    
+    # Генерируем JSON для интерактивных графиков
+    traj_json = generate_interactive_trajectory(data)
+    vel_json = generate_interactive_velocities(data)
+    acc_json = generate_interactive_accelerations(data)
+    traj_with_vel_json = generate_interactive_trajectory_with_velocities(data)
+    traj_with_acc_json = generate_interactive_trajectory_with_accelerations(data)
+    
+    return render_template('report_3_eszd.html', 
+                         data=data, 
+                         formulas=formulas,
+                         traj_json=traj_json, 
+                         vel_json=vel_json, 
+                         acc_json=acc_json,
+                         traj_with_vel_json=traj_with_vel_json,
+                         traj_with_acc_json=traj_with_acc_json
+    )"""
 
 
-@app.route('/export/pdf')
+@app.route('/sdt')
+def index4():
+    data, formulas = sdt_compute_complex_motion(t=1)
+    
+    # Генерируем JSON для интерактивных графиков
+    traj_json = sdt_trajectory(data)
+    vel_json = sdt_velocities(data)
+    acc_json = sdt_accelerations(data)
+    traj_with_vel_json = sdt_trajectory_with_velocities(data)
+    traj_with_acc_json = sdt_trajectory_with_accelerations(data)
+    
+    return render_template('report_4_sdt.html', 
+                         data=data, 
+                         formulas=formulas,
+                         traj_json=traj_json, 
+                         vel_json=vel_json, 
+                         acc_json=acc_json,
+                         traj_with_vel_json=traj_with_vel_json,
+                         traj_with_acc_json=traj_with_acc_json
+    )
+
+
+"""@app.route('/export/pdf')
 def export_pdf():
     pdf_data, error = generate_export_pdf(landscape=False)
     if error:
@@ -87,7 +142,7 @@ def export_word_16_9():
         return error, 500
     return send_file(io.BytesIO(docx_data), as_attachment=True,
                      download_name='report_16_9.docx', 
-                     mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+                     mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')"""
 
 
 if __name__ == '__main__':
