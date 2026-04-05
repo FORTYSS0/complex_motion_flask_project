@@ -24,6 +24,8 @@ class Arrow3D(FancyArrowPatch):
 
 def draw_axes(ax, origin=(0,0,0), length=None, color='black', labels=['X', 'Y', 'Z']):
     """Рисует оси координат в 3D."""
+    if length is None:
+        length = 5
     for i, label in enumerate(labels):
         vec = [0,0,0]
         vec[i] = length
@@ -41,6 +43,43 @@ def get_trajectory_points(t_max=2.5, num_points=200):
     y_t = 16 * np.sin(np.pi * t_vals**2 / 3)
     z_t = 2 * t_vals**2 + 4
     return x_t, y_t, z_t, t_vals
+
+
+def add_vector_with_arrow(fig, start, vector, color, name, scale=1.0):
+    """Добавляет вектор со стрелкой на 3D график Plotly."""
+    end = start + vector * scale
+    
+    # Рисуем линию вектора
+    fig.add_trace(go.Scatter3d(
+        x=[start[0], end[0]],
+        y=[start[1], end[1]],
+        z=[start[2], end[2]],
+        mode='lines',
+        line=dict(color=color, width=4),
+        name=name,
+        showlegend=True
+    ))
+    
+    # Добавляем конус (стрелку) в конце вектора
+    # Нормализуем направление
+    direction = vector / (np.linalg.norm(vector) + 1e-10)
+    # Размер конуса = 10% от длины вектора
+    cone_size = np.linalg.norm(vector * scale) * 0.15
+    
+    fig.add_trace(go.Cone(
+        x=[end[0] - direction[0] * cone_size * 0.5],
+        y=[end[1] - direction[1] * cone_size * 0.5],
+        z=[end[2] - direction[2] * cone_size * 0.5],
+        u=[direction[0]],
+        v=[direction[1]],
+        w=[direction[2]],
+        colorscale=[[0, color], [1, color]],
+        showscale=False,
+        sizemode="scaled",
+        sizeref=cone_size,
+        name=name + " (стрелка)",
+        showlegend=False
+    ))
 
 
 # ==================== Интерактивные графики (Plotly) 
@@ -67,21 +106,18 @@ def generate_interactive_trajectory(data):
 
 
 def generate_interactive_velocities(data):
-    """Интерактивный график скоростей."""
+    """Интерактивный график скоростей со стрелками."""
     point = data['point']
-    vectors = [data['V_rel'], data['V_rot'], data['V_trans_post'], data['V_abs']]
-    colors = ['blue', 'green', 'orange', 'purple']
-    labels = ['V_rel', 'V_rot', 'V_trans_post', 'V_abs']
     
     fig = go.Figure()
     fig.add_trace(go.Scatter3d(x=[point[0]], y=[point[1]], z=[point[2]],
                                mode='markers', marker=dict(color='red', size=8), name='Point M'))
     
-    for vec, col, lab in zip(vectors, colors, labels):
-        fig.add_trace(go.Scatter3d(x=[point[0], point[0]+vec[0]],
-                                   y=[point[1], point[1]+vec[1]],
-                                   z=[point[2], point[2]+vec[2]],
-                                   mode='lines', line=dict(color=col, width=3), name=lab))
+    # Добавляем векторы со стрелками
+    add_vector_with_arrow(fig, point, data['V_rel'], 'blue', 'V_rel')
+    add_vector_with_arrow(fig, point, data['V_rot'], 'green', 'V_rot')
+    add_vector_with_arrow(fig, point, data['V_trans_post'], 'orange', 'V_trans_post')
+    add_vector_with_arrow(fig, point, data['V_abs'], 'purple', 'V_abs')
     
     fig.update_layout(
         title='Векторы скоростей в точке M',
@@ -93,21 +129,20 @@ def generate_interactive_velocities(data):
 
 
 def generate_interactive_accelerations(data):
-    """Интерактивный график ускорений."""
+    """Интерактивный график ускорений со стрелками."""
     point = data['point']
-    vectors = [data['a_rel'], data['a_centr'], data['a_rot'], data['a_trans_post'], data['a_cor'], data['a_abs']]
-    colors = ['blue', 'green', 'orange', 'brown', 'cyan', 'purple']
-    labels = ['a_rel', 'a_centr', 'a_rot', 'a_trans_post', 'a_cor', 'a_abs']
     
     fig = go.Figure()
     fig.add_trace(go.Scatter3d(x=[point[0]], y=[point[1]], z=[point[2]],
                                mode='markers', marker=dict(color='red', size=8), name='Point M'))
     
-    for vec, col, lab in zip(vectors, colors, labels):
-        fig.add_trace(go.Scatter3d(x=[point[0], point[0]+vec[0]],
-                                   y=[point[1], point[1]+vec[1]],
-                                   z=[point[2], point[2]+vec[2]],
-                                   mode='lines', line=dict(color=col, width=3), name=lab))
+    # Добавляем векторы со стрелками
+    add_vector_with_arrow(fig, point, data['a_rel'], 'blue', 'a_rel')
+    add_vector_with_arrow(fig, point, data['a_centr'], 'green', 'a_centr')
+    add_vector_with_arrow(fig, point, data['a_rot'], 'orange', 'a_rot')
+    add_vector_with_arrow(fig, point, data['a_trans_post'], 'brown', 'a_trans_post')
+    add_vector_with_arrow(fig, point, data['a_cor'], 'cyan', 'a_cor')
+    add_vector_with_arrow(fig, point, data['a_abs'], 'purple', 'a_abs')
     
     fig.update_layout(
         title='Векторы ускорений в точке M',
@@ -119,33 +154,21 @@ def generate_interactive_accelerations(data):
 
 
 def generate_interactive_trajectory_with_velocities(data):
-    """Комбинированный интерактивный график: траектория + скорости."""
+    """Комбинированный график: траектория + скорости со стрелками."""
     x_t, y_t, z_t, _ = get_trajectory_points()
+    point = data['point']
     
     fig = go.Figure()
     fig.add_trace(go.Scatter3d(x=x_t, y=y_t, z=z_t, mode='lines', 
                                line=dict(color='blue', width=4), name='Траектория'))
-    fig.add_trace(go.Scatter3d(x=[data['point'][0]], y=[data['point'][1]], z=[data['point'][2]],
+    fig.add_trace(go.Scatter3d(x=[point[0]], y=[point[1]], z=[point[2]],
                                mode='markers', marker=dict(color='red', size=8), name='M (t=1)'))
     
-    # Векторы скоростей (масштабированные)
-    all_points = np.vstack([np.column_stack([x_t, y_t, z_t]), [data['point']], [0,0,0]])
-    min_vals = np.min(all_points, axis=0)
-    max_vals = np.max(all_points, axis=0)
-    axis_len = np.max(max_vals - min_vals) * 0.3
-    
-    vectors = [data['V_rel'], data['V_rot'], data['V_trans_post'], data['V_abs']]
-    colors = ['blue', 'green', 'orange', 'purple']
-    labels = ['V_rel', 'V_rot', 'V_trans_post', 'V_abs']
-    
-    for vec, col, lab in zip(vectors, colors, labels):
-        norm = np.linalg.norm(vec)
-        if norm > 1e-8:
-            scaled_vec = (vec / norm) * axis_len
-            fig.add_trace(go.Scatter3d(x=[data['point'][0], data['point'][0]+scaled_vec[0]],
-                                       y=[data['point'][1], data['point'][1]+scaled_vec[1]],
-                                       z=[data['point'][2], data['point'][2]+scaled_vec[2]],
-                                       mode='lines', line=dict(color=col, width=3), name=lab))
+    # Добавляем векторы скоростей со стрелками
+    add_vector_with_arrow(fig, point, data['V_rel'], 'blue', 'V_rel')
+    add_vector_with_arrow(fig, point, data['V_rot'], 'green', 'V_rot')
+    add_vector_with_arrow(fig, point, data['V_trans_post'], 'orange', 'V_trans_post')
+    add_vector_with_arrow(fig, point, data['V_abs'], 'purple', 'V_abs')
     
     fig.update_layout(
         title='Траектория и векторы скоростей',
@@ -157,33 +180,23 @@ def generate_interactive_trajectory_with_velocities(data):
 
 
 def generate_interactive_trajectory_with_accelerations(data):
-    """Комбинированный интерактивный график: траектория + ускорения."""
+    """Комбинированный график: траектория + ускорения со стрелками."""
     x_t, y_t, z_t, _ = get_trajectory_points()
+    point = data['point']
     
     fig = go.Figure()
     fig.add_trace(go.Scatter3d(x=x_t, y=y_t, z=z_t, mode='lines', 
                                line=dict(color='blue', width=4), name='Траектория'))
-    fig.add_trace(go.Scatter3d(x=[data['point'][0]], y=[data['point'][1]], z=[data['point'][2]],
+    fig.add_trace(go.Scatter3d(x=[point[0]], y=[point[1]], z=[point[2]],
                                mode='markers', marker=dict(color='red', size=8), name='M (t=1)'))
     
-    # Векторы ускорений (масштабированные)
-    all_points = np.vstack([np.column_stack([x_t, y_t, z_t]), [data['point']], [0,0,0]])
-    min_vals = np.min(all_points, axis=0)
-    max_vals = np.max(all_points, axis=0)
-    axis_len = np.max(max_vals - min_vals) * 0.3
-    
-    vectors = [data['a_rel'], data['a_centr'], data['a_rot'], data['a_trans_post'], data['a_cor'], data['a_abs']]
-    colors = ['blue', 'green', 'orange', 'brown', 'cyan', 'purple']
-    labels = ['a_rel', 'a_centr', 'a_rot', 'a_trans_post', 'a_cor', 'a_abs']
-    
-    for vec, col, lab in zip(vectors, colors, labels):
-        norm = np.linalg.norm(vec)
-        if norm > 1e-8:
-            scaled_vec = (vec / norm) * axis_len
-            fig.add_trace(go.Scatter3d(x=[data['point'][0], data['point'][0]+scaled_vec[0]],
-                                       y=[data['point'][1], data['point'][1]+scaled_vec[1]],
-                                       z=[data['point'][2], data['point'][2]+scaled_vec[2]],
-                                       mode='lines', line=dict(color=col, width=3), name=lab))
+    # Добавляем векторы ускорений со стрелками
+    add_vector_with_arrow(fig, point, data['a_rel'], 'blue', 'a_rel')
+    add_vector_with_arrow(fig, point, data['a_centr'], 'green', 'a_centr')
+    add_vector_with_arrow(fig, point, data['a_rot'], 'orange', 'a_rot')
+    add_vector_with_arrow(fig, point, data['a_trans_post'], 'brown', 'a_trans_post')
+    add_vector_with_arrow(fig, point, data['a_cor'], 'cyan', 'a_cor')
+    add_vector_with_arrow(fig, point, data['a_abs'], 'purple', 'a_abs')
     
     fig.update_layout(
         title='Траектория и векторы ускорений',
