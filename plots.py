@@ -97,38 +97,73 @@ def add_vector_with_arrow(fig, start, vector, color, name, scale=1.0):
 # ==================== Интерактивные графики (Plotly) 
 
 def generate_interactive_trajectory(data):
-    """Возвращает JSON для интерактивного графика траектории."""
+    """Возвращает JSON для интерактивного графика траектории с эллипсом в момент времени t."""
     x_t, y_t, z_t, _ = get_trajectory_points()
     
-    fig = go.Figure()
-    draw_axes(fig, length=20)
-    draw_axes(fig, length=1, labels=['i', 'j', 'k'], colors = ['red', 'green', 'blue'])
+    # Координаты точки M в момент t=1
+    Mx = float(data['point'][0])
+    My = float(data['point'][1])
+    Mz = float(data['point'][2])
     
-    # Добавляем траекторию
+    # Параметры эллипса из уравнений движения
+    a_val = 8  # полуось по X
+    b_val = 16  # полуось по Y (2 * a = 16)
+    
+    # Угол в момент t=1: φ = π * t² / 3 = π/3 = 60°
+    phi_t = np.pi * (1**2) / 3  # = π/3
+    
+    # Строим эллипс
+    theta = np.linspace(0, 2*np.pi, 200)
+    ellipse_x = a_val * np.cos(theta)
+    ellipse_y = b_val * np.sin(theta)
+    ellipse_z = np.full_like(theta, Mz)
+    
+    # Точка M на эллипсе должна быть при θ = phi_t
+    # x = 8*cos(π/3) = 4, y = 16*sin(π/3) = 13.856
+    
+    fig = go.Figure()
+    draw_axes(fig, length=25)
+    draw_axes(fig, length=1, labels=['i', 'j', 'k'], colors=['red', 'green', 'blue'])
+    
+    # 1. Абсолютная траектория
     fig.add_trace(go.Scatter3d(
-        x=x_t.tolist(), 
-        y=y_t.tolist(), 
-        z=z_t.tolist(), 
-        mode='lines', 
-        line=dict(color='blue', width=4), 
-        name='Траектория'
+        x=x_t.tolist(),
+        y=y_t.tolist(),
+        z=z_t.tolist(),
+        mode='lines',
+        line=dict(color='blue', width=4),
+        name='Абсолютная траектория'
     ))
     
-    # Добавляем точку M
+    # 2. Эллипс (относительное движение) в момент t=1
     fig.add_trace(go.Scatter3d(
-        x=[float(data['point'][0])], 
-        y=[float(data['point'][1])], 
-        z=[float(data['point'][2])],
-        mode='markers', 
-        marker=dict(color='red', size=8), 
-        name='M (t=1)'
+        x=ellipse_x.tolist(),
+        y=ellipse_y.tolist(),
+        z=ellipse_z.tolist(),
+        mode='lines',
+        line=dict(color='red', width=3, dash='dash'),
+        name=f'Эллипс в t=1 (8×16)'
+    ))
+    
+    # 3. Точка M
+    fig.add_trace(go.Scatter3d(
+        x=[Mx],
+        y=[My],
+        z=[Mz],
+        mode='markers',
+        marker=dict(color='red', size=10),
+        name=f'M (t=1)'
     ))
     
     fig.update_layout(
-        title='Способ задания движения (абсолютная траектория)',
-        scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='auto'),
-        legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5),
-        margin=dict(l=0, r=0, t=30, b=50)
+        title='Траектория и эллипс относительного движения в момент t=1',
+        scene=dict(
+            xaxis_title="X'",
+            yaxis_title="Y'",
+            zaxis_title="Z'",
+            aspectmode='auto'
+        ),
+        legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5)
     )
     return fig.to_json()
 
@@ -252,7 +287,7 @@ def generate_interactive_trajectory_with_accelerations(data):
         y=y_t.tolist(), 
         z=z_t.tolist(), 
         mode='lines', 
-        line=dict(color='gray', width=4), 
+        line=dict(color='black', width=4), 
         name='Траектория'
     ))
     
