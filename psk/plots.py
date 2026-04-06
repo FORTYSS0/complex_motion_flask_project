@@ -96,7 +96,7 @@ def add_vector_with_arrow(fig, start, vector, color, name, scale=1.0):
 
 # ==================== Интерактивные графики (Plotly) 
 
-def generate_interactive_trajectory(data):
+def psk_trajectory(data):
     """Возвращает JSON для интерактивного графика траектории с эллипсом в момент времени t."""
     x_t, y_t, z_t, _ = get_trajectory_points()
     
@@ -167,7 +167,7 @@ def generate_interactive_trajectory(data):
     )
     return fig.to_json()
 
-def generate_interactive_velocities(data):
+def psk_velocities(data):
     """Интерактивный график скоростей со стрелками."""
     point = data['point']
     
@@ -200,7 +200,7 @@ def generate_interactive_velocities(data):
     return fig.to_json()
 
 
-def generate_interactive_accelerations(data):
+def psk_accelerations(data):
     """Интерактивный график ускорений со стрелками."""
     point = data['point']
     
@@ -229,89 +229,6 @@ def generate_interactive_accelerations(data):
     fig.update_layout(
         title='Векторы ускорений в точке M',
         scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z", aspectmode='auto'),
-        legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5),
-        margin=dict(l=0, r=0, t=30, b=50)
-    )
-    return fig.to_json()
-
-
-def generate_interactive_trajectory_with_velocities(data):
-    """Комбинированный график: траектория + скорости со стрелками."""
-    x_t, y_t, z_t, _ = get_trajectory_points()
-    point = data['point']
-    
-    fig = go.Figure()
-    draw_axes(fig, length=20)
-    draw_axes(fig, length=1, labels=['i', 'j', 'k'], colors = ['red', 'green', 'blue'])
-    
-    # Добавляем траекторию
-    fig.add_trace(go.Scatter3d(
-        x=x_t.tolist(), 
-        y=y_t.tolist(), 
-        z=z_t.tolist(), 
-        mode='lines', 
-        line=dict(color='black', width=4), 
-        name='Траектория'
-    ))
-    
-    fig.add_trace(go.Scatter3d(x=[point[0]], y=[point[1]], z=[point[2]],
-                               mode='markers', marker=dict(color='red', size=8), name='M (t=1)'))
-    
-    # Добавляем векторы скоростей со стрелками
-    add_vector_with_arrow(fig, point, data['V_rel'], 'blue', 'V_rel')
-    add_vector_with_arrow(fig, point, data['V_rot'], 'green', 'V_rot')
-    add_vector_with_arrow(fig, point, data['V_trans_post'], 'orange', 'V_trans_post')
-    add_vector_with_arrow(fig, point, data['V_abs'], 'purple', 'V_abs')
-    
-    fig.update_layout(
-        title='Траектория и векторы скоростей',
-        scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='auto'),
-        legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5),
-        margin=dict(l=0, r=0, t=30, b=50)
-    )
-    return fig.to_json()
-
-
-def generate_interactive_trajectory_with_accelerations(data):
-    """Комбинированный график: траектория + ускорения со стрелками."""
-    x_t, y_t, z_t, _ = get_trajectory_points()
-    point = data['point']
-    
-    fig = go.Figure()
-    draw_axes(fig, length=90)
-    draw_axes(fig, length=1, labels=['i', 'j', 'k'], colors = ['red', 'green', 'blue'])
-    
-    # Добавляем траекторию
-    fig.add_trace(go.Scatter3d(
-        x=x_t.tolist(), 
-        y=y_t.tolist(), 
-        z=z_t.tolist(), 
-        mode='lines', 
-        line=dict(color='black', width=4), 
-        name='Траектория'
-    ))
-    
-    fig.add_trace(go.Scatter3d(
-        x=[point[0]], 
-        y=[point[1]], 
-        z=[point[2]],
-        mode='markers', 
-        marker=dict(color='red', size=8), 
-        name='M (t=1)'
-        )
-    )
-    
-    # Добавляем векторы ускорений со стрелками
-    add_vector_with_arrow(fig, point, data['a_rel'], 'blue', 'a_rel')
-    add_vector_with_arrow(fig, point, data['a_centr'], 'green', 'a_centr')
-    add_vector_with_arrow(fig, point, data['a_rot'], 'orange', 'a_rot')
-    add_vector_with_arrow(fig, point, data['a_trans_post'], 'brown', 'a_trans_post')
-    add_vector_with_arrow(fig, point, data['a_cor'], 'cyan', 'a_cor')
-    add_vector_with_arrow(fig, point, data['a_abs'], 'purple', 'a_abs')
-    
-    fig.update_layout(
-        title='Траектория и векторы ускорений',
-        scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='auto'),
         legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5),
         margin=dict(l=0, r=0, t=30, b=50)
     )

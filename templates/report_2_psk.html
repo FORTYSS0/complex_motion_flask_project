@@ -347,19 +347,9 @@
         <p><em>Все векторы пересчитаны в систему координат, где оси направлены вдоль относительной скорости, ускорения Кориолиса и угловой скорости. Конусы указывают направление.</em></p>
     </div>
     <div class="graph">
-        <h3>Рис. 2a. Траектория и векторы скоростей (исходная система координат)</h3>
-        <div id="trajectory-with-velocities-plot"></div>
-        <p><em>Траектория, оси координат, дуга ω и векторы скоростей (V_rel, V_rot, V_trans_post, V_abs) в неподвижной системе. Векторы масштабированы для наглядности, показывают только направление.</em></p>
-    </div>
-    <div class="graph">
         <h3>Рис. 3. Векторы ускорений в точке \(M\) (оси: \(\omega,\ a_{\text{cor}},\ a_{\text{отн}}\))</h3>
         <div id="accelerations-plot"></div>
         <p><em>Ускорения показаны в системе, где оси совпадают с направлениями \(\omega\), \(a_{\text{cor}}\) и перпендикулярной компонентой \(a_{\text{отн}}\).</em></p>
-    </div>
-    <div class="graph">
-        <h3>Рис. 3a. Траектория и векторы ускорений (исходная система координат)</h3>
-        <div id="trajectory-with-accelerations-plot"></div>
-        <p><em>Траектория, оси координат, дуга ω и векторы ускорений (a_rel, a_centr, a_rot, a_trans_post, a_cor, a_abs) в неподвижной системе. Векторы масштабированы для наглядности, показывают только направление.</em></p>
     </div>
 
     <!-- ----------------------------------------------------------------- -->
@@ -412,14 +402,10 @@
         var trajJson = {{ traj_json | tojson }};
         var velJson = {{ vel_json | tojson }};
         var accJson = {{ acc_json | tojson }};
-        var trajWithVelJson = {{ traj_with_vel_json | tojson }};
-        var trajWithAccJson = {{ traj_with_acc_json | tojson }};
 
         renderPlot('trajectory-plot', trajJson);
         renderPlot('velocities-plot', velJson);
         renderPlot('accelerations-plot', accJson);
-        renderPlot('trajectory-with-velocities-plot', trajWithVelJson);
-        renderPlot('trajectory-with-accelerations-plot', trajWithAccJson);
     });
 </script>
 </body>

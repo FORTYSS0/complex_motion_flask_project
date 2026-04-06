@@ -65,7 +65,7 @@ def compute_values_at_time(t0=1):
 
 
 # Основная функция расчёта сложного движения
-def compute_complex_motion(t=1):
+def psk_compute_complex_motion(t=1):
     """Вычисляет все кинематические характеристики сложного движения точки."""
     vals = compute_values_at_time(t)
     

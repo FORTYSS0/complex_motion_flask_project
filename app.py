@@ -1,10 +1,7 @@
-from flask import Flask, render_template, send_file, url_for
-import os
-import io
-import base64
+from flask import Flask, render_template
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+
 from dsk.calc import dsk_compute_complex_motion
 from dsk.plots import dsk_trajectory, \
     dsk_velocities, \
@@ -17,14 +14,24 @@ from sdt.plots import sdt_trajectory, \
                 sdt_trajectory_with_velocities, \
                 sdt_trajectory_with_accelerations
 
-# from export_utils import generate_export_pdf, generate_export_word
+from psk.calc import psk_compute_complex_motion
+from psk.plots import psk_trajectory, \
+                psk_velocities, \
+                psk_accelerations
+
+from eszd.calc import eszd_compute_complex_motion
+from eszd.plots import eszd_trajectory, \
+                eszd_velocities, \
+                eszd_accelerations
+
+from export_utils import generate_export_pdf, generate_export_word
 
 app = Flask(__name__)
-os.makedirs('static', exist_ok=True)
 
 
 # Маршруты
 @app.route('/')
+@app.route('/dsk')
 def index1():
     data, formulas = dsk_compute_complex_motion(t=1)
     
@@ -42,54 +49,43 @@ def index1():
     )
 
 
-"""@app.route('/psk')
-def index():
-    data, formulas = compute_complex_motion(t=1)
+@app.route('/psk')
+def index2():
+    data, formulas = psk_compute_complex_motion(t=1)
     
-    # Генерируем JSON для интерактивных графиков
-    traj_json = generate_interactive_trajectory(data)
-    vel_json = generate_interactive_velocities(data)
-    acc_json = generate_interactive_accelerations(data)
-    traj_with_vel_json = generate_interactive_trajectory_with_velocities(data)
-    traj_with_acc_json = generate_interactive_trajectory_with_accelerations(data)
+    traj_json = psk_trajectory(data)
+    vel_json = psk_velocities(data)
+    acc_json = psk_accelerations(data)
     
     return render_template('report_2_psk.html', 
                          data=data, 
                          formulas=formulas,
                          traj_json=traj_json, 
                          vel_json=vel_json, 
-                         acc_json=acc_json,
-                         traj_with_vel_json=traj_with_vel_json,
-                         traj_with_acc_json=traj_with_acc_json
-    )"""
+                         acc_json=acc_json
+    )
 
-"""@app.route('/eszd')
-def index():
-    data, formulas = compute_complex_motion(t=1)
+@app.route('/eszd')
+def index3():
+    data, formulas = eszd_compute_complex_motion(t=1)
     
-    # Генерируем JSON для интерактивных графиков
-    traj_json = generate_interactive_trajectory(data)
-    vel_json = generate_interactive_velocities(data)
-    acc_json = generate_interactive_accelerations(data)
-    traj_with_vel_json = generate_interactive_trajectory_with_velocities(data)
-    traj_with_acc_json = generate_interactive_trajectory_with_accelerations(data)
+    traj_json = eszd_trajectory(data)
+    vel_json = eszd_velocities(data)
+    acc_json = eszd_accelerations(data)
     
     return render_template('report_3_eszd.html', 
                          data=data, 
                          formulas=formulas,
                          traj_json=traj_json, 
                          vel_json=vel_json, 
-                         acc_json=acc_json,
-                         traj_with_vel_json=traj_with_vel_json,
-                         traj_with_acc_json=traj_with_acc_json
-    )"""
+                         acc_json=acc_json
+    )
 
 
 @app.route('/sdt')
 def index4():
     data, formulas = sdt_compute_complex_motion(t=1)
     
-    # Генерируем JSON для интерактивных графиков
     traj_json = sdt_trajectory(data)
     vel_json = sdt_velocities(data)
     acc_json = sdt_accelerations(data)
