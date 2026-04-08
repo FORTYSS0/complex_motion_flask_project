@@ -2,234 +2,506 @@ import numpy as np
 import plotly.graph_objects as go
 
 
-def draw_axes(fig, origin=(0,0,0), length=20, labels=['X', 'Y', 'Z'], colors = ['black', 'black', 'black']):
-    """Добавляет оси координат на Plotly график."""
-    for i, (label, color) in enumerate(zip(labels, colors)):
-        end = list(origin)
-        end[i] += length
-        
-        # Линия оси
-        fig.add_trace(go.Scatter3d(
-            x=[origin[0], end[0]],
-            y=[origin[1], end[1]],
-            z=[origin[2], end[2]],
-            mode='lines',
-            line=dict(color=color, width=3),
-            name=label,
-            showlegend=False
-        ))
-        
-        # Стрелка
-        cone_size = length * 0.1
-        direction = [1 if i==0 else 0, 1 if i==1 else 0, 1 if i==2 else 0]
-        fig.add_trace(go.Cone(
-            x=[end[0] - direction[0] * cone_size],
-            y=[end[1] - direction[1] * cone_size],
-            z=[end[2] - direction[2] * cone_size],
-            u=[direction[0]], 
-            v=[direction[1]], 
-            w=[direction[2]],
-            colorscale=[[0, color], [1, color]],
-            showscale=False,
-            sizemode="scaled",
-            sizeref=cone_size,
-            showlegend=False
-        ))
-        
-        # Подпись
-        fig.add_trace(go.Scatter3d(
-            x=[end[0] + (0.5 if i==0 else 0)],
-            y=[end[1] + (0.5 if i==1 else 0)],
-            z=[end[2] + (0.5 if i==2 else 0)],
-            mode='text',
-            text=[label],
-            textfont=dict(size=14, color=color),
-            showlegend=False
-        ))
-
-
-def get_trajectory_points(t_max=2.5, num_points=200):
-    """Возвращает точки траектории для построения."""
-    t_vals = np.linspace(0, t_max, num_points)
+def get_trajectory_points(t_max=2.5, num_points=500):
+    """Возвращает точки траектории."""
+    t_vals = np.linspace(0.01, t_max, num_points)
     x_t = 8 * np.cos(np.pi * t_vals**2 / 3)
     y_t = 16 * np.sin(np.pi * t_vals**2 / 3)
-    z_t = 2 * t_vals**2 + 4
-    return x_t, y_t, z_t, t_vals
+    return x_t, y_t, t_vals
 
 
-def add_vector_with_arrow(fig, start, vector, color, name, scale=1.0):
-    """Добавляет вектор со стрелкой на 3D график Plotly."""
-    end = start + vector * scale
+def draw_axes_2d(fig, origin=(0, 0), length=20, labels=['X', 'Y'], colors=['#333333', '#333333']):
+    """Добавляет оси координат на 2D график Plotly с постоянными стрелками."""
+    # Ось X
+    fig.add_trace(go.Scatter(
+        x=[origin[0], origin[0] + length],
+        y=[origin[1], origin[1]],
+        mode='lines',
+        line=dict(color=colors[0], width=2, dash='solid'),
+        showlegend=False,
+        hoverinfo='none'
+    ))
+    # Стрелка X
+    fig.add_annotation(
+        x=origin[0] + length, y=origin[1],
+        ax=origin[0] + length - 1.5, ay=origin[1],
+        xref='x', yref='y',
+        axref='x', ayref='y',
+        showarrow=True,
+        arrowhead=2,
+        arrowsize=1.2,
+        arrowwidth=2,
+        arrowcolor=colors[0]
+    )
+    # Подпись X
+    fig.add_annotation(
+        x=origin[0] + length + 1, y=origin[1],
+        text=labels[0],
+        showarrow=False,
+        font=dict(size=16, color=colors[0], family='Times New Roman')
+    )
     
-    # Рисуем линию вектора
-    fig.add_trace(go.Scatter3d(
-        x=[start[0], end[0]],
-        y=[start[1], end[1]],
-        z=[start[2], end[2]],
+    # Ось Y
+    fig.add_trace(go.Scatter(
+        x=[origin[0], origin[0]],
+        y=[origin[1], origin[1] + length],
+        mode='lines',
+        line=dict(color=colors[1], width=2, dash='solid'),
+        showlegend=False,
+        hoverinfo='none'
+    ))
+    # Стрелка Y
+    fig.add_annotation(
+        x=origin[0], y=origin[1] + length,
+        ax=origin[0], ay=origin[1] + length - 1.5,
+        xref='x', yref='y',
+        axref='x', ayref='y',
+        showarrow=True,
+        arrowhead=2,
+        arrowsize=1.2,
+        arrowwidth=2,
+        arrowcolor=colors[1]
+    )
+    # Подпись Y
+    fig.add_annotation(
+        x=origin[0], y=origin[1] + length + 1,
+        text=labels[1],
+        showarrow=False,
+        font=dict(size=16, color=colors[1], family='Times New Roman')
+    )
+    
+    # Точка O (центр координат)
+    fig.add_trace(go.Scatter(
+        x=[origin[0]],
+        y=[origin[1]],
+        mode='markers+text',
+        marker=dict(color='black', size=8, symbol='circle'),
+        text=['<b>O</b>'],
+        textposition='bottom right',
+        textfont=dict(size=14, color='black', family='Times New Roman'),
+        showlegend=True,
+        hovertemplate='<b>O</b><br>x = 0, y = 0<extra></extra>'
+    ))
+
+
+def add_vector_2d(fig, start, vector, color, name, show_legend=True):
+    """Добавляет вектор со стрелкой на 2D график."""
+    end_x = start[0] + vector[0]
+    end_y = start[1] + vector[1]
+    
+    # Линия вектора
+    fig.add_trace(go.Scatter(
+        x=[start[0], end_x],
+        y=[start[1], end_y],
         mode='lines',
         line=dict(color=color, width=4),
         name=name,
-        showlegend=True
+        showlegend=show_legend,
+        hoverinfo='none'
     ))
     
-    # Добавляем конус (стрелку) в конце вектора
-    # Нормализуем направление
-    direction = vector / (np.linalg.norm(vector) + 1e-10)
-    # Размер конуса = 10% от длины вектора
-    cone_size = np.linalg.norm(vector * scale) * 0.15
-    
-    fig.add_trace(go.Cone(
-        x=[end[0] - direction[0] * cone_size * 0.5],
-        y=[end[1] - direction[1] * cone_size * 0.5],
-        z=[end[2] - direction[2] * cone_size * 0.5],
-        u=[direction[0]],
-        v=[direction[1]],
-        w=[direction[2]],
-        colorscale=[[0, color], [1, color]],
-        showscale=False,
-        sizemode="scaled",
-        sizeref=cone_size,
-        name=name + " (стрелка)",
-        showlegend=False
-    ))
+    # Стрелка
+    angle = np.arctan2(vector[1], vector[0])
+    arrow_len = np.linalg.norm(vector) * 0.15
+    if arrow_len > 0.1:
+        arrow_angle = np.pi / 6
+        arrow_x = [
+            end_x,
+            end_x - arrow_len * np.cos(angle - arrow_angle),
+            end_x - arrow_len * np.cos(angle + arrow_angle)
+        ]
+        arrow_y = [
+            end_y,
+            end_y - arrow_len * np.sin(angle - arrow_angle),
+            end_y - arrow_len * np.sin(angle + arrow_angle)
+        ]
+        
+        fig.add_trace(go.Scatter(
+            x=arrow_x, y=arrow_y,
+            mode='lines',
+            line=dict(color=color, width=2),
+            fill='toself',
+            fillcolor=color,
+            showlegend=False,
+            hoverinfo='none'
+        ))
 
-
-# ==================== Интерактивные графики (Plotly) 
 
 def psk_trajectory(data):
-    """Возвращает JSON для интерактивного графика траектории с эллипсом в момент времени t."""
-    x_t, y_t, z_t, _ = get_trajectory_points()
-    
-    # Координаты точки M в момент t=1
-    Mx = float(data['point'][0])
-    My = float(data['point'][1])
-    Mz = float(data['point'][2])
-    
-    # Параметры эллипса из уравнений движения
-    a_val = 8  # полуось по X
-    b_val = 16  # полуось по Y (2 * a = 16)
-    
-    # Угол в момент t=1: φ = π * t² / 3 = π/3 = 60°
-    phi_t = np.pi * (1**2) / 3  # = π/3
-    
-    # Строим эллипс
-    theta = np.linspace(0, 2*np.pi, 200)
-    ellipse_x = a_val * np.cos(theta)
-    ellipse_y = b_val * np.sin(theta)
-    ellipse_z = np.full_like(theta, Mz)
-    
-    # Точка M на эллипсе должна быть при θ = phi_t
-    # x = 8*cos(π/3) = 4, y = 16*sin(π/3) = 13.856
+    """Рис. 1 — Траектория и положение точки в полярных координатах."""
+    x_t, y_t, _ = get_trajectory_points()
+    point = data['point']
+    r = data['r']
+    phi = data['phi']
     
     fig = go.Figure()
-    draw_axes(fig, length=25)
-    draw_axes(fig, length=1, labels=['i', 'j', 'k'], colors=['red', 'green', 'blue'])
+    draw_axes_2d(fig, length=25)
     
-    # 1. Абсолютная траектория
-    fig.add_trace(go.Scatter3d(
+    # Траектория
+    fig.add_trace(go.Scatter(
         x=x_t.tolist(),
         y=y_t.tolist(),
-        z=z_t.tolist(),
         mode='lines',
-        line=dict(color='blue', width=4),
-        name='Абсолютная траектория'
+        line=dict(color='#1f77b4', width=3),
+        name='Траектория движения',
+        hoverinfo='none'
     ))
     
-    # 2. Эллипс (относительное движение) в момент t=1
-    fig.add_trace(go.Scatter3d(
-        x=ellipse_x.tolist(),
-        y=ellipse_y.tolist(),
-        z=ellipse_z.tolist(),
+    # Радиус-вектор (из O в M)
+    fig.add_trace(go.Scatter(
+        x=[0, point[0]],
+        y=[0, point[1]],
         mode='lines',
-        line=dict(color='red', width=3, dash='dash'),
-        name=f'Эллипс в t=1 (8×16)'
+        line=dict(color='#9467bd', width=2.5, dash='dot'),
+        name=f'<b>r</b> = {r:.3f} м',
+        showlegend=True,
+        hoverinfo='none'
     ))
     
-    # 3. Точка M
-    fig.add_trace(go.Scatter3d(
-        x=[Mx],
-        y=[My],
-        z=[Mz],
-        mode='markers',
-        marker=dict(color='red', size=10),
-        name=f'M (t=1)'
+    # Точка M
+    fig.add_trace(go.Scatter(
+        x=[point[0]],
+        y=[point[1]],
+        mode='markers+text',
+        marker=dict(color='#d62728', size=14, symbol='circle', line=dict(color='white', width=2)),
+        text=['<b>M</b>'],
+        textposition='top center',
+        textfont=dict(size=14, color='#d62728', family='Times New Roman'),
+        name=f'Точка M (t = {data["t"]} с)',
+        hovertemplate=f'<b>M</b><br>r = {r:.3f} м<br>φ = {phi:.3f} рад ({phi*180/np.pi:.1f}°)<br>x = {point[0]:.3f} м<br>y = {point[1]:.3f} м<extra></extra>'
     ))
+    
+    # Дуга для обозначения угла φ
+    theta = np.linspace(0, phi, 50)
+    arc_r = r * 0.3
+    arc_x = arc_r * np.cos(theta)
+    arc_y = arc_r * np.sin(theta)
+    fig.add_trace(go.Scatter(
+        x=arc_x.tolist(),
+        y=arc_y.tolist(),
+        mode='lines',
+        line=dict(color='#9467bd', width=2, dash='dot'),
+        name=f'Угол φ = {phi:.3f} рад',
+        showlegend=True,
+        hoverinfo='none'
+    ))
+    
+    # Стрелка для обозначения направления угла
+    mid_angle = phi / 2
+    arrow_r = arc_r * 0.7
+    fig.add_annotation(
+        x=arrow_r * np.cos(mid_angle),
+        y=arrow_r * np.sin(mid_angle),
+        text='φ',
+        showarrow=False,
+        font=dict(size=14, color='#9467bd', family='Times New Roman')
+    )
     
     fig.update_layout(
-        title='Траектория и эллипс относительного движения в момент t=1',
-        scene=dict(
-            xaxis_title="X'",
-            yaxis_title="Y'",
-            zaxis_title="Z'",
-            aspectmode='auto'
+        title=dict(
+            text='<b>Рис. 1 — Траектория движения точки</b>',
+            font=dict(size=18, family='Times New Roman'),
+            x=0.5
         ),
-        legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5)
+        xaxis=dict(
+            title=dict(text='<b>x, м</b>', font=dict(size=14, family='Times New Roman')),
+            autorange=True,
+            scaleanchor='y',
+            scaleratio=1,
+            gridcolor='#e0e0e0',
+            showgrid=True,
+            zeroline=False
+        ),
+        yaxis=dict(
+            title=dict(text='<b>y, м</b>', font=dict(size=14, family='Times New Roman')),
+            autorange=True,
+            gridcolor='#e0e0e0',
+            showgrid=True,
+            zeroline=False
+        ),
+        showlegend=True,
+        legend=dict(
+            orientation='h',
+            yanchor='bottom',
+            y=1.02,
+            xanchor='center',
+            x=0.5,
+            font=dict(size=12, family='Times New Roman'),
+            bgcolor='rgba(255,255,255,0.9)',
+            bordercolor='#cccccc',
+            borderwidth=1
+        ),
+        plot_bgcolor='white',
+        hovermode='closest',
+        margin=dict(l=60, r=60, t=80, b=60)
     )
+    
     return fig.to_json()
 
+
 def psk_velocities(data):
-    """Интерактивный график скоростей со стрелками."""
+    """Рис. 2 — Радиальная и трансверсальная составляющие скорости."""
+    x_t, y_t, _ = get_trajectory_points()
     point = data['point']
+    r = data['r']
+    phi = data['phi']
+    Vr = data['Vr']
+    Vphi = data['Vphi']
+    V_mod = data['V_mod']
+    dr_dt = data['dr_dt']
+    dphi_dt = data['dphi_dt']
+    
+    # Вычисляем единичные векторы в точке M
+    e_r = np.array([point[0], point[1]]) / r if r > 0 else np.array([1, 0])
+    e_phi = np.array([-e_r[1], e_r[0]])  # поворот на 90° против часовой
+    
+    # Векторы компонент скорости
+    Vr_vec = Vr * e_r
+    Vphi_vec = Vphi * e_phi
     
     fig = go.Figure()
-    draw_axes(fig, length=20)
-    draw_axes(fig, length=1, labels=['i', 'j', 'k'], colors = ['red', 'green', 'blue'])
+    draw_axes_2d(fig, length=25)
     
-    fig.add_trace(go.Scatter3d(
-        x=[point[0]], 
-        y=[point[1]], 
-        z=[point[2]],
-        mode='markers', 
-        marker=dict(color='red', size=8), 
-        name='Point M'
-        )
-    )
+    # Траектория (полупрозрачная)
+    fig.add_trace(go.Scatter(
+        x=x_t.tolist(),
+        y=y_t.tolist(),
+        mode='lines',
+        line=dict(color='#1f77b4', width=2, dash='dot'),
+        name='Траектория',
+        hoverinfo='none'
+    ))
     
-    # Добавляем векторы со стрелками
-    add_vector_with_arrow(fig, point, data['V_rel'], 'blue', 'V_rel')
-    add_vector_with_arrow(fig, point, data['V_rot'], 'green', 'V_rot')
-    add_vector_with_arrow(fig, point, data['V_trans_post'], 'orange', 'V_trans_post')
-    add_vector_with_arrow(fig, point, data['V_abs'], 'purple', 'V_abs')
+    # Радиус-вектор
+    fig.add_trace(go.Scatter(
+        x=[0, point[0]],
+        y=[0, point[1]],
+        mode='lines',
+        line=dict(color='#9467bd', width=2, dash='dot'),
+        name=f'r = {r:.3f} м',
+        showlegend=True,
+        hoverinfo='none'
+    ))
+    
+    # Точка M
+    fig.add_trace(go.Scatter(
+        x=[point[0]],
+        y=[point[1]],
+        mode='markers',
+        marker=dict(color='#d62728', size=12, symbol='circle', line=dict(color='white', width=2)),
+        name='Точка M',
+        hovertemplate=f'<b>M</b><br>r = {r:.3f} м<br>φ = {phi:.3f} рад<extra></extra>'
+    ))
+    
+    # Радиальная составляющая скорости Vr (вдоль e_r)
+    add_vector_2d(fig, (point[0], point[1]), Vr_vec, '#1f77b4',
+                  f'<b>Vr</b> = {Vr:.3f} м/с  (dr/dt = {dr_dt:.3f} м/с)',
+                  show_legend=True)
+    
+    # Трансверсальная составляющая скорости Vφ (вдоль e_φ)
+    add_vector_2d(fig, (point[0], point[1]), Vphi_vec, '#e67e22',
+                  f'<b>Vφ</b> = {Vphi:.3f} м/с  (r·dφ/dt = {r:.3f}·{dphi_dt:.3f})',
+                  show_legend=True)
+    
+    # Пунктирные линии для правила параллелограмма
+    end_Vr = point + Vr_vec
+    end_Vphi = point + Vphi_vec
+    end_V = point + Vr_vec + Vphi_vec
+    
+    fig.add_trace(go.Scatter(
+        x=[end_Vr[0], end_V[0]],
+        y=[end_Vr[1], end_V[1]],
+        mode='lines',
+        line=dict(color='gray', width=2, dash='dash'),
+        showlegend=False,
+        hoverinfo='none'
+    ))
+    fig.add_trace(go.Scatter(
+        x=[end_Vphi[0], end_V[0]],
+        y=[end_Vphi[1], end_V[1]],
+        mode='lines',
+        line=dict(color='gray', width=2, dash='dash'),
+        showlegend=False,
+        hoverinfo='none'
+    ))
+    
+    # Полная скорость
+    add_vector_2d(fig, (point[0], point[1]), Vr_vec + Vphi_vec, '#2ca02c',
+                  f'<b>V</b> = {V_mod:.3f} м/с',
+                  show_legend=True)
     
     fig.update_layout(
-        title='Векторы скоростей в точке M',
-        scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z", aspectmode='auto'),
-        legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5),
-        margin=dict(l=0, r=0, t=30, b=50)
+        title=dict(
+            text='<b>Рис. 2 — Радиальная и трансверсальная составляющие скорости</b>',
+            font=dict(size=18, family='Times New Roman'),
+            x=0.5
+        ),
+        xaxis=dict(
+            title=dict(text='<b>x, м</b>', font=dict(size=14, family='Times New Roman')),
+            autorange=True,
+            scaleanchor='y',
+            scaleratio=1,
+            gridcolor='#e0e0e0',
+            showgrid=True,
+            zeroline=False
+        ),
+        yaxis=dict(
+            title=dict(text='<b>y, м</b>', font=dict(size=14, family='Times New Roman')),
+            autorange=True,
+            gridcolor='#e0e0e0',
+            showgrid=True,
+            zeroline=False
+        ),
+        showlegend=True,
+        legend=dict(
+            orientation='v',
+            yanchor='top',
+            y=0.98,
+            xanchor='left',
+            x=0.02,
+            font=dict(size=10, family='Times New Roman'),
+            bgcolor='rgba(255,255,255,0.9)',
+            bordercolor='#cccccc',
+            borderwidth=1
+        ),
+        plot_bgcolor='white',
+        hovermode='closest',
+        margin=dict(l=60, r=60, t=80, b=60)
     )
+    
     return fig.to_json()
 
 
 def psk_accelerations(data):
-    """Интерактивный график ускорений со стрелками."""
+    """Рис. 3 — Радиальная и трансверсальная составляющие ускорения."""
+    x_t, y_t, _ = get_trajectory_points()
     point = data['point']
+    r = data['r']
+    phi = data['phi']
+    ar = data['ar']
+    aphi = data['aphi']
+    a_mod = data['a_mod']
+    d2r_dt2 = data['d2r_dt2']
+    d2phi_dt2 = data['d2phi_dt2']
+    dphi_dt = data['dphi_dt']
+    dr_dt = data['dr_dt']
+    
+    # Вычисляем единичные векторы
+    e_r = np.array([point[0], point[1]]) / r if r > 0 else np.array([1, 0])
+    e_phi = np.array([-e_r[1], e_r[0]])
+    
+    # Векторы компонент ускорения
+    ar_vec = ar * e_r
+    aphi_vec = aphi * e_phi
     
     fig = go.Figure()
-    draw_axes(fig, length=90)
-    draw_axes(fig, length=1, labels=['i', 'j', 'k'], colors = ['red', 'green', 'blue'])
+    draw_axes_2d(fig, length=25)
     
-    fig.add_trace(go.Scatter3d(
+    # Траектория
+    fig.add_trace(go.Scatter(
+        x=x_t.tolist(),
+        y=y_t.tolist(),
+        mode='lines',
+        line=dict(color='#1f77b4', width=2, dash='dot'),
+        name='Траектория',
+        hoverinfo='none'
+    ))
+    
+    # Радиус-вектор
+    fig.add_trace(go.Scatter(
+        x=[0, point[0]],
+        y=[0, point[1]],
+        mode='lines',
+        line=dict(color='#9467bd', width=2, dash='dot'),
+        name=f'r = {r:.3f} м',
+        showlegend=True,
+        hoverinfo='none'
+    ))
+    
+    # Точка M
+    fig.add_trace(go.Scatter(
         x=[point[0]],
-        y=[point[1]], 
-        z=[point[2]],
-        mode='markers', 
-        marker=dict(color='red', size=8), 
-        name='Point M'
-        )
-    )
+        y=[point[1]],
+        mode='markers',
+        marker=dict(color='#d62728', size=12, symbol='circle', line=dict(color='white', width=2)),
+        name='Точка M',
+        hovertemplate=f'<b>M</b><br>r = {r:.3f} м<br>φ = {phi:.3f} рад<extra></extra>'
+    ))
     
-    # Добавляем векторы со стрелками
-    add_vector_with_arrow(fig, point, data['a_rel'], 'blue', 'a_rel')
-    add_vector_with_arrow(fig, point, data['a_centr'], 'green', 'a_centr')
-    add_vector_with_arrow(fig, point, data['a_rot'], 'orange', 'a_rot')
-    add_vector_with_arrow(fig, point, data['a_trans_post'], 'brown', 'a_trans_post')
-    add_vector_with_arrow(fig, point, data['a_cor'], 'cyan', 'a_cor')
-    add_vector_with_arrow(fig, point, data['a_abs'], 'purple', 'a_abs')
+    # Радиальная составляющая ускорения ar
+    add_vector_2d(fig, (point[0], point[1]), ar_vec, '#1f77b4',
+                  f'<b>ar</b> = {ar:.3f} м/с²  (d²r/dt² - r·ω² = {d2r_dt2:.3f} - {r:.3f}·{dphi_dt:.3f}² = {ar:.3f})',
+                  show_legend=True)
+    
+    # Трансверсальная составляющая ускорения aφ
+    add_vector_2d(fig, (point[0], point[1]), aphi_vec, '#e67e22',
+                  f'<b>aφ</b> = {aphi:.3f} м/с²  (r·ε + 2·Vr·ω = {r:.3f}·{d2phi_dt2:.3f} + 2·{dr_dt:.3f}·{dphi_dt:.3f} = {aphi:.3f})',
+                  show_legend=True)
+    
+    # Пунктирные линии
+    end_ar = point + ar_vec
+    end_aphi = point + aphi_vec
+    end_a = point + ar_vec + aphi_vec
+    
+    fig.add_trace(go.Scatter(
+        x=[end_ar[0], end_a[0]],
+        y=[end_ar[1], end_a[1]],
+        mode='lines',
+        line=dict(color='gray', width=2, dash='dash'),
+        showlegend=False,
+        hoverinfo='none'
+    ))
+    fig.add_trace(go.Scatter(
+        x=[end_aphi[0], end_a[0]],
+        y=[end_aphi[1], end_a[1]],
+        mode='lines',
+        line=dict(color='gray', width=2, dash='dash'),
+        showlegend=False,
+        hoverinfo='none'
+    ))
+    
+    # Полное ускорение
+    add_vector_2d(fig, (point[0], point[1]), ar_vec + aphi_vec, '#2ca02c',
+                  f'<b>a</b> = {a_mod:.3f} м/с²',
+                  show_legend=True)
     
     fig.update_layout(
-        title='Векторы ускорений в точке M',
-        scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z", aspectmode='auto'),
-        legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5),
-        margin=dict(l=0, r=0, t=30, b=50)
+        title=dict(
+            text='<b>Рис. 3 — Радиальная и трансверсальная составляющие ускорения</b>',
+            font=dict(size=18, family='Times New Roman'),
+            x=0.5
+        ),
+        xaxis=dict(
+            title=dict(text='<b>x, м</b>', font=dict(size=14, family='Times New Roman')),
+            autorange=True,
+            scaleanchor='y',
+            scaleratio=1,
+            gridcolor='#e0e0e0',
+            showgrid=True,
+            zeroline=False
+        ),
+        yaxis=dict(
+            title=dict(text='<b>y, м</b>', font=dict(size=14, family='Times New Roman')),
+            autorange=True,
+            gridcolor='#e0e0e0',
+            showgrid=True,
+            zeroline=False
+        ),
+        showlegend=True,
+        legend=dict(
+            orientation='v',
+            yanchor='top',
+            y=0.98,
+            xanchor='left',
+            x=0.02,
+            font=dict(size=9, family='Times New Roman'),
+            bgcolor='rgba(255,255,255,0.9)',
+            bordercolor='#cccccc',
+            borderwidth=1
+        ),
+        plot_bgcolor='white',
+        hovermode='closest',
+        margin=dict(l=60, r=60, t=80, b=60)
     )
+    
     return fig.to_json()

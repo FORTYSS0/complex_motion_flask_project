@@ -79,7 +79,6 @@ def draw_axes_2d(fig, origin=(0, 0), length=20, labels=['X', 'Y'], colors=['#333
         text=['<b>O</b>'],
         textposition='bottom right',
         textfont=dict(size=14, color='black', family='Times New Roman'),
-        name='Начало координат',
         showlegend=True,
         hovertemplate='<b>O</b><br>x = 0, y = 0<extra></extra>'
     ))
@@ -182,6 +181,7 @@ def dsk_trajectory(data):
     
     fig = go.Figure()
     draw_axes_2d(fig, length=20)
+    draw_axes_2d(fig, length=1, labels=['i', 'j'], colors=['red', 'green'])
     
     # Траектория
     fig.add_trace(go.Scatter(
@@ -259,6 +259,7 @@ def dsk_velocities(data):
     
     fig = go.Figure()
     draw_axes_2d(fig, length=25)
+    draw_axes_2d(fig, length=1, labels=['i', 'j'], colors=['red', 'green'])
     
     # Траектория (полупрозрачная)
     fig.add_trace(go.Scatter(
@@ -363,6 +364,7 @@ def dsk_accelerations(data):
     
     fig = go.Figure()
     draw_axes_2d(fig, length=25)
+    draw_axes_2d(fig, length=1, labels=['i', 'j'], colors=['red', 'green'])
     
     # Траектория (полупрозрачная)
     fig.add_trace(go.Scatter(

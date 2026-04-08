@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Отчёт: Движение точки в ДСК</title>
+    <title>Отчёт: Декартова система координат (ДСК)</title>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.1/plotly.min.js"></script>
     <style>
@@ -15,15 +15,14 @@
         .btn:hover { background-color: #004c99; }
         .btn-green { background-color: #28a745; }
         .btn-green:hover { background-color: #1e7e34; }
-        .formula { background: #f0f0f0; padding: 10px; border-radius: 5px; overflow-x: auto; margin: 10px 0; }
+        .formula-block { background: #f0f0f0; padding: 10px; border-radius: 5px; overflow-x: auto; margin: 15px 0; }
         .explanation { background: #e8f4fd; padding: 10px; border-left: 4px solid #0066cc; margin: 15px 0; border-radius: 4px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #0066cc; color: white; }
         .table-wrapper { overflow-x: auto; margin: 20px 0; }
         .graph { margin: 10px 0; }
-        #trajectory-plot, #velocities-plot, #accelerations-plot,
-        #trajectory-with-velocities-plot, #trajectory-with-accelerations-plot {
+        #trajectory-plot, #velocities-plot, #accelerations-plot {
             width: 100%;
             height: 70vh;
             border: 1px solid #ddd;
@@ -32,8 +31,7 @@
         .footer { font-size: 0.9em; color: #777; text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
 
         @media (max-width: 992px) {
-            #trajectory-plot, #velocities-plot, #accelerations-plot,
-            #trajectory-with-velocities-plot, #trajectory-with-accelerations-plot { height: 60vh; }
+            #trajectory-plot, #velocities-plot, #accelerations-plot { height: 60vh; }
         }
         @media (max-width: 768px) {
             body { padding: 0; margin: 0; }
@@ -44,8 +42,7 @@
                 box-shadow: none;
             }
             .graph { margin: 5px 0; }
-            #trajectory-plot, #velocities-plot, #accelerations-plot,
-            #trajectory-with-velocities-plot, #trajectory-with-accelerations-plot {
+            #trajectory-plot, #velocities-plot, #accelerations-plot {
                 height: 50vh !important;
                 width: 100% !important;
             }
@@ -53,13 +50,12 @@
             .btn { padding: 8px 12px; min-width: 70px; font-size: 14px; }
             h1 { font-size: 1.5rem; }
             h2 { font-size: 1.3rem; }
-            .formula, .explanation { font-size: 0.9rem; }
+            .formula-block, .explanation { font-size: 0.9rem; }
         }
         @media (max-width: 480px) {
             .btn-group { flex-direction: column; align-items: stretch; }
             .btn { margin: 2px 0; }
-            #trajectory-plot, #velocities-plot, #accelerations-plot,
-            #trajectory-with-velocities-plot, #trajectory-with-accelerations-plot {
+            #trajectory-plot, #velocities-plot, #accelerations-plot {
                 height: 40vh !important;
             }
         }
@@ -68,20 +64,22 @@
 <body>
 <div class="container">
     <div class="btn-group">
-        <a href="/dsk" class="btn">ДСК</a>
-        <a href="/psk" class="btn btn-green">ПСК</a>
+        <a href="/dsk" class="btn btn-green">ДСК</a>
+        <a href="/psk" class="btn">ПСК</a>
         <a href="/eszd" class="btn">ЕСЗД</a>
-        <a href="/sdt" class="btn btn-green">СДТ</a>
+        <a href="/sdt" class="btn">СДТ</a>
     </div>
-    <h1>1: Декартова система координат (ДСК)</h1>
+    <h1>Отчёт по декартовой системе координат (ДСК)</h1>
+
+    <!-- ------------------------------------------------------------------ -->
+    <h2>1. Исходные данные</h2>
     <div class="explanation">
-        <p><strong>Условие:</strong><br>
-        Движение точки в неподвижной системе \(Oxy\) задано уравнениями:</p>
+        <p>Движение точки в неподвижной системе \(Oxy\) задано уравнениями:</p>
         \[
         \begin{cases}
         x(t) = a \cdot \cos\left(\dfrac{b\pi t^{2}}{6}\right) \\[6pt]
         y(t) = -2a \cdot \sin\left(\dfrac{b\pi t^{2}}{6}\right) \\[6pt]
-        t = t_0 = 1 \ \text{с}
+        t = t_0 = 1\ \text{с}
         \end{cases}
         \qquad 
         a = 8,\quad b = -2
@@ -95,54 +93,78 @@
         \]
         <p>Таким образом, закон движения в ДСК:</p>
         \[
-        \boxed{x(t) = 8\cos\left(\frac{\pi t^{2}}{3}\right), \quad y(t) = 16\sin\left(\frac{\pi t^{2}}{3}\right), \quad t_0 = 1\ \text{с}}
+        \boxed{x(t) = 8\cos\left(\frac{\pi t^{2}}{3}\right), \quad y(t) = 16\sin\left(\frac{\pi t^{2}}{3}\right)}
         \]
-        <p>Требуется найти <strong>скорость, ускорение</strong> в момент \(t=1\) с. Построить три рисунка: траектория с положением точки, векторы скорости и ускорения.</p>
+        <p>Требуется найти <strong>скорость, ускорение и радиус кривизны</strong> траектории в момент \(t = {{ data.t }}\) с. Построить три интерактивных графика: траектория с положением точки, вектор скорости, вектор ускорения.</p>
     </div>
 
     <!-- ------------------------------------------------------------------ -->
-    <h2>1. Кинематические характеристики</h2>
-    
+    <h2>2. Положение точки</h2>
     <div class="formula-block">
-        <h3>1.1 Координаты точки при \(t=1\) с</h3>
+        <p>В момент времени \(t = {{ data.t }}\) с:</p>
         \[
         x(1) = 8\cos\left(\frac{\pi}{3}\right) = 8 \cdot \frac{1}{2} = 4 \ \text{м}
         \]
         \[
-        y(1) = 16\sin\left(\frac{\pi}{3}\right) = 16 \cdot \frac{\sqrt{3}}{2} = 8\sqrt{3} \approx 13.8564 \ \text{м}
+        y(1) = 16\sin\left(\frac{\pi}{3}\right) = 16 \cdot \frac{\sqrt{3}}{2} = 8\sqrt{3} \approx {{ "%.4f"|format(data.point[1]) }} \ \text{м}
         \]
-        <p>Точка \(M\) в момент \(t=1\) имеет координаты: \(M(4;\ 8\sqrt{3})\) м.</p>
+        <p>Точка \(M\) в момент \(t = {{ data.t }}\) с имеет координаты:</p>
+        \[
+        M(4;\ 8\sqrt{3}) \ \text{м} \quad \text{или} \quad M({{ "%.4f"|format(data.point[0]) }};\ {{ "%.4f"|format(data.point[1]) }})\ \text{м}
+        \]
+    </div>
+
+    <!-- ------------------------------------------------------------------ -->
+    <h2>3. Скорость точки</h2>
+    <div class="explanation">
+        <p>Вектор скорости в декартовой системе координат определяется как:</p>
+        \[
+        \vec V = \dot x \,\vec i + \dot y \,\vec j
+        \]
     </div>
 
     <div class="formula-block">
-        <h3>1.2 Скорость точки (компоненты и модуль)</h3>
-        <p>Скорость: \(\displaystyle v_x = \dot x(t),\ v_y = \dot y(t)\).</p>
+        <h3>3.1 Компоненты скорости</h3>
         \[
-        \dot x(t) = 8 \cdot \left[ -\sin\left(\frac{\pi t^2}{3}\right) \cdot \frac{2\pi t}{3} \right] = -\frac{16\pi t}{3} \sin\left(\frac{\pi t^2}{3}\right)
+        \dot x(t) = \frac{d}{dt}\left[8\cos\left(\frac{\pi t^2}{3}\right)\right] = 8 \cdot \left[ -\sin\left(\frac{\pi t^2}{3}\right) \cdot \frac{2\pi t}{3} \right] = -\frac{16\pi t}{3} \sin\left(\frac{\pi t^2}{3}\right)
         \]
         \[
-        \dot y(t) = 16 \cdot \left[ \cos\left(\frac{\pi t^2}{3}\right) \cdot \frac{2\pi t}{3} \right] = \frac{32\pi t}{3} \cos\left(\frac{\pi t^2}{3}\right)
+        \dot y(t) = \frac{d}{dt}\left[16\sin\left(\frac{\pi t^2}{3}\right)\right] = 16 \cdot \left[ \cos\left(\frac{\pi t^2}{3}\right) \cdot \frac{2\pi t}{3} \right] = \frac{32\pi t}{3} \cos\left(\frac{\pi t^2}{3}\right)
         \]
-        <p>Подставляем \(t=1\):</p>
+        
+        <p>Подставляем \(t = {{ data.t }}\) с:</p>
         \[
-        v_x(1) = -\frac{16\pi}{3} \sin\left(\frac{\pi}{3}\right) = -\frac{16\pi}{3} \cdot \frac{\sqrt{3}}{2} = -\frac{8\pi\sqrt{3}}{3} \approx -14.5104 \ \text{м/с}
+        \dot x(1) = -\frac{16\pi}{3} \sin\left(\frac{\pi}{3}\right) = -\frac{16\pi}{3} \cdot \frac{\sqrt{3}}{2} = -\frac{8\pi\sqrt{3}}{3} \approx {{ "%.4f"|format(data.V[0]) }} \ \text{м/с}
         \]
         \[
-        v_y(1) = \frac{32\pi}{3} \cos\left(\frac{\pi}{3}\right) = \frac{32\pi}{3} \cdot \frac{1}{2} = \frac{16\pi}{3} \approx 16.7552 \ \text{м/с}
+        \dot y(1) = \frac{32\pi}{3} \cos\left(\frac{\pi}{3}\right) = \frac{32\pi}{3} \cdot \frac{1}{2} = \frac{16\pi}{3} \approx {{ "%.4f"|format(data.V[1]) }} \ \text{м/с}
         \]
-        <p>Модуль скорости:</p>
+        
+        <h3>3.2 Модуль скорости</h3>
         \[
-        V = \sqrt{v_x^2 + v_y^2} = \sqrt{\left(-\frac{8\pi\sqrt{3}}{3}\right)^2 + \left(\frac{16\pi}{3}\right)^2}
-        = \frac{8\pi}{3}\sqrt{3 + 4} = \frac{8\pi\sqrt{7}}{3} \approx 22.1649 \ \text{м/с}
+        V = \sqrt{\dot x^2 + \dot y^2} = \sqrt{\left(-\frac{8\pi\sqrt{3}}{3}\right)^2 + \left(\frac{16\pi}{3}\right)^2}
+        = \frac{8\pi}{3}\sqrt{3 + 4} = \frac{8\pi\sqrt{7}}{3} \approx {{ "%.4f"|format(data.V_mod) }} \ \text{м/с}
         \]
-        <p>Вектор скорости: \(\vec V = \left(-14.5104,\ 16.7552\right)\) м/с.</p>
+        
+        <p>Вектор скорости в момент \(t = {{ data.t }}\) с:</p>
+        \[
+        \vec V = \left({{ "%.4f"|format(data.V[0]) }};\ {{ "%.4f"|format(data.V[1]) }}\right) \ \text{м/с}
+        \]
+    </div>
+
+    <!-- ------------------------------------------------------------------ -->
+    <h2>4. Ускорение точки</h2>
+    <div class="explanation">
+        <p>Вектор ускорения в декартовой системе координат определяется как:</p>
+        \[
+        \vec a = \ddot x \,\vec i + \ddot y \,\vec j
+        \]
     </div>
 
     <div class="formula-block">
-        <h3>1.3 Ускорение точки (компоненты и модуль)</h3>
-        <p>Ускорение: \(a_x = \ddot x(t),\ a_y = \ddot y(t)\).</p>
+        <h3>4.1 Компоненты ускорения</h3>
         \[
-        \ddot x(t) = \frac{d}{dt}\left( -\frac{16\pi t}{3} \sin\left(\frac{\pi t^2}{3}\right) \right) 
+        \ddot x(t) = \frac{d}{dt}\left( -\frac{16\pi t}{3} \sin\left(\frac{\pi t^2}{3}\right) \right)
         = -\frac{16\pi}{3}\sin\left(\frac{\pi t^2}{3}\right) - \frac{16\pi t}{3}\cos\left(\frac{\pi t^2}{3}\right)\cdot\frac{2\pi t}{3}
         \]
         \[
@@ -155,64 +177,74 @@
         \[
         \ddot y(t) = \frac{32\pi}{3}\cos\left(\frac{\pi t^2}{3}\right) - \frac{64\pi^2 t^2}{9}\sin\left(\frac{\pi t^2}{3}\right)
         \]
-        <p>При \(t=1\):</p>
+
+        <p>Подставляем \(t = {{ data.t }}\) с:</p>
         \[
-        a_x(1) = -\frac{16\pi}{3}\cdot\frac{\sqrt{3}}{2} - \frac{32\pi^2}{9}\cdot\frac{1}{2}
-        = -\frac{8\pi\sqrt{3}}{3} - \frac{16\pi^2}{9} \approx -14.5104 - 17.5459 \approx -32.0563 \ \text{м/с}^2
+        \ddot x(1) = -\frac{16\pi}{3}\cdot\frac{\sqrt{3}}{2} - \frac{32\pi^2}{9}\cdot\frac{1}{2}
+        = -\frac{8\pi\sqrt{3}}{3} - \frac{16\pi^2}{9} \approx {{ "%.4f"|format(data.a[0]) }} \ \text{м/с}^2
         \]
         \[
-        a_y(1) = \frac{32\pi}{3}\cdot\frac{1}{2} - \frac{64\pi^2}{9}\cdot\frac{\sqrt{3}}{2}
-        = \frac{16\pi}{3} - \frac{32\pi^2\sqrt{3}}{9} \approx 16.7552 - 60.781 \approx -44.0258 \ \text{м/с}^2
+        \ddot y(1) = \frac{32\pi}{3}\cdot\frac{1}{2} - \frac{64\pi^2}{9}\cdot\frac{\sqrt{3}}{2}
+        = \frac{16\pi}{3} - \frac{32\pi^2\sqrt{3}}{9} \approx {{ "%.4f"|format(data.a[1]) }} \ \text{м/с}^2
         \]
-        <p>Модуль ускорения:</p>
+
+        <h3>4.2 Модуль ускорения</h3>
         \[
-        a = \sqrt{a_x^2 + a_y^2} \approx \sqrt{(-32.0563)^2 + (-44.0258)^2} \approx \sqrt{1027.61 + 1942.47} \approx \sqrt{2970.08} \approx 54.498 \ \text{м/с}^2
+        a = \sqrt{\ddot x^2 + \ddot y^2} \approx \sqrt{({{ "%.4f"|format(data.a[0]) }})^2 + ({{ "%.4f"|format(data.a[1]) }})^2}
+        = {{ "%.4f"|format(data.a_mod) }} \ \text{м/с}^2
         \]
-        <p>(точное аналитическое значение: \(a = \sqrt{ \left( -\frac{8\pi\sqrt{3}}{3} - \frac{16\pi^2}{9} \right)^2 + \left( \frac{16\pi}{3} - \frac{32\pi^2\sqrt{3}}{9} \right)^2 }\)).</p>
+        
+        <p>Вектор ускорения в момент \(t = {{ data.t }}\) с:</p>
+        \[
+        \vec a = \left({{ "%.4f"|format(data.a[0]) }};\ {{ "%.4f"|format(data.a[1]) }}\right) \ \text{м/с}^2
+        \]
     </div>
 
     <!-- ------------------------------------------------------------------ -->
-
-    <h2>2. Интерактивные графики</h2>
+    <h2>5. Интерактивные графики</h2>
+    
     <div class="graph">
-        <h3>Рис. 1 — Траектория и положение точки</h3>
+        <h3>Рис. 1 — Траектория движения точки и положение точки M</h3>
         <div id="trajectory-plot"></div>
-        <p><em>Красные оси – подвижная система \(X,Y,Z\) из точки \(O\). Зелёная дуга – направление вращения (угловая скорость \(\omega\)). Фиолетовый вектор – абсолютная скорость (масштабирован). Зелёный конус – направление движения по траектории.</em></p>
+        <p><em>На графике показана траектория движения точки (синяя сплошная линия), точка M в момент времени \(t = {{ data.t }}\) с (красный маркер с подписью), оси координат X и Y, а также единичные векторы i и j (красная и зелёная стрелки).</em></p>
     </div>
+
     <div class="graph">
-        <h3>Рис. 2 — Векторы скорости в точке M</h3>
+        <h3>Рис. 2 — Вектор скорости в точке M</h3>
         <div id="velocities-plot"></div>
-        <p><em>Все векторы пересчитаны в систему координат, где оси направлены вдоль относительной скорости, ускорения Кориолиса и угловой скорости. Конусы указывают направление.</em></p>
+        <p><em>На графике показаны: траектория (синяя пунктирная линия), точка M (красный маркер), вектор скорости \(\vec V\) (оранжевая стрелка). В легенде отображаются численные значения компонент и модуля скорости.</em></p>
     </div>
+
     <div class="graph">
-        <h3>Рис. 3 — Векторы ускорения в точке M</h3>
+        <h3>Рис. 3 — Вектор ускорения в точке M</h3>
         <div id="accelerations-plot"></div>
-        <p><em>Ускорения показаны в системе, где оси совпадают с направлениями \(\omega\), \(a_{\text{cor}}\) и перпендикулярной компонентой \(a_{\text{отн}}\).</em></p>
+        <p><em>На графике показаны: траектория (синяя пунктирная линия), точка M (красный маркер), вектор ускорения \(\vec a\) (зелёная стрелка). В легенде отображаются численные значения компонент и модуля ускорения.</em></p>
     </div>
 
     <!-- ------------------------------------------------------------------ -->
-    <h2>3. Сводная таблица результатов</h2>
+    <h2>6. Сводная таблица результатов</h2>
     <div class="table-wrapper">
         <table>
             <thead>
-                <tr><th>Величина</th><th>Символ</th><th>Значение</th><th>Размерность</th></tr>
+                <tr><th>Величина</th><th>Обозначение</th><th>Значение</th><th>Размерность</th></tr>
             </thead>
             <tbody>
-                <tr><td>Координата x</td><td>\(x(1)\)</td><td>\(4\)</td><td>м</td></tr>
-                <tr><td>Координата y</td><td>\(y(1)\)</td><td>\(8\sqrt{3} \approx 13.8564\)</td><td>м</td></tr>
-                <tr><td>Проекция скорости \(v_x\)</td><td>\(\dot x(1)\)</td><td>\(-\dfrac{8\pi\sqrt{3}}{3} \approx -14.5104\)</td><td>м/с</td></tr>
-                <tr><td>Проекция скорости \(v_y\)</td><td>\(\dot y(1)\)</td><td>\(\dfrac{16\pi}{3} \approx 16.7552\)</td><td>м/с</td></tr>
-                <tr><td>Модуль скорости</td><td>\(V\)</td><td>\(\dfrac{8\pi\sqrt{7}}{3} \approx 22.1649\)</td><td>м/с</td></tr>
-                <tr><td>Проекция ускорения \(a_x\)</td><td>\(\ddot x(1)\)</td><td>\(-\dfrac{8\pi\sqrt{3}}{3} - \dfrac{16\pi^2}{9} \approx -32.0563\)</td><td>м/с²</td></tr>
-                <tr><td>Проекция ускорения \(a_y\)</td><td>\(\ddot y(1)\)</td><td>\(\dfrac{16\pi}{3} - \dfrac{32\pi^2\sqrt{3}}{9} \approx -44.0258\)</td><td>м/с²</td></tr>
-                <tr><td>Модуль ускорения</td><td>\(a\)</td><td>\(\approx 54.498\)</td><td>м/с²</td></tr>
+                <tr><td>Координата \(x\)</td><td>\(x(1)\)</td><td>{{ "%.4f"|format(data.point[0]) }}</td><td>м</td></tr>
+                <tr><td>Координата \(y\)</td><td>\(y(1)\)</td><td>{{ "%.4f"|format(data.point[1]) }}</td><td>м</td></tr>
+                <tr><td>Проекция скорости \(v_x\)</td><td>\(\dot x(1)\)</td><td>{{ "%.4f"|format(data.V[0]) }}</td><td>м/с</td></tr>
+                <tr><td>Проекция скорости \(v_y\)</td><td>\(\dot y(1)\)</td><td>{{ "%.4f"|format(data.V[1]) }}</td><td>м/с</td></tr>
+                <tr><td>Модуль скорости</td><td>\(V\)</td><td>{{ "%.4f"|format(data.V_mod) }}</td><td>м/с</td></tr>
+                <tr><td>Проекция ускорения \(a_x\)</td><td>\(\ddot x(1)\)</td><td>{{ "%.4f"|format(data.a[0]) }}</td><td>м/с²</td></tr>
+                <tr><td>Проекция ускорения \(a_y\)</td><td>\(\ddot y(1)\)</td><td>{{ "%.4f"|format(data.a[1]) }}</td><td>м/с²</td></tr>
+                <tr><td>Модуль ускорения</td><td>\(a\)</td><td>{{ "%.4f"|format(data.a_mod) }}</td><td>м/с²</td></tr>
             </tbody>
         </table>
     </div>
 
+    <!-- ------------------------------------------------------------------ -->
     <div class="footer">
-        Отчёт сгенерирован автоматически. Все расчёты выполнены для момента времени \( t = {{ data.t }} \).<br>
-        Графики интерактивны – их можно вращать, масштабировать и перемещать. Конусы указывают направление.
+        Отчёт сгенерирован автоматически. Все расчёты выполнены для момента времени \( t = {{ data.t }}\) с.<br>
+        Графики интерактивны – их можно масштабировать и перемещать.
     </div>
 </div>
 
