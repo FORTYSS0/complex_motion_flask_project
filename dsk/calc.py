@@ -17,8 +17,11 @@ y_sym = -2 * a_sym * sp.sin(b_sym * sp.pi * t_sym**2 / 6)
 x_expr = x_sym.subs({a_sym: a_val, b_sym: b_val}).simplify()
 y_expr = y_sym.subs({a_sym: a_val, b_sym: b_val}).simplify()
 
+# Скорости
 vx_expr = sp.diff(x_expr, t_sym).simplify()
 vy_expr = sp.diff(y_expr, t_sym).simplify()
+
+# Ускорения
 ax_expr = sp.diff(vx_expr, t_sym).simplify()
 ay_expr = sp.diff(vy_expr, t_sym).simplify()
 
@@ -62,19 +65,16 @@ def get_formulas():
     }
 
 
-# Для обратной совместимости с существующим кодом
 def dsk_compute_complex_motion(t=1):
     vals = compute_values_at_time(t)
     
     data = {
         't': t,
-        'point': np.array([vals['x'], vals['y'], 0.0]),
-        'V_rel': np.array([vals['vx'], vals['vy'], 0.0]),
-        'V_abs': np.array([vals['vx'], vals['vy'], 0.0]),
-        'a_rel': np.array([vals['ax'], vals['ay'], 0.0]),
-        'a_abs': np.array([vals['ax'], vals['ay'], 0.0]),
-        'V_abs_mod': vals['V_mod'],
-        'a_abs_mod': vals['a_mod'],
+        'point': np.array([vals['x'], vals['y']]),
+        'V': np.array([vals['vx'], vals['vy']]),
+        'a': np.array([vals['ax'], vals['ay']]),
+        'V_mod': vals['V_mod'],
+        'a_mod': vals['a_mod']
     }
     
     return data, get_formulas()
