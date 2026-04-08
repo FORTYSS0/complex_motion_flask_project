@@ -79,8 +79,8 @@ def draw_axes_2d(fig, origin=(0, 0), length=20, labels=['X', 'Y'], colors=['#333
         text=['<b>O</b>'],
         textposition='bottom right',
         textfont=dict(size=14, color='black', family='Times New Roman'),
-        showlegend=True,
-        hovertemplate='<b>O</b><br>x = 0, y = 0<extra></extra>'
+        showlegend=False,
+        hoverinfo='none'
     ))
 
 

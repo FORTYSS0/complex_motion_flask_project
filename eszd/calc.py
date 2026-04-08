@@ -1,5 +1,6 @@
 import numpy as np
 import sympy as sp
+from scipy import integrate
 
 
 # Символьные переменные и выражения
@@ -10,140 +11,147 @@ a_sym, b_sym = sp.symbols('a b', real=True)
 a_val = 8
 b_val = -2
 
-# Относительное движение
+# Движение точки в ДСК
 x_sym = a_sym * sp.cos(b_sym * sp.pi * t_sym**2 / 6)
 y_sym = -2 * a_sym * sp.sin(b_sym * sp.pi * t_sym**2 / 6)
 
 x_expr = x_sym.subs({a_sym: a_val, b_sym: b_val}).simplify()
 y_expr = y_sym.subs({a_sym: a_val, b_sym: b_val}).simplify()
 
+# Скорости в ДСК
 vx_expr = sp.diff(x_expr, t_sym).simplify()
 vy_expr = sp.diff(y_expr, t_sym).simplify()
+
+# Ускорения в ДСК
 ax_expr = sp.diff(vx_expr, t_sym).simplify()
 ay_expr = sp.diff(vy_expr, t_sym).simplify()
 
-# Переносное движение
-z_expr = 2 * t_sym**2 + 4
-vz_expr = sp.diff(z_expr, t_sym)
-az_expr = sp.diff(vz_expr, t_sym)
-
-phi_expr = 2 * sp.sin(sp.pi * t_sym)
-omega_expr = sp.diff(phi_expr, t_sym).simplify()
-alpha_expr = sp.diff(omega_expr, t_sym).simplify()
+# Модуль скорости (символьный)
+V_sym = sp.sqrt(vx_expr**2 + vy_expr**2).simplify()
 
 
-# Вычисление в конкретный момент времени
 def compute_values_at_time(t0=1):
-    """Вычисляет все кинематические величины в момент времени t0."""
+    """Вычисляет все кинематические величины в момент времени t0 для ЕСЗД."""
+    # Координаты
     x0 = float(x_expr.subs(t_sym, t0))
     y0 = float(y_expr.subs(t_sym, t0))
-    z0 = 0.0
     
+    # Скорости
     vx0 = float(vx_expr.subs(t_sym, t0))
     vy0 = float(vy_expr.subs(t_sym, t0))
-    V_rel = np.array([vx0, vy0, 0.0])
     
+    # Ускорения
     ax0 = float(ax_expr.subs(t_sym, t0))
     ay0 = float(ay_expr.subs(t_sym, t0))
-    a_rel = np.array([ax0, ay0, 0.0])
     
-    zp0 = float(z_expr.subs(t_sym, t0))
-    vz0 = float(vz_expr.subs(t_sym, t0))
-    az0 = float(az_expr.subs(t_sym, t0))
+    # Модуль скорости (полная скорость)
+    V = np.hypot(vx0, vy0)
     
-    phi0 = float(phi_expr.subs(t_sym, t0))
-    omega0 = float(omega_expr.subs(t_sym, t0))
-    alpha0 = float(alpha_expr.subs(t_sym, t0))
+    # Касательное ускорение (производная модуля скорости по времени)
+    # a_tau = dV/dt = (vx*ax + vy*ay) / V
+    a_tau = (vx0 * ax0 + vy0 * ay0) / V if V > 0 else 0
     
-    return {
-        'x0': x0, 'y0': y0, 'z0': z0,
-        'vx0': vx0, 'vy0': vy0,
-        'ax0': ax0, 'ay0': ay0,
-        'zp0': zp0, 'vz0': vz0, 'az0': az0,
-        'phi0': phi0, 'omega0': omega0, 'alpha0': alpha0
-    }
-
-
-# Основная функция расчёта сложного движения
-def eszd_compute_complex_motion(t=1):
-    """Вычисляет все кинематические характеристики сложного движения точки."""
-    vals = compute_values_at_time(t)
-    
-    # Векторы относительного движения
-    r_rel = np.array([vals['x0'], vals['y0'], 0.0])
-    V_rel = np.array([vals['vx0'], vals['vy0'], 0.0])
-    a_rel = np.array([vals['ax0'], vals['ay0'], 0.0])
-    
-    # Переносное движение (поступательное)
-    V_trans_post = np.array([0.0, 0.0, vals['vz0']])
-    a_trans_post = np.array([0.0, 0.0, vals['az0']])
-    
-    # Переносное движение (вращательное)
-    V_rot = np.cross([0, 0, vals['omega0']], r_rel)
-    a_centr = np.cross([0, 0, vals['omega0']], np.cross([0, 0, vals['omega0']], r_rel))
-    a_rot = np.cross([0, 0, vals['alpha0']], r_rel)
-    
-    # Абсолютное движение
-    V_abs = V_rel + V_trans_post + V_rot
-    a_trans = a_centr + a_rot + a_trans_post
-    a_cor = 2 * np.cross([0, 0, vals['omega0']], V_rel)
-    a_abs = a_rel + a_trans + a_cor
+    # Нормальное ускорение (центростремительное)
+    # a_n = sqrt(a^2 - a_tau^2)
+    a_mod = np.hypot(ax0, ay0)
+    a_n = np.sqrt(max(0, a_mod**2 - a_tau**2))
     
     # Радиус кривизны
-    V_abs_norm = np.linalg.norm(V_abs)
-    cross = np.cross(V_abs, a_abs)
-    cross_norm = np.linalg.norm(cross)
-    rho = V_abs_norm**3 / cross_norm if cross_norm != 0 else float('inf')
+    # ρ = V^2 / a_n (если a_n > 0)
+    if a_n > 1e-10:
+        rho = V**2 / a_n
+    else:
+        rho = float('inf')
     
-    # Сбор результатов
-    data = {
-        't': t,
-        'point': np.array([vals['x0'], vals['y0'], vals['zp0']]),
-        'zp': vals['zp0'],
-        'V_rel': V_rel,
-        'V_rot': V_rot,
-        'V_trans_post': V_trans_post,
-        'V_abs': V_abs,
-        'a_rel': a_rel,
-        'a_centr': a_centr,
-        'a_rot': a_rot,
-        'a_trans_post': a_trans_post,
-        'a_cor': a_cor,
-        'a_abs': a_abs,
+    # Длина дуги (численное интегрирование)
+    # Создаём функцию для численного интегрирования модуля скорости
+    def V_numeric(t):
+        t_val = float(t)
+        vx = float(vx_expr.subs(t_sym, t_val))
+        vy = float(vy_expr.subs(t_sym, t_val))
+        return np.hypot(vx, vy)
+    
+    # Вычисляем интеграл от 0 до t0
+    s0, _ = integrate.quad(V_numeric, 0, t0, limit=100)
+    
+    # Единичные векторы касательной и нормали
+    # Касательный вектор: τ = (vx, vy) / V
+    tau_x = vx0 / V if V > 0 else 1
+    tau_y = vy0 / V if V > 0 else 0
+    
+    # Нормальный вектор (повернутый касательный на 90°)
+    # Определяем направление по знаку векторного произведения
+    cross = vx0 * ay0 - vy0 * ax0
+    if cross > 0:
+        n_x = -tau_y
+        n_y = tau_x
+    else:
+        n_x = tau_y
+        n_y = -tau_x
+    
+    return {
+        't': t0,
+        'x': x0,
+        'y': y0,
+        'vx': vx0,
+        'vy': vy0,
+        'ax': ax0,
+        'ay': ay0,
+        'V': V,
+        'a_tau': a_tau,
+        'a_n': a_n,
+        'a_mod': a_mod,
         'rho': rho,
-        'omega': vals['omega0'],
-        'alpha': vals['alpha0'],
-        'dzpdt': vals['vz0'],
-        'd2zpdt2': vals['az0'],
-        'phi': vals['phi0'],
-        'dphi_dt': vals['omega0'],
-        'd2phi_dt2': vals['alpha0'],
-        'V_rel_mod': np.linalg.norm(V_rel),
-        'V_rot_mod': np.linalg.norm(V_rot),
-        'V_trans_post_mod': np.linalg.norm(V_trans_post),
-        'V_abs_mod': V_abs_norm,
-        'a_rel_mod': np.linalg.norm(a_rel),
-        'a_centr_mod': np.linalg.norm(a_centr),
-        'a_rot_mod': np.linalg.norm(a_rot),
-        'a_trans_post_mod': np.linalg.norm(a_trans_post),
-        'a_cor_mod': np.linalg.norm(a_cor),
-        'a_abs_mod': np.linalg.norm(a_abs),
+        's': s0,
+        'tau_x': tau_x,
+        'tau_y': tau_y,
+        'n_x': n_x,
+        'n_y': n_y
     }
+
+
+def get_formulas():
+    """Возвращает LaTeX-формулы для отображения."""
+    # Касательное ускорение (символьно)
+    a_tau_sym = sp.diff(V_sym, t_sym).simplify()
     
-    # Формулы для отображения
-    formulas = {
+    # Для нормального ускорения используем формулу a_n = V^2 / ρ
+    cross_sym = vx_expr * ay_expr - vy_expr * ax_expr
+    rho_sym = V_sym**3 / sp.Abs(cross_sym)
+    a_n_sym = V_sym**2 / rho_sym
+    
+    return {
         'x': sp.latex(x_expr),
         'y': sp.latex(y_expr),
-        'dxdt': sp.latex(vx_expr),
-        'dydt': sp.latex(vy_expr),
-        'd2xdt2': sp.latex(ax_expr),
-        'd2ydt2': sp.latex(ay_expr),
-        'zp': sp.latex(z_expr),
-        'dzpdt': sp.latex(vz_expr),
-        'd2zpdt2': sp.latex(az_expr),
-        'phi': sp.latex(phi_expr),
-        'dphi_dt': sp.latex(omega_expr),
-        'd2phi_dt2': sp.latex(alpha_expr),
+        'vx': sp.latex(vx_expr),
+        'vy': sp.latex(vy_expr),
+        'ax': sp.latex(ax_expr),
+        'ay': sp.latex(ay_expr),
+        'V': sp.latex(V_sym),
+        'a_tau': sp.latex(a_tau_sym),
+        'a_n': sp.latex(a_n_sym),
+        'rho': sp.latex(rho_sym),
+    }
+
+
+def eszd_compute_complex_motion(t=1):
+    """Основная функция для ЕСЗД."""
+    vals = compute_values_at_time(t)
+    
+    data = {
+        't': t,
+        'point': np.array([vals['x'], vals['y']]),
+        'V': vals['V'],
+        'V_vec': np.array([vals['vx'], vals['vy']]),
+        'a_tau': vals['a_tau'],
+        'a_n': vals['a_n'],
+        'a_mod': vals['a_mod'],
+        'a_tau_vec': np.array([vals['tau_x'], vals['tau_y']]) * vals['a_tau'],
+        'a_n_vec': np.array([vals['n_x'], vals['n_y']]) * vals['a_n'],
+        'rho': vals['rho'],
+        's': vals['s'],
+        'tau': np.array([vals['tau_x'], vals['tau_y']]),
+        'n': np.array([vals['n_x'], vals['n_y']])
     }
     
-    return data, formulas
+    return data, get_formulas()
