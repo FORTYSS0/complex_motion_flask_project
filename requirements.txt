@@ -6,3 +6,4 @@ pdfkit>=1.0.0
 pypandoc>=1.11
 plotly>=5.18.0
 scipy
+gunicorn
