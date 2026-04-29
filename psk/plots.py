@@ -128,7 +128,7 @@ def add_vector_2d(fig, start, vector, color, name, show_legend=True):
 
 
 def psk_trajectory(data):
-    """Рис. 1 — Траектория и положение точки в полярных координатах."""
+    """Рис. 1 - Траектория и положение точки в полярных координатах."""
     x_t, y_t, _ = get_trajectory_points()
     point = data['point']
     r = data['r']
@@ -199,7 +199,7 @@ def psk_trajectory(data):
     
     fig.update_layout(
         title=dict(
-            text='<b>Рис. 1 — Траектория движения точки</b>',
+            text='<b>Рис. 1 - Траектория движения точки</b>',
             font=dict(size=18, family='Times New Roman'),
             x=0.5
         ),
@@ -240,7 +240,7 @@ def psk_trajectory(data):
 
 
 def psk_velocities(data):
-    """Рис. 2 — Радиальная и трансверсальная составляющие скорости."""
+    """Рис. 2 - Радиальная и трансверсальная составляющие скорости."""
     x_t, y_t, _ = get_trajectory_points()
     point = data['point']
     r = data['r']
@@ -332,7 +332,7 @@ def psk_velocities(data):
     
     fig.update_layout(
         title=dict(
-            text='<b>Рис. 2 — Радиальная и трансверсальная составляющие скорости</b>',
+            text='<b>Рис. 2 - Радиальная и трансверсальная составляющие скорости</b>',
             font=dict(size=18, family='Times New Roman'),
             x=0.5
         ),
@@ -373,7 +373,7 @@ def psk_velocities(data):
 
 
 def psk_accelerations(data):
-    """Рис. 3 — Радиальная и трансверсальная составляющие ускорения."""
+    """Рис. 3 - Радиальная и трансверсальная составляющие ускорения."""
     x_t, y_t, _ = get_trajectory_points()
     point = data['point']
     r = data['r']
@@ -467,7 +467,7 @@ def psk_accelerations(data):
     
     fig.update_layout(
         title=dict(
-            text='<b>Рис. 3 — Радиальная и трансверсальная составляющие ускорения</b>',
+            text='<b>Рис. 3 - Радиальная и трансверсальная составляющие ускорения</b>',
             font=dict(size=18, family='Times New Roman'),
             x=0.5
         ),

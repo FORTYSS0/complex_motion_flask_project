@@ -130,7 +130,7 @@ def add_vector_2d(fig, start, vector, color, name, show_legend=True):
 
 
 def eszd_trajectory(data):
-    """Рис. 1 — Траектория и положение точки с выделением пройденного пути S."""
+    """Рис. 1 - Траектория и положение точки с выделением пройденного пути S."""
     x_t_full, y_t_full, _ = get_trajectory_points()
     x_t_segment, y_t_segment, _ = get_trajectory_segment(t0=data['t'])
     point = data['point']
@@ -220,7 +220,7 @@ def eszd_trajectory(data):
     
     fig.update_layout(
         title=dict(
-            text='<b>Рис. 1 — Траектория движения точки</b>',
+            text='<b>Рис. 1 - Траектория движения точки</b>',
             font=dict(size=18, family='Times New Roman'),
             x=0.5
         ),
@@ -261,7 +261,7 @@ def eszd_trajectory(data):
 
 
 def eszd_velocities(data):
-    """Рис. 2 — Вектор скорости и касательное ускорение."""
+    """Рис. 2 - Вектор скорости и касательное ускорение."""
     x_t_full, y_t_full, _ = get_trajectory_points()
     x_t_segment, y_t_segment, _ = get_trajectory_segment(t0=data['t'])
     point = data['point']
@@ -317,7 +317,7 @@ def eszd_velocities(data):
     
     fig.update_layout(
         title=dict(
-            text='<b>Рис. 2 — Вектор скорости и касательное ускорение</b>',
+            text='<b>Рис. 2 - Вектор скорости и касательное ускорение</b>',
             font=dict(size=18, family='Times New Roman'),
             x=0.5
         ),
@@ -358,7 +358,7 @@ def eszd_velocities(data):
 
 
 def eszd_accelerations(data):
-    """Рис. 3 — Касательное и нормальное ускорения."""
+    """Рис. 3 - Касательное и нормальное ускорения."""
     x_t_full, y_t_full, _ = get_trajectory_points()
     x_t_segment, y_t_segment, _ = get_trajectory_segment(t0=data['t'])
     point = data['point']
@@ -423,7 +423,7 @@ def eszd_accelerations(data):
     
     fig.update_layout(
         title=dict(
-            text='<b>Рис. 3 — Касательное и нормальное ускорения</b>',
+            text='<b>Рис. 3 - Касательное и нормальное ускорения</b>',
             font=dict(size=18, family='Times New Roman'),
             x=0.5
         ),
