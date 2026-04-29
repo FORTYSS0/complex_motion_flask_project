@@ -50,7 +50,7 @@ def draw_axes_2d(fig, origin=(0, 0), length=20, labels=['X', 'Y'], colors=['#333
         showlegend=False,
         hoverinfo='none'
     ))
-    # Стрелка Y (всегда видима)
+    # Стрелка Y
     fig.add_annotation(
         x=origin[0], y=origin[1] + length,
         ax=origin[0], ay=origin[1] + length - 1.5,
@@ -175,7 +175,7 @@ def add_vector_2d(fig, start, vector, color, name, show_legend=True):
 
 
 def dsk_trajectory(data):
-    """Рис. 1 — Траектория и положение точки."""
+    """Рис. 1 - Траектория и положение точки."""
     x_t, y_t, _ = get_trajectory_points()
     point = data['point']
     
@@ -209,7 +209,7 @@ def dsk_trajectory(data):
     # Настройка оформления
     fig.update_layout(
         title=dict(
-            text='<b>Рис. 1 — Траектория движения точки</b>',
+            text='<b>Рис. 1 - Траектория движения точки</b>',
             font=dict(size=18, family='Times New Roman'),
             x=0.5
         ),
@@ -250,7 +250,7 @@ def dsk_trajectory(data):
 
 
 def dsk_velocities(data):
-    """Рис. 2 — Вектор скорости и его компоненты."""
+    """Рис. 2 - Вектор скорости и его компоненты."""
     x_t, y_t, _ = get_trajectory_points()
     point = data['point']
     V = data['V']
@@ -314,7 +314,7 @@ def dsk_velocities(data):
     
     fig.update_layout(
         title=dict(
-            text='<b>Рис. 2 — Вектор скорости точки M',
+            text='<b>Рис. 2 - Вектор скорости точки M',
             font=dict(size=18, family='Times New Roman'),
             x=0.5
         ),
@@ -355,7 +355,7 @@ def dsk_velocities(data):
 
 
 def dsk_accelerations(data):
-    """Рис. 3 — Вектор ускорения и его компоненты."""
+    """Рис. 3 - Вектор ускорения и его компоненты."""
     x_t, y_t, _ = get_trajectory_points()
     point = data['point']
     a = data['a']
@@ -417,7 +417,7 @@ def dsk_accelerations(data):
     
     fig.update_layout(
         title=dict(
-            text='<b>Рис. 3 — Вектор ускорения точки M</b>',
+            text='<b>Рис. 3 - Вектор ускорения точки M</b>',
             font=dict(size=18, family='Times New Roman'),
             x=0.5
         ),
