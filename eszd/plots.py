@@ -3,23 +3,24 @@ import plotly.graph_objects as go
 
 
 def add_fixed_hatch_2d(fig, origin, axis_dir, length, color='#333333',
-                       n=3, inset=2.0, spacing=1.3, stroke=1.6):
-    """Рисует короткие штрихи у конца оси — признак неподвижной (зафиксированной) оси.
+                       n=4, inset=1.0, spacing=1.0, stroke=1.8):
+    """Рисует короткую штриховку у конца оси — признак неподвижной (зафиксированной) оси.
 
-    Штрихи наносятся поперёк оси у её конца наклонными чёрточками («///»),
-    как принято обозначать неподвижную систему отсчёта в механике.
+    Штрихи наносятся наклонно (45°) ПО ОДНУ СТОРОНУ от оси: основание штриха
+    лежит на самой оси, а сам штрих уходит в сторону — так принято обозначать
+    закреплённую (неподвижную) опору. Ось проходит по краю штриховки, а не по её
+    середине.
     """
     d = np.array(axis_dir, dtype=float)
     d = d / np.linalg.norm(d)
     p = np.array([-d[1], d[0]])          # перпендикуляр к оси
-    h = (d + p) / np.sqrt(2.0)           # направление штриха (45°)
+    h = (p - d) / np.sqrt(2.0)           # направление штриха (45° вбок и назад)
     tip = np.array(origin, dtype=float) + d * length
     for i in range(n):
-        c = tip - d * (inset + i * spacing)   # центр штриха, отступая от конца
-        a = c - 0.5 * stroke * h
-        b = c + 0.5 * stroke * h
+        base = tip - d * (inset + i * spacing)   # основание штриха — на оси, у конца
+        end = base + stroke * h                  # штрих уходит на одну сторону
         fig.add_trace(go.Scatter(
-            x=[a[0], b[0]], y=[a[1], b[1]],
+            x=[base[0], end[0]], y=[base[1], end[1]],
             mode='lines',
             line=dict(color=color, width=1.5),
             showlegend=False,
@@ -43,7 +44,7 @@ def get_trajectory_segment(t0=1, num_points=500):
     return x_t, y_t, t_vals
 
 
-def draw_axes_2d(fig, origin=(0, 0), length=20, labels=['X', 'Y'], colors=['#333333', '#333333']):
+def draw_axes_2d(fig, origin=(0, 0), length=20, labels=['X', 'Y'], colors=['#333333', '#333333'], fixed=True):
     """Добавляет оси координат на 2D график Plotly с постоянными стрелками."""
     # Ось X
     fig.add_trace(go.Scatter(
@@ -112,9 +113,10 @@ def draw_axes_2d(fig, origin=(0, 0), length=20, labels=['X', 'Y'], colors=['#333
         hoverinfo='none'
     ))
 
-    # Штрихи неподвижности на концах осей (оси зафиксированы)
-    add_fixed_hatch_2d(fig, origin, (1, 0), length, color=colors[0])
-    add_fixed_hatch_2d(fig, origin, (0, 1), length, color=colors[1])
+    # Штрихи неподвижности на концах осей — только для зафиксированных осей.
+    if fixed:
+        add_fixed_hatch_2d(fig, origin, (1, 0), length, color=colors[0])
+        add_fixed_hatch_2d(fig, origin, (0, 1), length, color=colors[1])
 
 
 def add_vector_2d(fig, start, vector, color, name, show_legend=True):
