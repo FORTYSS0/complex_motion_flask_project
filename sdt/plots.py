@@ -112,10 +112,30 @@ def get_trajectory_points(t_max=2.5, num_points=200):
     return x_t, y_t, z_t, t_vals
 
 
+def vector_display_scale(vectors, target=18.0):
+    """Единый масштаб отображения для группы векторов.
+
+    Самый длинный вектор приводится к длине target (для соразмерности со
+    сценой и траекторией), пропорции между векторами сохраняются. Истинные
+    модули указываются в подписи легенды (см. add_vector_with_arrow).
+    """
+    mags = [float(np.linalg.norm(np.asarray(v, dtype=float))) for v in vectors]
+    m = max(mags) if mags else 0.0
+    return (target / m) if m > 1e-9 else 1.0
+
+
 def add_vector_with_arrow(fig, start, vector, color, name, scale=1.0):
-    """Добавляет вектор со стрелкой на 3D график Plotly."""
+    """Добавляет вектор со стрелкой на 3D график Plotly.
+
+    Вектор рисуется в масштабе scale (для соразмерности со сценой), а в
+    подписи легенды приводится ИСТИННЫЙ модуль вектора.
+    """
+    start = np.asarray(start, dtype=float)
+    vector = np.asarray(vector, dtype=float)
+    mag = float(np.linalg.norm(vector))
+    label = ('%s = %.1f' % (name, mag)).replace('.', ',')
     end = start + vector * scale
-    
+
     # Рисуем линию вектора
     fig.add_trace(go.Scatter3d(
         x=[start[0], end[0]],
@@ -123,14 +143,14 @@ def add_vector_with_arrow(fig, start, vector, color, name, scale=1.0):
         z=[start[2], end[2]],
         mode='lines',
         line=dict(color=color, width=4),
-        name=name,
+        name=label,
         showlegend=True
     ))
-    
+
     # Добавляем конус (стрелку) в конце вектора
     # Нормализуем направление
     direction = vector / (np.linalg.norm(vector) + 1e-10)
-    # Размер конуса = 10% от длины вектора
+    # Размер конуса пропорционален ОТОБРАЖАЕМОЙ длине вектора
     cone_size = np.linalg.norm(vector * scale) * 0.15
     
     fig.add_trace(go.Cone(
@@ -216,7 +236,7 @@ def sdt_trajectory(data):
             xaxis_title="X'",
             yaxis_title="Y'",
             zaxis_title="Z'",
-            aspectmode='auto'
+            aspectmode='data'
         ),
         legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5)
     )
@@ -240,15 +260,17 @@ def sdt_velocities(data):
         )
     )
     
-    # Добавляем векторы со стрелками
-    add_vector_with_arrow(fig, point, data['V_rel'], 'blue', 'V_rel')
-    add_vector_with_arrow(fig, point, data['V_rot'], 'green', 'V_rot')
-    add_vector_with_arrow(fig, point, data['V_trans_post'], 'orange', 'V_trans_post')
-    add_vector_with_arrow(fig, point, data['V_abs'], 'purple', 'V_abs')
-    
+    # Векторы скоростей — в едином масштабе отображения (истинные модули в легенде)
+    s = vector_display_scale([data['V_rel'], data['V_rot'],
+                              data['V_trans_post'], data['V_abs']], target=18.0)
+    add_vector_with_arrow(fig, point, data['V_rel'], 'blue', 'V_rel', scale=s)
+    add_vector_with_arrow(fig, point, data['V_rot'], 'green', 'V_rot', scale=s)
+    add_vector_with_arrow(fig, point, data['V_trans_post'], 'orange', 'V_trans_post', scale=s)
+    add_vector_with_arrow(fig, point, data['V_abs'], 'purple', 'V_abs', scale=s)
+
     fig.update_layout(
         title='Векторы скоростей в точке M',
-        scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z", aspectmode='auto'),
+        scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z", aspectmode='data'),
         legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5),
         margin=dict(l=0, r=0, t=30, b=50)
     )
@@ -260,30 +282,32 @@ def sdt_accelerations(data):
     point = data['point']
     
     fig = go.Figure()
-    draw_axes(fig, length=90, fixed=True)
+    draw_axes(fig, length=25, fixed=True)
     draw_axes(fig, length=1, labels=['i', 'j', 'k'], colors = ['red', 'green', 'blue'])
-    
+
     fig.add_trace(go.Scatter3d(
         x=[point[0]],
-        y=[point[1]], 
+        y=[point[1]],
         z=[point[2]],
-        mode='markers', 
-        marker=dict(color='red', size=8), 
+        mode='markers',
+        marker=dict(color='red', size=8),
         name='Point M'
         )
     )
-    
-    # Добавляем векторы со стрелками
-    add_vector_with_arrow(fig, point, data['a_rel'], 'blue', 'a_rel')
-    add_vector_with_arrow(fig, point, data['a_centr'], 'green', 'a_centr')
-    add_vector_with_arrow(fig, point, data['a_rot'], 'orange', 'a_rot')
-    add_vector_with_arrow(fig, point, data['a_trans_post'], 'brown', 'a_trans_post')
-    add_vector_with_arrow(fig, point, data['a_cor'], 'cyan', 'a_cor')
-    add_vector_with_arrow(fig, point, data['a_abs'], 'purple', 'a_abs')
-    
+
+    # Векторы ускорений — в едином масштабе отображения (истинные модули в легенде)
+    s = vector_display_scale([data['a_rel'], data['a_centr'], data['a_rot'],
+                              data['a_trans_post'], data['a_cor'], data['a_abs']], target=20.0)
+    add_vector_with_arrow(fig, point, data['a_rel'], 'blue', 'a_rel', scale=s)
+    add_vector_with_arrow(fig, point, data['a_centr'], 'green', 'a_centr', scale=s)
+    add_vector_with_arrow(fig, point, data['a_rot'], 'orange', 'a_rot', scale=s)
+    add_vector_with_arrow(fig, point, data['a_trans_post'], 'brown', 'a_trans_post', scale=s)
+    add_vector_with_arrow(fig, point, data['a_cor'], 'cyan', 'a_cor', scale=s)
+    add_vector_with_arrow(fig, point, data['a_abs'], 'purple', 'a_abs', scale=s)
+
     fig.update_layout(
         title='Векторы ускорений в точке M',
-        scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z", aspectmode='auto'),
+        scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z", aspectmode='data'),
         legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5),
         margin=dict(l=0, r=0, t=30, b=50)
     )
@@ -296,31 +320,33 @@ def sdt_trajectory_with_velocities(data):
     point = data['point']
     
     fig = go.Figure()
-    draw_axes(fig, length=20, fixed=True)
+    draw_axes(fig, length=25, fixed=True)
     draw_axes(fig, length=1, labels=['i', 'j', 'k'], colors = ['red', 'green', 'blue'])
-    
+
     # Добавляем траекторию
     fig.add_trace(go.Scatter3d(
-        x=x_t.tolist(), 
-        y=y_t.tolist(), 
-        z=z_t.tolist(), 
-        mode='lines', 
-        line=dict(color='black', width=4), 
+        x=x_t.tolist(),
+        y=y_t.tolist(),
+        z=z_t.tolist(),
+        mode='lines',
+        line=dict(color='black', width=4),
         name='Траектория'
     ))
-    
+
     fig.add_trace(go.Scatter3d(x=[point[0]], y=[point[1]], z=[point[2]],
                                mode='markers', marker=dict(color='red', size=8), name='M (t=1)'))
-    
-    # Добавляем векторы скоростей со стрелками
-    add_vector_with_arrow(fig, point, data['V_rel'], 'blue', 'V_rel')
-    add_vector_with_arrow(fig, point, data['V_rot'], 'green', 'V_rot')
-    add_vector_with_arrow(fig, point, data['V_trans_post'], 'orange', 'V_trans_post')
-    add_vector_with_arrow(fig, point, data['V_abs'], 'purple', 'V_abs')
-    
+
+    # Векторы скоростей — в едином масштабе отображения (истинные модули в легенде)
+    s = vector_display_scale([data['V_rel'], data['V_rot'],
+                              data['V_trans_post'], data['V_abs']], target=20.0)
+    add_vector_with_arrow(fig, point, data['V_rel'], 'blue', 'V_rel', scale=s)
+    add_vector_with_arrow(fig, point, data['V_rot'], 'green', 'V_rot', scale=s)
+    add_vector_with_arrow(fig, point, data['V_trans_post'], 'orange', 'V_trans_post', scale=s)
+    add_vector_with_arrow(fig, point, data['V_abs'], 'purple', 'V_abs', scale=s)
+
     fig.update_layout(
         title='Траектория и векторы скоростей',
-        scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='auto'),
+        scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='data'),
         legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5),
         margin=dict(l=0, r=0, t=30, b=50)
     )
@@ -333,40 +359,42 @@ def sdt_trajectory_with_accelerations(data):
     point = data['point']
     
     fig = go.Figure()
-    draw_axes(fig, length=90, fixed=True)
+    draw_axes(fig, length=25, fixed=True)
     draw_axes(fig, length=1, labels=['i', 'j', 'k'], colors = ['red', 'green', 'blue'])
-    
+
     # Добавляем траекторию
     fig.add_trace(go.Scatter3d(
-        x=x_t.tolist(), 
-        y=y_t.tolist(), 
-        z=z_t.tolist(), 
-        mode='lines', 
-        line=dict(color='black', width=4), 
+        x=x_t.tolist(),
+        y=y_t.tolist(),
+        z=z_t.tolist(),
+        mode='lines',
+        line=dict(color='black', width=4),
         name='Траектория'
     ))
-    
+
     fig.add_trace(go.Scatter3d(
-        x=[point[0]], 
-        y=[point[1]], 
+        x=[point[0]],
+        y=[point[1]],
         z=[point[2]],
-        mode='markers', 
-        marker=dict(color='red', size=8), 
+        mode='markers',
+        marker=dict(color='red', size=8),
         name='M (t=1)'
         )
     )
-    
-    # Добавляем векторы ускорений со стрелками
-    add_vector_with_arrow(fig, point, data['a_rel'], 'blue', 'a_rel')
-    add_vector_with_arrow(fig, point, data['a_centr'], 'green', 'a_centr')
-    add_vector_with_arrow(fig, point, data['a_rot'], 'orange', 'a_rot')
-    add_vector_with_arrow(fig, point, data['a_trans_post'], 'brown', 'a_trans_post')
-    add_vector_with_arrow(fig, point, data['a_cor'], 'cyan', 'a_cor')
-    add_vector_with_arrow(fig, point, data['a_abs'], 'purple', 'a_abs')
-    
+
+    # Векторы ускорений — в едином масштабе отображения (истинные модули в легенде)
+    s = vector_display_scale([data['a_rel'], data['a_centr'], data['a_rot'],
+                              data['a_trans_post'], data['a_cor'], data['a_abs']], target=20.0)
+    add_vector_with_arrow(fig, point, data['a_rel'], 'blue', 'a_rel', scale=s)
+    add_vector_with_arrow(fig, point, data['a_centr'], 'green', 'a_centr', scale=s)
+    add_vector_with_arrow(fig, point, data['a_rot'], 'orange', 'a_rot', scale=s)
+    add_vector_with_arrow(fig, point, data['a_trans_post'], 'brown', 'a_trans_post', scale=s)
+    add_vector_with_arrow(fig, point, data['a_cor'], 'cyan', 'a_cor', scale=s)
+    add_vector_with_arrow(fig, point, data['a_abs'], 'purple', 'a_abs', scale=s)
+
     fig.update_layout(
         title='Траектория и векторы ускорений',
-        scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='auto'),
+        scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='data'),
         legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5),
         margin=dict(l=0, r=0, t=30, b=50)
     )
