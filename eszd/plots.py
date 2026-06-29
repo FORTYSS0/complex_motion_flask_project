@@ -2,6 +2,31 @@ import numpy as np
 import plotly.graph_objects as go
 
 
+# Наконечник вектора: одинаковый небольшой размер для всех стрелок,
+# полный угол раствора 20° по ГОСТ (половинный угол 10°).
+ARROW_HEAD_2D = 1.3
+ARROW_HALF_2D = np.radians(10)
+
+
+def fit_scale_2d(vectors, target=11.0):
+    """Единый масштаб отображения векторов на фигуре: самый длинный вектор
+    приводится к длине target (чтобы вписаться в оси), пропорции сохраняются.
+    Истинные модули остаются в подписях."""
+    m = max((float(np.linalg.norm(np.asarray(v, dtype=float))) for v in vectors),
+            default=0.0)
+    return (target / m) if m > 1e-9 else 1.0
+
+
+def add_unit_ort_2d(fig, origin, direction, color):
+    """Единичный вектор (орт, длина 1) из начала координат, параллельный
+    заданному направлению — показывает направление базисного орта."""
+    d = np.asarray(direction, dtype=float)
+    n = np.linalg.norm(d)
+    if n < 1e-9:
+        return
+    add_vector_2d(fig, origin, (d / n), color, '', show_legend=False)
+
+
 def add_fixed_hatch_2d(fig, origin, axis_dir, length, color='#333333',
                        n=4, inset=1.0, spacing=1.0, stroke=1.8):
     """Рисует короткую штриховку у конца оси — признак неподвижной (зафиксированной) оси.
@@ -134,21 +159,22 @@ def add_vector_2d(fig, start, vector, color, name, show_legend=True):
         hoverinfo='none'
     ))
     
-    angle = np.arctan2(vector[1], vector[0])
-    arrow_len = np.linalg.norm(vector) * 0.15
-    if arrow_len > 0.1:
-        arrow_angle = np.pi / 6
+    # Наконечник: одинаковый небольшой размер, полный угол 20° (ГОСТ)
+    L = np.hypot(vector[0], vector[1])
+    if L > 1e-6:
+        angle = np.arctan2(vector[1], vector[0])
+        head = min(ARROW_HEAD_2D, 0.6 * L)
         arrow_x = [
             end_x,
-            end_x - arrow_len * np.cos(angle - arrow_angle),
-            end_x - arrow_len * np.cos(angle + arrow_angle)
+            end_x - head * np.cos(angle - ARROW_HALF_2D),
+            end_x - head * np.cos(angle + ARROW_HALF_2D)
         ]
         arrow_y = [
             end_y,
-            end_y - arrow_len * np.sin(angle - arrow_angle),
-            end_y - arrow_len * np.sin(angle + arrow_angle)
+            end_y - head * np.sin(angle - ARROW_HALF_2D),
+            end_y - head * np.sin(angle + ARROW_HALF_2D)
         ]
-        
+
         fig.add_trace(go.Scatter(
             x=arrow_x, y=arrow_y,
             mode='lines',
@@ -335,14 +361,21 @@ def eszd_velocities(data):
         hovertemplate=f'<b>M</b><br>x = {point[0]:.3f} м<br>y = {point[1]:.3f} м<br>S = {s:.3f} м<extra></extra>'
     ))
     
-    # Вектор скорости
-    add_vector_2d(fig, (point[0], point[1]), V_vec, '#2ca02c',
+    # Единый масштаб отображения векторов (пропорции сохранены, модули — в подписях)
+    mscale = fit_scale_2d([V_vec, a_tau_vec], target=11.0)
+
+    # Базисные орты (единичные, длина 1) из начала координат: τ и n
+    add_unit_ort_2d(fig, (0, 0), data['tau'], '#2ca02c')
+    add_unit_ort_2d(fig, (0, 0), data['n'], '#1f77b4')
+
+    # Вектор скорости (в масштабе)
+    add_vector_2d(fig, (point[0], point[1]), V_vec * mscale, '#2ca02c',
                   f'<b>V</b> = {V:.3f} м/с',
                   show_legend=True)
-    
-    # Касательное ускорение
+
+    # Касательное ускорение (в масштабе)
     if abs(a_tau) > 0.01:
-        add_vector_2d(fig, (point[0], point[1]), a_tau_vec, '#e67e22',
+        add_vector_2d(fig, (point[0], point[1]), a_tau_vec * mscale, '#e67e22',
                       f'<b>a_τ</b> = {a_tau:.3f} м/с²',
                       show_legend=True)
     
@@ -435,20 +468,27 @@ def eszd_accelerations(data):
         hovertemplate=f'<b>M</b><br>x = {point[0]:.3f} м<br>y = {point[1]:.3f} м<br>S = {s:.3f} м<br>ρ = {rho:.3f} м<extra></extra>'
     ))
     
-    # Касательное ускорение
+    # Единый масштаб отображения векторов (пропорции сохранены, модули — в подписях)
+    mscale = fit_scale_2d([a_tau_vec, a_n_vec, a_tau_vec + a_n_vec], target=11.0)
+
+    # Базисные орты (единичные, длина 1) из начала координат: τ и n
+    add_unit_ort_2d(fig, (0, 0), data['tau'], '#2ca02c')
+    add_unit_ort_2d(fig, (0, 0), data['n'], '#1f77b4')
+
+    # Касательное ускорение (в масштабе)
     if abs(a_tau) > 0.01:
-        add_vector_2d(fig, (point[0], point[1]), a_tau_vec, '#e67e22',
+        add_vector_2d(fig, (point[0], point[1]), a_tau_vec * mscale, '#e67e22',
                       f'<b>a_τ</b> = {a_tau:.3f} м/с²',
                       show_legend=True)
-    
-    # Нормальное ускорение
+
+    # Нормальное ускорение (в масштабе)
     if abs(a_n) > 0.01:
-        add_vector_2d(fig, (point[0], point[1]), a_n_vec, '#1f77b4',
+        add_vector_2d(fig, (point[0], point[1]), a_n_vec * mscale, '#1f77b4',
                       f'<b>a_n</b> = {a_n:.3f} м/с²  (V²/ρ = {V:.3f}²/{rho:.3f})',
                       show_legend=True)
-    
-    # Полное ускорение
-    add_vector_2d(fig, (point[0], point[1]), a_tau_vec + a_n_vec, '#2ca02c',
+
+    # Полное ускорение (в масштабе)
+    add_vector_2d(fig, (point[0], point[1]), (a_tau_vec + a_n_vec) * mscale, '#2ca02c',
                   f'<b>a</b> = {a_mod:.3f} м/с²',
                   show_legend=True)
     
