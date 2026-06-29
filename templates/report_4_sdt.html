@@ -24,7 +24,7 @@
         .table-wrapper { overflow-x: auto; margin: 20px 0; }
         .graph { margin: 10px 0; }
         #trajectory-plot, #velocities-plot, #accelerations-plot,
-        #trajectory-with-velocities-plot, #trajectory-with-accelerations-plot {
+        #trajectory-with-velocities-plot, #trajectory-with-accelerations-plot, #radius-of-curvature-plot {
             width: 100%;
             height: 70vh;
             border: 1px solid #ddd;
@@ -34,7 +34,7 @@
 
         @media (max-width: 992px) {
             #trajectory-plot, #velocities-plot, #accelerations-plot,
-            #trajectory-with-velocities-plot, #trajectory-with-accelerations-plot { height: 60vh; }
+            #trajectory-with-velocities-plot, #trajectory-with-accelerations-plot, #radius-of-curvature-plot { height: 60vh; }
         }
         @media (max-width: 768px) {
             body { padding: 0; margin: 0; }
@@ -46,7 +46,7 @@
             }
             .graph { margin: 5px 0; }
             #trajectory-plot, #velocities-plot, #accelerations-plot,
-            #trajectory-with-velocities-plot, #trajectory-with-accelerations-plot {
+            #trajectory-with-velocities-plot, #trajectory-with-accelerations-plot, #radius-of-curvature-plot {
                 height: 50vh !important;
                 width: 100% !important;
             }
@@ -60,7 +60,7 @@
             .btn-group { flex-direction: column; align-items: stretch; }
             .btn { margin: 2px 0; }
             #trajectory-plot, #velocities-plot, #accelerations-plot,
-            #trajectory-with-velocities-plot, #trajectory-with-accelerations-plot {
+            #trajectory-with-velocities-plot, #trajectory-with-accelerations-plot, #radius-of-curvature-plot {
                 height: 40vh !important;
             }
         }
@@ -347,6 +347,11 @@
         <div id="trajectory-with-accelerations-plot"></div>
         <p><em>Траектория, оси координат, дуга ω и векторы ускорений (a_rel, a_centr, a_rot, a_trans_post, a_cor, a_abs) в неподвижной системе. Векторы масштабированы для наглядности, показывают только направление.</em></p>
     </div>
+    <div class="graph">
+        <h3>Рис. 4 - Радиус кривизны абсолютной траектории по сечениям</h3>
+        <div id="radius-of-curvature-plot"></div>
+        <p><em>Траектория разбита на сечения (чёрные узлы — границы участков). В характерной точке каждого сечения построена единичная главная нормаль — стрелка к центру кривизны — с подписью радиуса \(\rho_i\). В точке \(M\,(t=1)\) показаны соприкасающаяся окружность и радиус кривизны \(\rho(M)\) к её центру \(C\). Стрелки-нормали имеют единую отображаемую длину; истинные значения \(\rho\) указаны в подписях.</em></p>
+    </div>
 
     <!-- ----------------------------------------------------------------- -->
     <h2>6. Итоговая таблица результатов</h2>
@@ -399,12 +404,14 @@
         var accJson = {{ acc_json | tojson }};
         var trajWithVelJson = {{ traj_with_vel_json | tojson }};
         var trajWithAccJson = {{ traj_with_acc_json | tojson }};
+        var radiusJson = {{ radius_json | tojson }};
 
         renderPlot('trajectory-plot', trajJson);
         renderPlot('velocities-plot', velJson);
         renderPlot('accelerations-plot', accJson);
         renderPlot('trajectory-with-velocities-plot', trajWithVelJson);
         renderPlot('trajectory-with-accelerations-plot', trajWithAccJson);
+        renderPlot('radius-of-curvature-plot', radiusJson);
     });
 </script>
 </body>

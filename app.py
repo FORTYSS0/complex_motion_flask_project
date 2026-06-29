@@ -12,7 +12,8 @@ from sdt.plots import sdt_trajectory, \
                 sdt_velocities, \
                 sdt_accelerations, \
                 sdt_trajectory_with_velocities, \
-                sdt_trajectory_with_accelerations
+                sdt_trajectory_with_accelerations, \
+                sdt_radius_of_curvature
 
 from psk.calc import psk_compute_complex_motion
 from psk.plots import psk_trajectory, \
@@ -116,15 +117,17 @@ def index4():
     acc_json = sdt_accelerations(data)
     traj_with_vel_json = sdt_trajectory_with_velocities(data)
     traj_with_acc_json = sdt_trajectory_with_accelerations(data)
-    
-    return render_template('report_4_sdt.html', 
-                         data=data, 
+    radius_json = sdt_radius_of_curvature(data)
+
+    return render_template('report_4_sdt.html',
+                         data=data,
                          formulas=formulas,
-                         traj_json=traj_json, 
-                         vel_json=vel_json, 
+                         traj_json=traj_json,
+                         vel_json=vel_json,
                          acc_json=acc_json,
                          traj_with_vel_json=traj_with_vel_json,
-                         traj_with_acc_json=traj_with_acc_json
+                         traj_with_acc_json=traj_with_acc_json,
+                         radius_json=radius_json
     )
 
 

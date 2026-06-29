@@ -169,7 +169,62 @@ def add_vector_with_arrow(fig, start, vector, color, name, scale=1.0):
     ))
 
 
-# ==================== Интерактивные графики (Plotly) 
+def _curve_point(t):
+    """Точка АБСОЛЮТНОЙ траектории r_abs(t) (см. get_trajectory_points)."""
+    x_rel = 8.0 * np.cos(np.pi * t**2 / 3.0)
+    y_rel = 16.0 * np.sin(np.pi * t**2 / 3.0)
+    phi = 2.0 * np.sin(np.pi * t)
+    cp, sp = np.cos(phi), np.sin(phi)
+    return np.array([cp * x_rel - sp * y_rel,
+                     sp * x_rel + cp * y_rel,
+                     2.0 * t**2 + 4.0])
+
+
+def _frenet_at(t):
+    """Возвращает (точка, орт касательной τ, орт главной нормали n, радиус ρ)
+    абсолютной траектории в момент t. Производные — численные.
+
+        ρ = |r'|^3 / |r' × r''|,   n — единичная главная нормаль (к центру).
+    """
+    h = 1e-5
+    r0 = _curve_point(t)
+    rp = (_curve_point(t + h) - _curve_point(t - h)) / (2.0 * h)
+    rpp = (_curve_point(t + h) - 2.0 * r0 + _curve_point(t - h)) / h**2
+    v = float(np.linalg.norm(rp))
+    tau = rp / (v + 1e-12)
+    a_perp = rpp - np.dot(rpp, tau) * tau            # нормальная составляющая
+    n = a_perp / (np.linalg.norm(a_perp) + 1e-12)    # к центру кривизны
+    cr = np.cross(rp, rpp)
+    rho = v**3 / (float(np.linalg.norm(cr)) + 1e-12)
+    return r0, tau, n, rho
+
+
+def add_named_arrow_3d(fig, start, disp_vec, color, text, width=4, head=0.18):
+    """Стрелка фиксированной отображаемой длины disp_vec с текстовой подписью
+    у наконечника (используется для нормалей-радиусов кривизны)."""
+    start = np.asarray(start, dtype=float)
+    disp_vec = np.asarray(disp_vec, dtype=float)
+    end = start + disp_vec
+    fig.add_trace(go.Scatter3d(
+        x=[start[0], end[0]], y=[start[1], end[1]], z=[start[2], end[2]],
+        mode='lines', line=dict(color=color, width=width),
+        showlegend=False, hoverinfo='none'))
+    direction = disp_vec / (np.linalg.norm(disp_vec) + 1e-10)
+    cone_size = np.linalg.norm(disp_vec) * head
+    fig.add_trace(go.Cone(
+        x=[end[0] - direction[0] * cone_size * 0.5],
+        y=[end[1] - direction[1] * cone_size * 0.5],
+        z=[end[2] - direction[2] * cone_size * 0.5],
+        u=[direction[0]], v=[direction[1]], w=[direction[2]],
+        colorscale=[[0, color], [1, color]], showscale=False,
+        sizemode="scaled", sizeref=cone_size, showlegend=False, hoverinfo='none'))
+    fig.add_trace(go.Scatter3d(
+        x=[end[0]], y=[end[1]], z=[end[2]], mode='text', text=[text],
+        textfont=dict(size=12, color=color, family='Times New Roman'),
+        textposition='top center', showlegend=False, hoverinfo='none'))
+
+
+# ==================== Интерактивные графики (Plotly)
 
 def sdt_trajectory(data):
     """Возвращает JSON для интерактивного графика траектории с эллипсом в момент времени t."""
@@ -347,6 +402,100 @@ def sdt_trajectory_with_velocities(data):
     fig.update_layout(
         title='Траектория и векторы скоростей',
         scene=dict(xaxis_title="X'", yaxis_title="Y'", zaxis_title="Z'", aspectmode='data'),
+        legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5),
+        margin=dict(l=0, r=0, t=30, b=50)
+    )
+    return fig.to_json()
+
+
+def sdt_radius_of_curvature(data):
+    """Радиус кривизны абсолютной траектории, показанный по сечениям.
+
+    Траектория разбивается на участки (сечения) границами по времени; в
+    характерной точке каждого сечения строится единичная главная нормаль —
+    стрелка к центру кривизны — с подписью ρ_i. В точке M (t=1) дополнительно
+    показана соприкасающаяся окружность и радиус кривизны к её центру C.
+    """
+    x_t, y_t, z_t, _ = get_trajectory_points()
+
+    fig = go.Figure()
+    draw_axes(fig, length=25, fixed=True)
+    draw_axes(fig, length=1, labels=['i', 'j', 'k'], colors=['red', 'green', 'blue'])
+
+    # Абсолютная траектория
+    fig.add_trace(go.Scatter3d(
+        x=x_t.tolist(), y=y_t.tolist(), z=z_t.tolist(),
+        mode='lines', line=dict(color='blue', width=3),
+        name='Абсолютная траектория'))
+
+    # Границы сечений (узлы разбиения кривой)
+    t_bounds = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5]
+    B = np.array([_curve_point(t) for t in t_bounds])
+    fig.add_trace(go.Scatter3d(
+        x=B[:, 0].tolist(), y=B[:, 1].tolist(), z=B[:, 2].tolist(),
+        mode='markers', marker=dict(color='black', size=4),
+        name='Границы сечений'))
+
+    # Радиус кривизны в характерной точке каждого сечения
+    DISP = 6.0  # отображаемая длина стрелки-нормали (соразмерно сцене)
+    t_mid = [0.25, 0.75, 1.25, 1.75, 2.25]
+    first = True
+    for i, tc in enumerate(t_mid, 1):
+        r, tau, n, rho = _frenet_at(tc)
+        label = ('ρ%d = %.2f м' % (i, rho)).replace('.', ',')
+        # сегмент-нормаль (для легенды показываем один раз)
+        end = r + DISP * n
+        fig.add_trace(go.Scatter3d(
+            x=[r[0], end[0]], y=[r[1], end[1]], z=[r[2], end[2]],
+            mode='lines', line=dict(color='#9467bd', width=4),
+            name='Нормаль к центру кривизны', showlegend=first, hoverinfo='none'))
+        first = False
+        direction = n
+        cone_size = DISP * 0.18
+        fig.add_trace(go.Cone(
+            x=[end[0] - direction[0] * cone_size * 0.5],
+            y=[end[1] - direction[1] * cone_size * 0.5],
+            z=[end[2] - direction[2] * cone_size * 0.5],
+            u=[direction[0]], v=[direction[1]], w=[direction[2]],
+            colorscale=[[0, '#9467bd'], [1, '#9467bd']], showscale=False,
+            sizemode="scaled", sizeref=cone_size, showlegend=False, hoverinfo='none'))
+        fig.add_trace(go.Scatter3d(
+            x=[r[0]], y=[r[1]], z=[r[2]], mode='markers',
+            marker=dict(color='#9467bd', size=4), showlegend=False, hoverinfo='none'))
+        fig.add_trace(go.Scatter3d(
+            x=[end[0]], y=[end[1]], z=[end[2]], mode='text', text=[label],
+            textfont=dict(size=12, color='#9467bd', family='Times New Roman'),
+            textposition='top center', showlegend=False, hoverinfo='none'))
+
+    # Точка M (t=1): соприкасающаяся окружность + радиус кривизны
+    rM, tauM, nM, rhoM = _frenet_at(1.0)
+    C = rM + rhoM * nM
+    u = -nM            # от центра C к точке M
+    w = tauM           # касательная — вторая ось плоскости окружности
+    ang = np.linspace(0, 2 * np.pi, 200)
+    circ = np.array([C + rhoM * (np.cos(a) * u + np.sin(a) * w) for a in ang])
+    fig.add_trace(go.Scatter3d(
+        x=circ[:, 0].tolist(), y=circ[:, 1].tolist(), z=circ[:, 2].tolist(),
+        mode='lines', line=dict(color='red', width=2, dash='dash'),
+        name='Соприкасающаяся окружность в M'))
+    fig.add_trace(go.Scatter3d(
+        x=[rM[0], C[0]], y=[rM[1], C[1]], z=[rM[2], C[2]],
+        mode='lines', line=dict(color='red', width=4),
+        name=('ρ(M) = %.2f м' % rhoM).replace('.', ',')))
+    fig.add_trace(go.Scatter3d(
+        x=[rM[0]], y=[rM[1]], z=[rM[2]], mode='markers+text',
+        marker=dict(color='red', size=8), text=['M'],
+        textfont=dict(size=13, color='red', family='Times New Roman'),
+        textposition='top center', showlegend=False, hoverinfo='none'))
+    fig.add_trace(go.Scatter3d(
+        x=[C[0]], y=[C[1]], z=[C[2]], mode='markers+text',
+        marker=dict(color='red', size=6, symbol='x'), text=['C'],
+        textfont=dict(size=13, color='red', family='Times New Roman'),
+        textposition='bottom center', showlegend=False, hoverinfo='none'))
+
+    fig.update_layout(
+        title='Радиус кривизны абсолютной траектории по сечениям',
+        scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z", aspectmode='data'),
         legend=dict(orientation='h', yanchor='top', y=-0.1, xanchor='center', x=0.5),
         margin=dict(l=0, r=0, t=30, b=50)
     )
