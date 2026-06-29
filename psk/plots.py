@@ -2,6 +2,31 @@ import numpy as np
 import plotly.graph_objects as go
 
 
+# Наконечник вектора: одинаковый небольшой размер для всех стрелок,
+# полный угол раствора 20° по ГОСТ (половинный угол 10°).
+ARROW_HEAD_2D = 1.3
+ARROW_HALF_2D = np.radians(10)
+
+
+def fit_scale_2d(vectors, target=11.0):
+    """Единый масштаб отображения векторов на фигуре: самый длинный вектор
+    приводится к длине target (чтобы вписаться в оси), пропорции сохраняются.
+    Истинные модули остаются в подписях."""
+    m = max((float(np.linalg.norm(np.asarray(v, dtype=float))) for v in vectors),
+            default=0.0)
+    return (target / m) if m > 1e-9 else 1.0
+
+
+def add_unit_ort_2d(fig, origin, direction, color):
+    """Единичный вектор (орт, длина 1) из начала координат, параллельный
+    заданному направлению — показывает направление компоненты."""
+    d = np.asarray(direction, dtype=float)
+    n = np.linalg.norm(d)
+    if n < 1e-9:
+        return
+    add_vector_2d(fig, origin, (d / n), color, '', show_legend=False)
+
+
 def add_fixed_hatch_2d(fig, origin, axis_dir, length, color='#333333',
                        n=4, inset=1.0, spacing=1.0, stroke=1.8):
     """Рисует короткую штриховку у конца оси — признак неподвижной (зафиксированной) оси.
@@ -131,22 +156,22 @@ def add_vector_2d(fig, start, vector, color, name, show_legend=True):
         hoverinfo='none'
     ))
     
-    # Стрелка
-    angle = np.arctan2(vector[1], vector[0])
-    arrow_len = np.linalg.norm(vector) * 0.15
-    if arrow_len > 0.1:
-        arrow_angle = np.pi / 6
+    # Наконечник: одинаковый небольшой размер, полный угол 20° (ГОСТ)
+    L = np.hypot(vector[0], vector[1])
+    if L > 1e-6:
+        angle = np.arctan2(vector[1], vector[0])
+        head = min(ARROW_HEAD_2D, 0.6 * L)
         arrow_x = [
             end_x,
-            end_x - arrow_len * np.cos(angle - arrow_angle),
-            end_x - arrow_len * np.cos(angle + arrow_angle)
+            end_x - head * np.cos(angle - ARROW_HALF_2D),
+            end_x - head * np.cos(angle + ARROW_HALF_2D)
         ]
         arrow_y = [
             end_y,
-            end_y - arrow_len * np.sin(angle - arrow_angle),
-            end_y - arrow_len * np.sin(angle + arrow_angle)
+            end_y - head * np.sin(angle - ARROW_HALF_2D),
+            end_y - head * np.sin(angle + ARROW_HALF_2D)
         ]
-        
+
         fig.add_trace(go.Scatter(
             x=arrow_x, y=arrow_y,
             mode='lines',
@@ -324,21 +349,30 @@ def psk_velocities(data):
         hovertemplate=f'<b>M</b><br>r = {r:.3f} м<br>φ = {phi:.3f} рад<extra></extra>'
     ))
     
-    # Радиальная составляющая скорости Vr (вдоль e_r)
-    add_vector_2d(fig, (point[0], point[1]), Vr_vec, '#1f77b4',
+    # Единый масштаб отображения векторов (пропорции сохранены, модули — в подписях)
+    s = fit_scale_2d([Vr_vec, Vphi_vec, Vr_vec + Vphi_vec], target=11.0)
+    sVr = Vr_vec * s
+    sVphi = Vphi_vec * s
+
+    # Орты (единичные векторы) из начала координат, параллельные Vr и Vφ
+    add_unit_ort_2d(fig, (0, 0), Vr_vec, '#1f77b4')
+    add_unit_ort_2d(fig, (0, 0), Vphi_vec, '#e67e22')
+
+    # Радиальная составляющая скорости Vr (вдоль e_r), в масштабе
+    add_vector_2d(fig, (point[0], point[1]), sVr, '#1f77b4',
                   f'<b>Vr</b> = {Vr:.3f} м/с  (dr/dt = {dr_dt:.3f} м/с)',
                   show_legend=True)
-    
-    # Трансверсальная составляющая скорости Vφ (вдоль e_φ)
-    add_vector_2d(fig, (point[0], point[1]), Vphi_vec, '#e67e22',
+
+    # Трансверсальная составляющая скорости Vφ (вдоль e_φ), в масштабе
+    add_vector_2d(fig, (point[0], point[1]), sVphi, '#e67e22',
                   f'<b>Vφ</b> = {Vphi:.3f} м/с  (r·dφ/dt = {r:.3f}·{dphi_dt:.3f})',
                   show_legend=True)
-    
-    # Пунктирные линии для правила параллелограмма
-    end_Vr = point + Vr_vec
-    end_Vphi = point + Vphi_vec
-    end_V = point + Vr_vec + Vphi_vec
-    
+
+    # Пунктирные линии для правила параллелограмма (в масштабе)
+    end_Vr = point + sVr
+    end_Vphi = point + sVphi
+    end_V = point + sVr + sVphi
+
     fig.add_trace(go.Scatter(
         x=[end_Vr[0], end_V[0]],
         y=[end_Vr[1], end_V[1]],
@@ -355,9 +389,9 @@ def psk_velocities(data):
         showlegend=False,
         hoverinfo='none'
     ))
-    
-    # Полная скорость
-    add_vector_2d(fig, (point[0], point[1]), Vr_vec + Vphi_vec, '#2ca02c',
+
+    # Полная скорость (в масштабе)
+    add_vector_2d(fig, (point[0], point[1]), sVr + sVphi, '#2ca02c',
                   f'<b>V</b> = {V_mod:.3f} м/с',
                   show_legend=True)
     
@@ -459,21 +493,30 @@ def psk_accelerations(data):
         hovertemplate=f'<b>M</b><br>r = {r:.3f} м<br>φ = {phi:.3f} рад<extra></extra>'
     ))
     
-    # Радиальная составляющая ускорения ar
-    add_vector_2d(fig, (point[0], point[1]), ar_vec, '#1f77b4',
+    # Единый масштаб отображения векторов (пропорции сохранены, модули — в подписях)
+    s = fit_scale_2d([ar_vec, aphi_vec, ar_vec + aphi_vec], target=11.0)
+    sar = ar_vec * s
+    saphi = aphi_vec * s
+
+    # Орты (единичные векторы) из начала координат, параллельные ar и aφ
+    add_unit_ort_2d(fig, (0, 0), ar_vec, '#1f77b4')
+    add_unit_ort_2d(fig, (0, 0), aphi_vec, '#e67e22')
+
+    # Радиальная составляющая ускорения ar (в масштабе)
+    add_vector_2d(fig, (point[0], point[1]), sar, '#1f77b4',
                   f'<b>ar</b> = {ar:.3f} м/с²  (d²r/dt² - r·ω² = {d2r_dt2:.3f} - {r:.3f}·{dphi_dt:.3f}² = {ar:.3f})',
                   show_legend=True)
-    
-    # Трансверсальная составляющая ускорения aφ
-    add_vector_2d(fig, (point[0], point[1]), aphi_vec, '#e67e22',
+
+    # Трансверсальная составляющая ускорения aφ (в масштабе)
+    add_vector_2d(fig, (point[0], point[1]), saphi, '#e67e22',
                   f'<b>aφ</b> = {aphi:.3f} м/с²  (r·ε + 2·Vr·ω = {r:.3f}·{d2phi_dt2:.3f} + 2·{dr_dt:.3f}·{dphi_dt:.3f} = {aphi:.3f})',
                   show_legend=True)
-    
-    # Пунктирные линии
-    end_ar = point + ar_vec
-    end_aphi = point + aphi_vec
-    end_a = point + ar_vec + aphi_vec
-    
+
+    # Пунктирные линии (в масштабе)
+    end_ar = point + sar
+    end_aphi = point + saphi
+    end_a = point + sar + saphi
+
     fig.add_trace(go.Scatter(
         x=[end_ar[0], end_a[0]],
         y=[end_ar[1], end_a[1]],
@@ -490,9 +533,9 @@ def psk_accelerations(data):
         showlegend=False,
         hoverinfo='none'
     ))
-    
-    # Полное ускорение
-    add_vector_2d(fig, (point[0], point[1]), ar_vec + aphi_vec, '#2ca02c',
+
+    # Полное ускорение (в масштабе)
+    add_vector_2d(fig, (point[0], point[1]), sar + saphi, '#2ca02c',
                   f'<b>a</b> = {a_mod:.3f} м/с²',
                   show_legend=True)
     

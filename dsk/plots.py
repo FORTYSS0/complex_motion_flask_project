@@ -2,6 +2,31 @@ import numpy as np
 import plotly.graph_objects as go
 
 
+# Наконечник вектора: одинаковый небольшой размер для всех стрелок,
+# полный угол раствора 20° по ГОСТ (половинный угол 10°).
+ARROW_HEAD_2D = 1.3
+ARROW_HALF_2D = np.radians(10)
+
+
+def fit_scale_2d(vectors, target=11.0):
+    """Единый масштаб отображения векторов на фигуре: самый длинный вектор
+    приводится к длине target (чтобы вписаться в оси), пропорции сохраняются.
+    Истинные модули остаются в подписях."""
+    m = max((float(np.linalg.norm(np.asarray(v, dtype=float))) for v in vectors),
+            default=0.0)
+    return (target / m) if m > 1e-9 else 1.0
+
+
+def add_unit_ort_2d(fig, origin, direction, color):
+    """Единичный вектор (орт, длина 1) из начала координат, параллельный
+    заданному направлению — показывает направление компоненты."""
+    d = np.asarray(direction, dtype=float)
+    n = np.linalg.norm(d)
+    if n < 1e-9:
+        return
+    add_vector_2d(fig, origin, (d / n), color, '', show_legend=False)
+
+
 def add_fixed_hatch_2d(fig, origin, axis_dir, length, color='#333333',
                        n=4, inset=1.0, spacing=1.0, stroke=1.8):
     """Рисует короткую штриховку у конца оси — признак неподвижной (зафиксированной) оси.
@@ -136,22 +161,22 @@ def add_vector_component_2d(fig, start, component, color, name, axis_name, is_da
         hoverinfo='none'
     ))
     
-    # Стрелка на конце компоненты
-    angle = np.arctan2(component[1], component[0])
-    arrow_len = np.linalg.norm(component) * 0.15
-    if arrow_len > 0.1:
-        arrow_angle = np.pi / 6
+    # Наконечник: одинаковый небольшой размер, полный угол 20° (ГОСТ)
+    L = np.hypot(component[0], component[1])
+    if L > 1e-6:
+        angle = np.arctan2(component[1], component[0])
+        head = min(ARROW_HEAD_2D, 0.6 * L)
         arrow_x = [
             end_x,
-            end_x - arrow_len * np.cos(angle - arrow_angle),
-            end_x - arrow_len * np.cos(angle + arrow_angle)
+            end_x - head * np.cos(angle - ARROW_HALF_2D),
+            end_x - head * np.cos(angle + ARROW_HALF_2D)
         ]
         arrow_y = [
             end_y,
-            end_y - arrow_len * np.sin(angle - arrow_angle),
-            end_y - arrow_len * np.sin(angle + arrow_angle)
+            end_y - head * np.sin(angle - ARROW_HALF_2D),
+            end_y - head * np.sin(angle + ARROW_HALF_2D)
         ]
-        
+
         fig.add_trace(go.Scatter(
             x=arrow_x, y=arrow_y,
             mode='lines',
@@ -179,22 +204,22 @@ def add_vector_2d(fig, start, vector, color, name, show_legend=True):
         hoverinfo='none'
     ))
     
-    # Стрелка
-    angle = np.arctan2(vector[1], vector[0])
-    arrow_len = np.linalg.norm(vector) * 0.15
-    if arrow_len > 0.1:
-        arrow_angle = np.pi / 6
+    # Наконечник: одинаковый небольшой размер, полный угол 20° (ГОСТ)
+    L = np.hypot(vector[0], vector[1])
+    if L > 1e-6:
+        angle = np.arctan2(vector[1], vector[0])
+        head = min(ARROW_HEAD_2D, 0.6 * L)
         arrow_x = [
             end_x,
-            end_x - arrow_len * np.cos(angle - arrow_angle),
-            end_x - arrow_len * np.cos(angle + arrow_angle)
+            end_x - head * np.cos(angle - ARROW_HALF_2D),
+            end_x - head * np.cos(angle + ARROW_HALF_2D)
         ]
         arrow_y = [
             end_y,
-            end_y - arrow_len * np.sin(angle - arrow_angle),
-            end_y - arrow_len * np.sin(angle + arrow_angle)
+            end_y - head * np.sin(angle - ARROW_HALF_2D),
+            end_y - head * np.sin(angle + ARROW_HALF_2D)
         ]
-        
+
         fig.add_trace(go.Scatter(
             x=arrow_x, y=arrow_y,
             mode='lines',
@@ -313,17 +338,25 @@ def dsk_velocities(data):
         hovertemplate=f'<b>M</b><br>x = {point[0]:.3f} м<br>y = {point[1]:.3f} м<extra></extra>'
     ))
     
-    # Компоненты скорости
+    # Единый масштаб отображения векторов (пропорции сохранены, модули — в подписях)
+    s = fit_scale_2d([(vx, 0), (0, vy), (vx, vy)], target=11.0)
+    sx, sy = vx * s, vy * s
+
+    # Орты (единичные векторы) из начала координат, параллельные Vx и Vy
+    add_unit_ort_2d(fig, (0, 0), (vx, 0), '#1f77b4')
+    add_unit_ort_2d(fig, (0, 0), (0, vy), '#b41f53')
+
+    # Компоненты скорости (в масштабе)
     # Vx (по оси X)
-    add_vector_component_2d(fig, (point[0], point[1]), (vx, 0), '#1f77b4', f'<b>Vx</b> = {vx:.3f} м/с', 'X')
+    add_vector_component_2d(fig, (point[0], point[1]), (sx, 0), '#1f77b4', f'<b>Vx</b> = {vx:.3f} м/с', 'X')
     # Vy (по оси Y)
-    add_vector_component_2d(fig, (point[0], point[1]), (0, vy), "#b41f53", f'<b>Vy</b> = {vy:.3f} м/с', 'Y')
-    
-    # Пунктирные линии для правила параллелограмма
+    add_vector_component_2d(fig, (point[0], point[1]), (0, sy), "#b41f53", f'<b>Vy</b> = {vy:.3f} м/с', 'Y')
+
+    # Пунктирные линии для правила параллелограмма (в масштабе)
     # От конца Vx к концу V
     fig.add_trace(go.Scatter(
-        x=[point[0] + vx, point[0] + vx],
-        y=[point[1], point[1] + vy],
+        x=[point[0] + sx, point[0] + sx],
+        y=[point[1], point[1] + sy],
         mode='lines',
         line=dict(color='gray', width=2, dash='dash'),
         showlegend=False,
@@ -331,16 +364,16 @@ def dsk_velocities(data):
     ))
     # От конца Vy к концу V
     fig.add_trace(go.Scatter(
-        x=[point[0], point[0] + vx],
-        y=[point[1] + vy, point[1] + vy],
+        x=[point[0], point[0] + sx],
+        y=[point[1] + sy, point[1] + sy],
         mode='lines',
         line=dict(color='gray', width=2, dash='dash'),
         showlegend=False,
         hoverinfo='none'
     ))
-    
-    # Результирующий вектор скорости
-    add_vector_2d(fig, (point[0], point[1]), (vx, vy), '#e67e22',
+
+    # Результирующий вектор скорости (в масштабе)
+    add_vector_2d(fig, (point[0], point[1]), (sx, sy), '#e67e22',
                   f'<b>V</b> = ({vx:.3f}, {vy:.3f}) м/с<br>|V| = {V_mod:.3f} м/с',
                   show_legend=True)
     
@@ -418,32 +451,40 @@ def dsk_accelerations(data):
         hovertemplate=f'<b>M</b><br>x = {point[0]:.3f} м<br>y = {point[1]:.3f} м<extra></extra>'
     ))
     
-    # Компоненты ускорения
+    # Единый масштаб отображения векторов (пропорции сохранены, модули — в подписях)
+    s = fit_scale_2d([(ax, 0), (0, ay), (ax, ay)], target=11.0)
+    sax, say = ax * s, ay * s
+
+    # Орты (единичные векторы) из начала координат, параллельные ax и ay
+    add_unit_ort_2d(fig, (0, 0), (ax, 0), '#1f77b4')
+    add_unit_ort_2d(fig, (0, 0), (0, ay), '#b41f53')
+
+    # Компоненты ускорения (в масштабе)
     # ax (по оси X)
-    add_vector_component_2d(fig, (point[0], point[1]), (ax, 0), '#1f77b4', f'<b>ax</b> = {ax:.3f} м/с²', 'X')
+    add_vector_component_2d(fig, (point[0], point[1]), (sax, 0), '#1f77b4', f'<b>ax</b> = {ax:.3f} м/с²', 'X')
     # ay (по оси Y)
-    add_vector_component_2d(fig, (point[0], point[1]), (0, ay), '#b41f53', f'<b>ay</b> = {ay:.3f} м/с²', 'Y')
-    
-    # Пунктирные линии для правила параллелограмма
+    add_vector_component_2d(fig, (point[0], point[1]), (0, say), '#b41f53', f'<b>ay</b> = {ay:.3f} м/с²', 'Y')
+
+    # Пунктирные линии для правила параллелограмма (в масштабе)
     fig.add_trace(go.Scatter(
-        x=[point[0] + ax, point[0] + ax],
-        y=[point[1], point[1] + ay],
+        x=[point[0] + sax, point[0] + sax],
+        y=[point[1], point[1] + say],
         mode='lines',
         line=dict(color='gray', width=2, dash='dash'),
         showlegend=False,
         hoverinfo='none'
     ))
     fig.add_trace(go.Scatter(
-        x=[point[0], point[0] + ax],
-        y=[point[1] + ay, point[1] + ay],
+        x=[point[0], point[0] + sax],
+        y=[point[1] + say, point[1] + say],
         mode='lines',
         line=dict(color='gray', width=2, dash='dash'),
         showlegend=False,
         hoverinfo='none'
     ))
-    
-    # Результирующий вектор ускорения
-    add_vector_2d(fig, (point[0], point[1]), (ax, ay), '#2ca02c',
+
+    # Результирующий вектор ускорения (в масштабе)
+    add_vector_2d(fig, (point[0], point[1]), (sax, say), '#2ca02c',
                   f'<b>a</b> = ({ax:.3f}, {ay:.3f}) м/с²<br>|a| = {a_mod:.3f} м/с²',
                   show_legend=True)
     
