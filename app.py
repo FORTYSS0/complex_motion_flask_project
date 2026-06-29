@@ -95,13 +95,15 @@ def index3():
     traj_json = eszd_trajectory(data)
     vel_json = eszd_velocities(data)
     acc_json = eszd_accelerations(data)
-    
-    return render_template('report_3_eszd.html', 
-                         data=data, 
+    acc_rho_json = eszd_accelerations(data, show_radius=True)
+
+    return render_template('report_3_eszd.html',
+                         data=data,
                          formulas=formulas,
-                         traj_json=traj_json, 
-                         vel_json=vel_json, 
-                         acc_json=acc_json
+                         traj_json=traj_json,
+                         vel_json=vel_json,
+                         acc_json=acc_json,
+                         acc_rho_json=acc_rho_json
     )
 
 

@@ -22,7 +22,7 @@
         th { background-color: #0066cc; color: white; }
         .table-wrapper { overflow-x: auto; margin: 20px 0; }
         .graph { margin: 10px 0; }
-        #trajectory-plot, #velocities-plot, #accelerations-plot {
+        #trajectory-plot, #velocities-plot, #accelerations-plot, #accelerations-rho-plot {
             width: 100%;
             height: 70vh;
             border: 1px solid #ddd;
@@ -31,7 +31,7 @@
         .footer { font-size: 0.9em; color: #777; text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
 
         @media (max-width: 992px) {
-            #trajectory-plot, #velocities-plot, #accelerations-plot { height: 60vh; }
+            #trajectory-plot, #velocities-plot, #accelerations-plot, #accelerations-rho-plot { height: 60vh; }
         }
         @media (max-width: 768px) {
             body { padding: 0; margin: 0; }
@@ -42,7 +42,7 @@
                 box-shadow: none;
             }
             .graph { margin: 5px 0; }
-            #trajectory-plot, #velocities-plot, #accelerations-plot {
+            #trajectory-plot, #velocities-plot, #accelerations-plot, #accelerations-rho-plot {
                 height: 50vh !important;
                 width: 100% !important;
             }
@@ -55,7 +55,7 @@
         @media (max-width: 480px) {
             .btn-group { flex-direction: column; align-items: stretch; }
             .btn { margin: 2px 0; }
-            #trajectory-plot, #velocities-plot, #accelerations-plot {
+            #trajectory-plot, #velocities-plot, #accelerations-plot, #accelerations-rho-plot {
                 height: 40vh !important;
             }
         }
@@ -258,15 +258,21 @@
     </div>
 
     <div class="graph">
-        <h3>Рис. 2 - Вектор скорости и касательное ускорение в точке M</h3>
+        <h3>Рис. 2 - Вектор скорости в точке M</h3>
         <div id="velocities-plot"></div>
-        <p><em>На графике показаны: траектория (синяя пунктирная линия), точка M (красный маркер), вектор скорости \(\vec V\) (зелёный) и касательное ускорение \(\vec a_\tau\) (оранжевый).</em></p>
+        <p><em>На графике показаны: траектория (синяя пунктирная линия), точка M (красный маркер) и вектор скорости \(\vec V\) (зелёный), направленный по касательной к траектории.</em></p>
     </div>
 
     <div class="graph">
         <h3>Рис. 3 - Касательное и нормальное ускорения в точке M</h3>
         <div id="accelerations-plot"></div>
         <p><em>На графике показаны: траектория (синяя пунктирная линия), точка M (красный маркер), касательное ускорение \(\vec a_\tau\) (оранжевый), нормальное ускорение \(\vec a_n\) (синий) и полное ускорение \(\vec a\) (зелёный).</em></p>
+    </div>
+
+    <div class="graph">
+        <h3>Рис. 3а - Касательное и нормальное ускорения с радиусом кривизны в точке M</h3>
+        <div id="accelerations-rho-plot"></div>
+        <p><em>Тот же график, что Рис. 3, с добавленным радиусом кривизны: соприкасающаяся окружность (фиолетовый пунктир) радиуса \(\rho = {{ (data.rho)|gost(3) }}\) м с центром в центре кривизны C, а также выноска радиуса \(\vec\rho\) из точки M в центр C (вдоль нормали \(\vec n\)).</em></p>
     </div>
 
     <!-- ------------------------------------------------------------------ -->
@@ -316,10 +322,12 @@
         var trajJson = {{ traj_json | tojson }};
         var velJson = {{ vel_json | tojson }};
         var accJson = {{ acc_json | tojson }};
+        var accRhoJson = {{ acc_rho_json | tojson }};
 
         renderPlot('trajectory-plot', trajJson);
         renderPlot('velocities-plot', velJson);
         renderPlot('accelerations-plot', accJson);
+        renderPlot('accelerations-rho-plot', accRhoJson);
     });
 </script>
 </body>

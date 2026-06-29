@@ -361,27 +361,17 @@ def eszd_velocities(data):
         hovertemplate=f'<b>M</b><br>x = {point[0]:.3f} м<br>y = {point[1]:.3f} м<br>S = {s:.3f} м<extra></extra>'
     ))
     
-    # Единый масштаб отображения векторов (пропорции сохранены, модули — в подписях)
-    mscale = fit_scale_2d([V_vec, a_tau_vec], target=11.0)
-
-    # Базисные орты (единичные, длина 1) из начала координат: τ и n
-    add_unit_ort_2d(fig, (0, 0), data['tau'], '#2ca02c')
-    add_unit_ort_2d(fig, (0, 0), data['n'], '#1f77b4')
+    # Масштаб отображения вектора скорости (вписать в оси, модуль — в подписи)
+    mscale = fit_scale_2d([V_vec], target=11.0)
 
     # Вектор скорости (в масштабе)
     add_vector_2d(fig, (point[0], point[1]), V_vec * mscale, '#2ca02c',
                   f'<b>V</b> = {V:.3f} м/с',
                   show_legend=True)
-
-    # Касательное ускорение (в масштабе)
-    if abs(a_tau) > 0.01:
-        add_vector_2d(fig, (point[0], point[1]), a_tau_vec * mscale, '#e67e22',
-                      f'<b>a_τ</b> = {a_tau:.3f} м/с²',
-                      show_legend=True)
     
     fig.update_layout(
         title=dict(
-            text='<b>Рис. 2 - Вектор скорости и касательное ускорение</b>',
+            text='<b>Рис. 2 - Вектор скорости</b>',
             font=dict(size=18, family='Times New Roman'),
             x=0.5
         ),
@@ -421,8 +411,12 @@ def eszd_velocities(data):
     return fig.to_json()
 
 
-def eszd_accelerations(data):
-    """Рис. 3 - Касательное и нормальное ускорения."""
+def eszd_accelerations(data, show_radius=False):
+    """Рис. 3 - Касательное и нормальное ускорения.
+
+    При show_radius=True дополнительно строится радиус кривизны: соприкасающаяся
+    окружность радиуса ρ с центром в центре кривизны C = M + ρ·n и выноска ρ.
+    """
     x_t_full, y_t_full, _ = get_trajectory_points()
     x_t_segment, y_t_segment, _ = get_trajectory_segment(t0=data['t'])
     point = data['point']
@@ -468,12 +462,37 @@ def eszd_accelerations(data):
         hovertemplate=f'<b>M</b><br>x = {point[0]:.3f} м<br>y = {point[1]:.3f} м<br>S = {s:.3f} м<br>ρ = {rho:.3f} м<extra></extra>'
     ))
     
+    # Радиус кривизны: соприкасающаяся окружность и выноска ρ (опционально)
+    if show_radius:
+        M = np.asarray(point, dtype=float)
+        nrm = np.asarray(data['n'], dtype=float)
+        nrm = nrm / (np.linalg.norm(nrm) + 1e-12)
+        C = M + rho * nrm                      # центр кривизны
+        # Соприкасающаяся окружность радиуса ρ с центром в C
+        th = np.linspace(0, 2 * np.pi, 200)
+        fig.add_trace(go.Scatter(
+            x=(C[0] + rho * np.cos(th)).tolist(),
+            y=(C[1] + rho * np.sin(th)).tolist(),
+            mode='lines',
+            line=dict(color='#9467bd', width=1.5, dash='dash'),
+            name='Соприкасающаяся окружность',
+            hoverinfo='none'
+        ))
+        # Выноска радиуса кривизны ρ: отрезок M → C
+        add_vector_2d(fig, (M[0], M[1]), (C - M), '#9467bd',
+                      f'<b>ρ</b> = {rho:.3f} м', show_legend=True)
+        # Центр кривизны C
+        fig.add_trace(go.Scatter(
+            x=[C[0]], y=[C[1]],
+            mode='markers+text',
+            marker=dict(color='#9467bd', size=8, symbol='x'),
+            text=['<b>C</b>'], textposition='bottom left',
+            textfont=dict(size=13, color='#9467bd', family='Times New Roman'),
+            showlegend=False, hoverinfo='none'
+        ))
+
     # Единый масштаб отображения векторов (пропорции сохранены, модули — в подписях)
     mscale = fit_scale_2d([a_tau_vec, a_n_vec, a_tau_vec + a_n_vec], target=11.0)
-
-    # Базисные орты (единичные, длина 1) из начала координат: τ и n
-    add_unit_ort_2d(fig, (0, 0), data['tau'], '#2ca02c')
-    add_unit_ort_2d(fig, (0, 0), data['n'], '#1f77b4')
 
     # Касательное ускорение (в масштабе)
     if abs(a_tau) > 0.01:
@@ -492,9 +511,12 @@ def eszd_accelerations(data):
                   f'<b>a</b> = {a_mod:.3f} м/с²',
                   show_legend=True)
     
+    title_text = ('<b>Рис. 3а - Касательное и нормальное ускорения с радиусом кривизны</b>'
+                  if show_radius else
+                  '<b>Рис. 3 - Касательное и нормальное ускорения</b>')
     fig.update_layout(
         title=dict(
-            text='<b>Рис. 3 - Касательное и нормальное ускорения</b>',
+            text=title_text,
             font=dict(size=18, family='Times New Roman'),
             x=0.5
         ),
@@ -530,5 +552,5 @@ def eszd_accelerations(data):
         hovermode='closest',
         margin=dict(l=60, r=60, t=80, b=60)
     )
-    
+
     return fig.to_json()
